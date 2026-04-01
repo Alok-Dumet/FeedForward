@@ -42,7 +42,14 @@ const router = createBrowserRouter([
         loader: homeLoader
       },
     ],
-  },
+  }
+  // {
+  //   element: <Background2 />
+  //   errorElement:
+  //   children:{
+
+  //   }
+  // },
 ]);
 
 export default function App() {
