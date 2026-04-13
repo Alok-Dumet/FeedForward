@@ -3,20 +3,21 @@ import hmac
 import secrets
 
 from database.database import db
+from sessions import build_session_cookie, create_session, delete_session
 from router import Router
-from utils import parse_validate_body, send_json
+from utils import parse_cookies, parse_validate_body, send_json
 
 router = Router()
 
 
-#We will hash passwords and utilize salts as well. We will be dramatic and do 200_000 iterations for the hash
+#We will hash passwords and utilize salts as well.
 def hash_password(password):
     salt = secrets.token_hex(16)
     password_hash = hashlib.pbkdf2_hmac(
         "sha256",
         password.encode("utf-8"),
         salt.encode("utf-8"),
-        200_000,
+        200_000,        #We will be dramatic and do 200_000 iterations for the hash
     ).hex()
     return f"{salt}${password_hash}"
 
@@ -129,6 +130,9 @@ def login(handler):
     #If no user exists or the password is wrong, reject the login
     if not user or not verify_password(body["password"], user[2]):
         return send_json(handler, 401, {"error": "Invalid email or password"})
+    
+    #Creating the session token
+    session_token = create_session(user[0])
 
     return send_json(handler, 200, {
         "success": "Login successful",
@@ -140,12 +144,25 @@ def login(handler):
             "organization_type": user[5],
             },
         },
+        headers=[("Set-Cookie", build_session_cookie(session_token, 604800))] #sets the cookie to last for 604800 seconds (7 days)
     )
 
 
-#Our route handler for logging out
+#Our route handler for logging out.
 def logout(handler):
-    return send_json(handler, 200, {"success": "Logout successful"})
+    cookies = parse_cookies(handler)
+    session_token = cookies.get("feedforward_session")
+
+    #We will delete the session from memory and then tell the user to set their cookie to an empty string
+    if session_token:
+        delete_session(session_token)
+
+    return send_json(
+        handler,
+        200,
+        {"success": "Logout successful"},
+        headers=[("Set-Cookie", build_session_cookie("", 0))],
+    )
 
 
 router.post("/api/login", login)

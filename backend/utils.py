@@ -1,15 +1,20 @@
 import json
 
-#We will use this helper function for sending JSON responses
-def send_json(self, status, data):
+#We will use this helper function for sending JSON responses and cookies
+def send_json(self, status, data, headers=None):
     body = json.dumps(data).encode("utf-8")
     self.send_response(status)
     self.send_header("Content-Type", "application/json")
     self.send_header("Content-Length", str(len(body)))
+
+    if headers:
+        for header_name, header_value in headers:
+            self.send_header(header_name, header_value)
+
     self.end_headers()
     self.wfile.write(body)
 
-#We will use this helper function for parsing request bodies. None is sent back if there's a malformed json or if the json sent wasn't a dictionary
+#We will use this helper function for parsing request bodies.
 def parse_body(self):
     length = int(self.headers.get("Content-Length", 0))
     if not length:
@@ -17,11 +22,11 @@ def parse_body(self):
 
     raw = self.rfile.read(length)
 
+    #None is sent back if there's a malformed json or if the json sent wasn't a dictionary
     try:
         body = json.loads(raw.decode("utf-8"))
     except (UnicodeDecodeError, json.JSONDecodeError):
         return None
-
     if not isinstance(body, dict):
         return None
 
@@ -56,7 +61,6 @@ def require_fields(body, field_names):
     return missing
 
 #We will combine the parsing, stripping, and validation helpers into one function for our handlers
-#It'll send back None if there was an error, otherwise it'll send back the validated body
 def parse_validate_body(self, required_fields):
     body = parse_body(self)
 
@@ -66,9 +70,26 @@ def parse_validate_body(self, required_fields):
 
     body = strip_strings(body)
 
+    #It'll send back None if there was an error, otherwise it'll send back the validated body
     missing = require_fields(body, required_fields)
     if missing:
         send_json(self, 400, {"error": f"Missing fields: {', '.join(missing)}"})
         return None
 
     return body
+
+#We will use this helper function for parsing cookies in from the user's request
+def parse_cookies(self):
+    cookie_header = self.headers.get("Cookie")
+    if not cookie_header:
+        return {}
+
+    cookies = {}
+
+    for cookie in cookie_header.split(";"):
+        key, _, value = cookie.strip().partition("=")
+        if key:
+            cookies[key] = value
+
+    return cookies
+
