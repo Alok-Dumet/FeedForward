@@ -1,5 +1,6 @@
 import mimetypes
 
+#Differentiates between requests for static assets and requests for the main html file
 def handle(handler):
     if handler.path.startswith("/assets/"):
         handleAssets(handler)

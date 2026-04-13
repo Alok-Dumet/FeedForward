@@ -3,9 +3,9 @@ import hmac
 import secrets
 
 from database.database import db
-from sessions import build_session_cookie, create_session, delete_session
+from sessions import parse_cookies, build_session_cookie, create_session, delete_session, get_session_user_id
 from router import Router
-from utils import parse_cookies, parse_validate_body, send_json
+from utils import parse_validate_body, send_json
 
 router = Router()
 
@@ -17,7 +17,7 @@ def hash_password(password):
         "sha256",
         password.encode("utf-8"),
         salt.encode("utf-8"),
-        200_000,        #We will be dramatic and do 200_000 iterations for the hash
+        200_000        #We will be dramatic and do 200_000 iterations for the hash
     ).hex()
     return f"{salt}${password_hash}"
 
@@ -32,7 +32,7 @@ def verify_password(password, stored_password_hash):
         "sha256",
         password.encode("utf-8"),
         salt.encode("utf-8"),
-        200_000,
+        200_000
     ).hex()
     return hmac.compare_digest(actual_hash, expected_hash)
 
@@ -40,7 +40,7 @@ def verify_password(password, stored_password_hash):
 #Our route handler for registering
 def register(handler):
     #Parses the body, strips it, and checks for missing fields. If the body is none, an error json is returned by the function as well
-    body = parse_validate_body(handler, ["email", "password", "role", "organization_name", "organization_type"])
+    body = parse_validate_body(handler, ["email", "password", "role", "organization_name"])
     if body is None:
         return
 
@@ -66,19 +66,17 @@ def register(handler):
                     email,
                     password_hash,
                     role,
-                    organization_name,
-                    organization_type
+                    organization_name
                 )
-                VALUES (%s, %s, %s, %s, %s)
-                RETURNING id, email, role, organization_name, organization_type
+                VALUES (%s, %s, %s, %s)
+                RETURNING id, email, role, organization_name
                 """,
                 (
                     body["email"].lower(),
                     password_hash,
                     body["role"],
-                    body["organization_name"],
-                    body["organization_type"],
-                ),
+                    body["organization_name"]
+                )
             )
             user = cur.fetchone()
         db.commit()
@@ -97,10 +95,9 @@ def register(handler):
             "id": user[0],
             "email": user[1],
             "role": user[2],
-            "organization_name": user[3],
-            "organization_type": user[4],
-            },
-        },
+            "organization_name": user[3]
+            }
+        }
     )
 
 
@@ -116,7 +113,7 @@ def login(handler):
         with db.cursor() as cur:
             cur.execute(
                 """
-                SELECT id, email, password_hash, role, organization_name, organization_type
+                SELECT id, email, password_hash, role, organization_name
                 FROM users
                 WHERE email = %s
                 """,
@@ -140,9 +137,8 @@ def login(handler):
             "id": user[0],
             "email": user[1],
             "role": user[3],
-            "organization_name": user[4],
-            "organization_type": user[5],
-            },
+            "organization_name": user[4]
+            }
         },
         headers=[("Set-Cookie", build_session_cookie(session_token, 604800))] #sets the cookie to last for 604800 seconds (7 days)
     )
@@ -157,14 +153,47 @@ def logout(handler):
     if session_token:
         delete_session(session_token)
 
-    return send_json(
-        handler,
-        200,
-        {"success": "Logout successful"},
-        headers=[("Set-Cookie", build_session_cookie("", 0))],
-    )
+    return send_json(handler, 200, {"success": "Logout successful"}, headers=[("Set-Cookie", build_session_cookie("", 0))])
 
+#Our route handler to allow the user to check their session details
+def get_session(handler):
+    user_id = get_session_user_id(handler)
+
+    #We will return an error if the user session doesn't exist
+    if user_id is None:
+        return send_json(handler, 401, {"error": "Not authenticated"})
+
+    #Even if the sessions exists, we need to check if the user exists
+    try:
+        with db.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id, email, role, organization_name
+                FROM users
+                WHERE id = %s
+                """,
+                (user_id,)
+            )
+            user = cur.fetchone()
+    except Exception:
+        db.rollback()
+        return send_json( handler, 500, {"error": "Unable to load session due to a server error."})
+
+    if not user:
+        return send_json(handler, 401, {"error": "Invalid session"})
+
+    return send_json(
+        handler, 200, {
+            "user": {
+                "id": user[0],
+                "email": user[1],
+                "role": user[2],
+                "organization_name": user[3]
+            }
+        }
+    )
 
 router.post("/api/login", login)
 router.post("/api/logout", logout)
 router.post("/api/register", register)
+router.get("/api/session", get_session)

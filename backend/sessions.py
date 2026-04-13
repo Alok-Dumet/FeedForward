@@ -1,6 +1,4 @@
 import secrets
-from utils import parse_cookies
-
 
 #We will use this dictionary for storing sessions in memory (For now. We may move it to a database)
 sessions = {}
@@ -8,6 +6,20 @@ sessions = {}
 #This is our session cookie name
 SESSION_COOKIE_NAME = "feedforward_session"
 
+#We will use this helper function for parsing cookies in from the user's request
+def parse_cookies(self):
+    cookie_header = self.headers.get("Cookie")
+    if not cookie_header:
+        return {}
+
+    cookies = {}
+
+    for cookie in cookie_header.split(";"):
+        key, _, value = cookie.strip().partition("=")
+        if key:
+            cookies[key] = value
+
+    return cookies
 
 #We will creating a unique session token and store it (It loops in case a collision occurs)
 def create_session(user_id):

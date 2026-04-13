@@ -77,19 +77,3 @@ def parse_validate_body(self, required_fields):
         return None
 
     return body
-
-#We will use this helper function for parsing cookies in from the user's request
-def parse_cookies(self):
-    cookie_header = self.headers.get("Cookie")
-    if not cookie_header:
-        return {}
-
-    cookies = {}
-
-    for cookie in cookie_header.split(";"):
-        key, _, value = cookie.strip().partition("=")
-        if key:
-            cookies[key] = value
-
-    return cookies
-
