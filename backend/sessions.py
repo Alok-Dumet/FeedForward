@@ -1,5 +1,7 @@
 import secrets
 
+from database.database import db
+
 #We will use this dictionary for storing sessions in memory (For now. We may move it to a database)
 sessions = {}
 
@@ -42,6 +44,38 @@ def get_session_user_id(self):
         return None
 
     return sessions.get(session_token)
+
+#We will load the current user after checking the session
+def get_user(self):
+    user_id = get_session_user_id(self)
+
+    if user_id is None:
+        return None
+
+    try:
+        with db.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id, email, role, organization_name
+                FROM users
+                WHERE id = %s
+                """,
+                (user_id,)
+            )
+            user = cur.fetchone()
+    except Exception:
+        db.rollback()
+        raise
+
+    if not user:
+        return None
+
+    return {
+        "id": user[0],
+        "email": user[1],
+        "role": user[2],
+        "organization_name": user[3],
+    }
 
 #This is for deleting a session token when a user wants to log out
 def delete_session(session_token):

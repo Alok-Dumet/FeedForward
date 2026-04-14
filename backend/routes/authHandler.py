@@ -3,7 +3,7 @@ import hmac
 import secrets
 
 from database.database import db
-from sessions import parse_cookies, build_session_cookie, create_session, delete_session, get_session_user_id
+from sessions import SESSION_COOKIE_NAME, parse_cookies, build_session_cookie, create_session, delete_session, get_user
 from router import Router
 from utils import parse_validate_body, send_json
 
@@ -147,7 +147,7 @@ def login(handler):
 #Our route handler for logging out.
 def logout(handler):
     cookies = parse_cookies(handler)
-    session_token = cookies.get("feedforward_session")
+    session_token = cookies.get(SESSION_COOKIE_NAME)
 
     #We will delete the session from memory and then tell the user to set their cookie to an empty string
     if session_token:
@@ -157,41 +157,15 @@ def logout(handler):
 
 #Our route handler to allow the user to check their session details
 def get_session(handler):
-    user_id = get_session_user_id(handler)
+    try:
+        user = get_user(handler)
+    except Exception:
+        return send_json(handler, 500, {"error": "Unable to load session due to a server error."})
 
-    #We will return an error if the user session doesn't exist
-    if user_id is None:
+    if user is None:
         return send_json(handler, 401, {"error": "Not authenticated"})
 
-    #Even if the sessions exists, we need to check if the user exists
-    try:
-        with db.cursor() as cur:
-            cur.execute(
-                """
-                SELECT id, email, role, organization_name
-                FROM users
-                WHERE id = %s
-                """,
-                (user_id,)
-            )
-            user = cur.fetchone()
-    except Exception:
-        db.rollback()
-        return send_json( handler, 500, {"error": "Unable to load session due to a server error."})
-
-    if not user:
-        return send_json(handler, 401, {"error": "Invalid session"})
-
-    return send_json(
-        handler, 200, {
-            "user": {
-                "id": user[0],
-                "email": user[1],
-                "role": user[2],
-                "organization_name": user[3]
-            }
-        }
-    )
+    return send_json(handler, 200, {"user": user})
 
 router.post("/api/login", login)
 router.post("/api/logout", logout)
