@@ -18,6 +18,8 @@ export default function Register() {
         body: JSON.stringify({
           email: e.currentTarget.elements.email.value,
           password: e.currentTarget.elements.password.value,
+          role: e.currentTarget.elements.role.value,
+          organization_name: e.currentTarget.elements.organization_name.value
         }),
       });
 
@@ -27,7 +29,11 @@ export default function Register() {
         console.log("Intentional Response");
       } else {
         setError("");
-        navigate("/home");
+        navigate("/login", {
+          state: {
+            message: "Registration successful. You can log in now."
+          }
+        });
       }
     } catch {
       setError("Network Error");
@@ -40,7 +46,7 @@ export default function Register() {
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: "easeOut" }}
-        className="w-full max-w-md rounded-3xl border border-white/60 bg-white/80 p-8 shadow-2xl backdrop-blur-md"
+        className="w-full max-w-xl rounded-3xl border border-white/60 bg-white/80 p-8 shadow-2xl backdrop-blur-md"
       >
         <div className="text-center">
           <p className="text-sm font-medium tracking-[0.2em] text-amber-700 uppercase">
@@ -57,6 +63,41 @@ export default function Register() {
         <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
           <div>
             <label
+              htmlFor="role"
+              className="mb-2 block text-sm font-medium text-slate-700"
+            >
+              Role
+            </label>
+            <select
+              id="role"
+              name="role"
+              defaultValue="food_provider"
+              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 transition outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
+            >
+              <option value="food_provider">Food Provider</option>
+              <option value="recipient_organization">
+                Recipient Organization
+              </option>
+            </select>
+          </div>
+
+          <div>
+            <label
+              htmlFor="organization_name"
+              className="mb-2 block text-sm font-medium text-slate-700"
+            >
+              Organization Name
+            </label>
+            <input
+              id="organization_name"
+              name="organization_name"
+              type="text"
+              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 transition outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
+            />
+          </div>
+
+          <div>
+            <label
               htmlFor="email"
               className="mb-2 block text-sm font-medium text-slate-700"
             >
@@ -66,6 +107,7 @@ export default function Register() {
               id="email"
               name="email"
               type="email"
+              autoComplete="email"
               className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 transition outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
             />
           </div>
@@ -81,6 +123,7 @@ export default function Register() {
               id="password"
               name="password"
               type="password"
+              autoComplete="new-password"
               className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 transition outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
             />
           </div>

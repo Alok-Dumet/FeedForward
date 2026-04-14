@@ -1,13 +1,18 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { motion } from "motion/react";
 
 export default function Login() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
+  const message = location.state?.message ?? "";
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (location.state?.message) {
+      navigate(location.pathname, { replace: true, state: null });
+    }
 
     try {
       const res = await fetch("/api/login", {
@@ -65,6 +70,7 @@ export default function Login() {
               id="email"
               name="email"
               type="email"
+              autoComplete="email"
               className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 transition outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
             />
           </div>
@@ -80,10 +86,14 @@ export default function Login() {
               id="password"
               name="password"
               type="password"
+              autoComplete="current-password"
               className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 transition outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
             />
           </div>
 
+          {message && (
+            <p className="text-sm font-medium text-emerald-700">{message}</p>
+          )}
           {error && <p className="text-sm font-medium text-red-600">{error}</p>}
 
           <button

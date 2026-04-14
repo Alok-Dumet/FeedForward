@@ -1,17 +1,18 @@
-export default async function homeLoader({ request }) {
-  return [{name: "John"},  {name: "Chris"}];
+import { redirect } from "react-router-dom";
 
-  //Fetch the available donations
-  const res = await fetch("/api/donations", {
-    signal: request.signal,
+export default async function homeLoader({ request }) {
+  const res = await fetch("/api/session", {
+    signal: request.signal
   });
 
-  //Stop if the HTTP request failed
-  if (!res.ok) {
-    throw new Response("Failed to load feed", { status: res.status });
+  if (res.status === 401) {
+    return redirect("/login");
   }
 
-  //Give the data back to React Router
+  if (!res.ok) {
+    throw new Response("Failed to load session", { status: res.status });
+  }
+
   const data = await res.json();
   return data;
 }
