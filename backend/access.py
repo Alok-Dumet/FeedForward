@@ -1,5 +1,6 @@
 from sessions import get_user
 from utils import send_json
+from urllib.parse import urlparse
 
 #We will define which paths are public, require authentication, or require a specific role
 PUBLIC_PATHS = {
@@ -9,7 +10,9 @@ PUBLIC_PATHS = {
 
 AUTH_REQUIRED_PATHS = {
     "/api/session",
-    "/api/logout"
+    "/api/logout",
+    "/api/listings/details", # requires login before showing full details for one listing/post
+    "/api/listings/accept" # requires login because accepting creates a claim/order for the current user
 }
 
 PROTECTED_PAGE_PATHS = {
@@ -26,7 +29,7 @@ def redirect(handler, location):
 
 #We will redirect users to login or a not_authorized page only for protected paths
 def enforce_access(handler):
-    path = handler.path
+    path = urlparse(handler.path).path
 
     if path.startswith("/assets/"):
         return True

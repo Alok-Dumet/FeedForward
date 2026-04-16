@@ -1,3 +1,5 @@
+from urllib.parse import urlparse
+
 class Router:
     def __init__(self):
         self.routes = []
@@ -15,8 +17,11 @@ class Router:
         self.routes.append(('PATCH', path, handler))
 
     def handle(self, handler):
+
+        request_path = urlparse(handler.path).path
+
         for method, path, fn in self.routes:
-            if handler.command == method and handler.path == path:
+            if handler.command == method and request_path == path:
                 fn(handler)
                 return True
         return False
