@@ -1,9 +1,11 @@
-from urllib.parse import urlparse, parse_qs
+
 
 from database.database import db
 from router import Router
 from sessions import get_user
-from utils import parse_validate_body, send_json
+from utils import parse_validate_body, send_json, get_query_param
+from psycopg2 import errors
+
 
 router = Router()
 
@@ -20,20 +22,6 @@ define two API endpoints
 """
 
 
-def get_query_param(handler, name):
-
-    """ extracts one query parameter from the request URL """
-
-    query = urlparse(handler.path).query # take the request path, parse it as a URL and pull out only the query-string portion
-    values = parse_qs(query).get(name) # parse the query string into a dictionary and get the list of values for the requested parameter names
-
-    if not values: # check whether the parameter was missing or had no values
-        return None # let the call know value was absent
-
-    return values[0] # return the first value for that parameter since query params come back as lists
-
-
-
 
 def get_listing_details(handler): # start of get_listing_details() function definition
 
@@ -42,19 +30,22 @@ def get_listing_details(handler): # start of get_listing_details() function defi
 
     listing_id = get_query_param(handler, "id")
     if not listing_id:
-        return send_json(handler, 401, {"error": "missing listing id"})
+        return send_json(handler, 400, {"error": "missing listing id"})
     
-    # reaching here means listing id is present
+    try:
+        listing_id = int(listing_id)
+    except ValueError:
+        return send_json(handler, 400, {"error":"Listing id must be a valid number"})
+    if listing_id <= 0:
+        return send_json(handler, 400, {"error":"Listing id must be greater than zero"})
+    
+    # reaching here means listing id is present and valid
 
 
     try: # start of try-block so any database / runtime error can be caught and returned cleanly
 
-
         user = get_user(handler)
-        if user is None:
-            return send_json(handler, 400, {"error": "Not authenticated"})
 
-        # reaching here means user is present
 
         with db.cursor() as cur: # open database cursor
 
@@ -112,7 +103,7 @@ def get_listing_details(handler): # start of get_listing_details() function defi
 
         # end of database cursor
 
-    except Exception as exc:
+    except Exception:
 
         # reaching here means an error occured
 
@@ -193,15 +184,17 @@ def accept_listing(handler): # start of accept_listing() function definition
         return
 
     
+    try:
+        listing_id = int(body["listing_id"])
+    except (TypeError, ValueError):
+        return send_json(handler, 400, {"error":"listing_id must be a valid number"})
+    if listing_id <= 0:
+        return send_json(handler, 400, {"error":"listing_id must be greater than zero"})
+
+    
     try: # start of try-block so DB errors can be caught and returned cleanly
 
-        user = get_user(handler)  # get the currently authenticated user from the session/request
-
-        if user is None:
-            return send_json(handler, 401, {"error": "User is not authenticated"})
-
-        
-        # reaching here means `user` is authenticated
+        user = get_user(handler)
 
         with db.cursor() as cur: # open a database cursor
 
@@ -220,7 +213,7 @@ def accept_listing(handler): # start of accept_listing() function definition
                 RETURNING id, listing_id, claimant_user_id, status, claimed_at              -- immediately return the newly created claim fields
                 """,
                 (
-                    body["listing_id"], # first SQL parameter: the listing id from the request body
+                    listing_id, # first SQL parameter: the listing id from the request body
                     user["id"] # second SQL parameter: the current authenticated user's id
                 )
             ) # end of execute an INSERT that creates a new claim row for this listing
@@ -229,16 +222,41 @@ def accept_listing(handler): # start of accept_listing() function definition
 
         # end of database cursor
         
-
         db.commit() # lock-in the transaction so the new claim is saved
 
-    except Exception as exc:
-
-        # reaching here means an error occurred for the insertion transaction
-
+    # reaching here means error with the insertion transaction
+    except errors.UniqueViolation:
         db.rollback()
-        return send_json(handler, 400, {"error": str(exc)})
+        return send_json(handler, 409, {"error":"This listing has already been claimed"})
+    except errors.ForeignKeyViolation:
+        db.rollback()
+        return send_json(handler, 404, {"error":"Listing not found"})
+    except errors.RaiseException as exc:
+        db.rollback()
 
+        message = str(exc) # `message` takes on raw database error text
+
+        if "Listing" in message and "does not exist" in message:
+            return send_json(handler, 404, {"error":"Listing not found"})
+
+        if "Users cannot claim their own listings" in message:
+            return send_json(handler, 403, {
+                "error": "You cannot claim your own listing."
+            })
+
+        if "Only recipient organizations can claim offer listings" in message:
+            return send_json(handler, 403, {"error": "Only recipient organizations can claim offer listings."})
+
+        if "Only food providers can claim request listings" in message:
+            return send_json(handler, 403, {"error": "Only food providers can claim request listings."})
+
+        if "Only available listings can be claimed" in message:
+            return send_json(handler, 409, {"error": "This listing is no longer available."})
+
+        return send_json(handler, 500, {"error": "Unable to accept listing due to a server error."})
+    except Exception: # fallback catchall
+        db.rollback()
+        return send_json(handler, 500, {"error": "Unable to accept listing due to a server error"})
 
 
     # reaching here means a new claim record was successfully created
@@ -261,10 +279,6 @@ def accept_listing(handler): # start of accept_listing() function definition
 
 # end of accept_listing() function definition
     
-
-
-
-
 
 
 

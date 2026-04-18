@@ -1,4 +1,5 @@
 import json
+from urllib.parse import urlparse, parse_qs
 
 #We will use this helper function for sending JSON responses and cookies
 def send_json(self, status, data, headers=None):
@@ -77,3 +78,19 @@ def parse_validate_body(self, required_fields):
         return None
 
     return body
+
+
+
+
+def get_query_param(handler, name): # start of get_query_param() function definition
+
+    """ extracts one query parameter from the request URL """
+
+    query = urlparse(handler.path).query # take the request path, parse it as a URL and pull out only the query-string portion
+    values = parse_qs(query).get(name) # parse the query string into a dictionary and get the list of values for the requested parameter names
+
+    if not values: # check whether the parameter was missing or had no values
+        return None # let the call know value was absent
+
+    return values[0] # return the first value for that parameter since query params come back as lists
+# end of get_query_param() function definition
