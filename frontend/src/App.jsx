@@ -13,7 +13,11 @@ import offersLoader from "./pages/offers/offersLoader.jsx";
 import Requests from "./pages/requests/requests.jsx";
 import requestsLoader from "./pages/requests/requestsLoader.jsx";
 import Details from "./pages/details/details.jsx";
-import detailsLoader from "./pages/details/detailsLoader.jsx";
+import {
+  historyDetailsLoader,
+  offerDetailsLoader,
+  requestDetailsLoader,
+} from "./pages/details/detailsLoader.jsx";
 import UserOffers from "./pages/userOffers/userOffers.jsx";
 import userOffersLoader from "./pages/userOffers/userOffersLoader.jsx";
 import UserRequests from "./pages/userRequests/userRequests.jsx";
@@ -24,6 +28,7 @@ import UserRequestCreate from "./pages/userRequestCreate/userRequestCreate.jsx";
 import userRequestCreateLoader from "./pages/userRequestCreate/userRequestCreateLoader.jsx";
 import History from "./pages/history/history.jsx";
 import historyLoader from "./pages/history/historyLoader.jsx";
+import { rootSessionLoader, withProtectedLoader } from "./session.js";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,7 +42,9 @@ const queryClient = new QueryClient({
 
 const router = createBrowserRouter([
   {
+    id: "root",
     element: <BackGround1 />,
+    loader: rootSessionLoader,
     errorElement: <ErrorCheck />,
     children: [
       {
@@ -60,42 +67,52 @@ const router = createBrowserRouter([
       {
         path: "/offers",
         element: <Offers />,
-        loader: offersLoader,
+        loader: withProtectedLoader(offersLoader, ["recipient"]),
+      },
+      {
+        path: "/offers/:id",
+        element: <Details />,
+        loader: withProtectedLoader(offerDetailsLoader, ["recipient"]),
       },
       {
         path: "/requests",
         element: <Requests />,
-        loader: requestsLoader,
+        loader: withProtectedLoader(requestsLoader, ["donor"]),
       },
       {
-        path: "/details",
+        path: "/requests/:id",
         element: <Details />,
-        loader: detailsLoader,
+        loader: withProtectedLoader(requestDetailsLoader, ["donor"]),
+      },
+      {
+        path: "/history/:id",
+        element: <Details />,
+        loader: withProtectedLoader(historyDetailsLoader),
       },
       {
         path: "/history",
         element: <History />,
-        loader: historyLoader,
+        loader: withProtectedLoader(historyLoader),
       },
       {
         path: "/users/:id/offers",
         element: <UserOffers />,
-        loader: userOffersLoader,
+        loader: withProtectedLoader(userOffersLoader, ["recipient"]),
       },
       {
         path: "/users/:id/offers/create",
         element: <UserOfferCreate />,
-        loader: userOfferCreateLoader,
+        loader: withProtectedLoader(userOfferCreateLoader, ["recipient"]),
       },
       {
         path: "/users/:id/requests",
         element: <UserRequests />,
-        loader: userRequestsLoader,
+        loader: withProtectedLoader(userRequestsLoader, ["donor"]),
       },
       {
         path: "/users/:id/requests/create",
         element: <UserRequestCreate />,
-        loader: userRequestCreateLoader,
+        loader: withProtectedLoader(userRequestCreateLoader, ["donor"]),
       },
     ],
   },

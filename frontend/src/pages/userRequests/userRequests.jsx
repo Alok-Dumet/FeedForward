@@ -125,7 +125,7 @@ export default function UserRequests() {
 
               <div className="flex flex-wrap gap-3 px-2">
                 <Link
-                  to="/details"
+                  to={`/requests/${item.id}`}
                   className="inline-flex rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-amber-300 hover:text-amber-800"
                 >
                   View details

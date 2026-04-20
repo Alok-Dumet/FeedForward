@@ -1,18 +1,13 @@
 import { redirect } from "react-router-dom";
 
+import { getDefaultRouteForUserType, getUserType, requireSession } from "../../session.js";
+
 export default async function homeLoader({ request }) {
-  const res = await fetch("/api/session", {
-    signal: request.signal
-  });
+  const session = await requireSession(request);
 
-  if (res.status === 401) {
-    return redirect("/login");
+  if (session instanceof Response) {
+    return session;
   }
 
-  if (!res.ok) {
-    throw new Response("Failed to load session", { status: res.status });
-  }
-
-  const data = await res.json();
-  return data;
+  return redirect(getDefaultRouteForUserType(getUserType(session)));
 }
