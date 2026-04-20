@@ -107,7 +107,7 @@ export default function UserOffers() {
               initial={{ opacity: 0, y: 22 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.04 * index, duration: 0.4, ease: "easeOut" }}
-              className="grid gap-4"
+              className="grid"
             >
               <ListingCard
                 eyebrow={item.status}
@@ -121,22 +121,12 @@ export default function UserOffers() {
                   { label: "Best For", value: item.audience },
                 ]}
                 tags={item.tags}
+                action={{
+                  label: "View details",
+                  to: `/offers/${item.id}`,
+                  placement: "inline",
+                }}
               />
-
-              <div className="flex flex-wrap gap-3 px-2">
-                <Link
-                  to={`/offers/${item.id}`}
-                  className="inline-flex rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-amber-300 hover:text-amber-800"
-                >
-                  View details
-                </Link>
-                <button
-                  type="button"
-                  className="inline-flex rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-amber-300 hover:text-amber-800"
-                >
-                  Edit offer
-                </button>
-              </div>
             </motion.div>
           ))}
         </section>

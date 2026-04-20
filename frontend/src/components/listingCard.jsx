@@ -13,6 +13,17 @@ export default function ListingCard({
   metaText,
   action,
 }) {
+  const inlineAction =
+    action?.placement === "inline" ? (
+      <Link
+        to={action.to}
+        className="inline-flex items-center gap-1 text-sm font-semibold text-slate-600 transition hover:text-amber-800"
+      >
+        <span>{action.label}</span>
+        <span aria-hidden="true">›</span>
+      </Link>
+    ) : null;
+
   if (variant === "compactHistory") {
     return (
       <motion.article
@@ -93,8 +104,10 @@ export default function ListingCard({
         ))}
       </div>
 
+      {inlineAction ? <div className="mt-5">{inlineAction}</div> : null}
+
       {action ? (
-        <div className="mt-5">
+        <div className={`mt-5 ${action.placement === "inline" ? "hidden" : ""}`}>
           <Link
             to={action.to}
             className="inline-flex rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-amber-300 hover:text-amber-800"
