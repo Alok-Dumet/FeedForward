@@ -1,3 +1,7 @@
+import { redirect } from "react-router-dom";
+
+import { getSessionUserId } from "../../session.js";
+
 function formatUserName(id) {
   return id
     .split(/[-_]/)
@@ -6,9 +10,16 @@ function formatUserName(id) {
     .join(" ");
 }
 
-export default async function userOffersLoader({ params }) {
-  const userId = params.id ?? "user-01";
-  const displayName = formatUserName(userId);
+export default async function userOffersLoader({ params }, session) {
+  const sessionUserId = getSessionUserId(session);
+  const userId = sessionUserId ?? params.id ?? "user-01";
+
+  if (sessionUserId && params.id !== sessionUserId) {
+    return redirect(`/users/${sessionUserId}/offers`);
+  }
+
+  const displayName =
+    session?.user?.organization_name ?? session?.user?.name ?? formatUserName(userId);
 
   return {
     user: {

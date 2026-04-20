@@ -1,7 +1,12 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { motion } from "motion/react";
 
+import Navbar from "./navbar.jsx";
+
 export default function Background1() {
+  const location = useLocation();
+  const hideNavbar = ["/", "/login", "/register"].includes(location.pathname);
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-gradient-to-br from-amber-100 via-orange-50 to-lime-100">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -23,6 +28,7 @@ export default function Background1() {
       </div>
 
       <div className="relative z-10 min-h-screen">
+        {hideNavbar ? null : <Navbar />}
         <Outlet />
       </div>
     </main>

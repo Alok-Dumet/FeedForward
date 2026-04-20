@@ -2,6 +2,14 @@ import { useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { motion } from "motion/react";
 
+import {
+  createMockSession,
+  getDefaultRouteForUserType,
+  getUserType,
+  inferMockUserType,
+  persistMockSession,
+} from "../../session.js";
+
 export default function Login() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -10,8 +18,29 @@ export default function Login() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+
+    const email = e.currentTarget.elements.email.value;
+    const password = e.currentTarget.elements.password.value;
+    const normalizedEmail = email.trim().toLowerCase();
+
     if (location.state?.message) {
       navigate(location.pathname, { replace: true, state: null });
+    }
+
+    if (import.meta.env.DEV && normalizedEmail.endsWith("@feedforward.local")) {
+      const userType = inferMockUserType(normalizedEmail);
+
+      persistMockSession(
+        createMockSession(userType, {
+          user: {
+            email: normalizedEmail,
+          },
+        }),
+      );
+
+      setError("");
+      navigate(getDefaultRouteForUserType(userType), { replace: true });
+      return;
     }
 
     try {
@@ -21,21 +50,91 @@ export default function Login() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email: e.currentTarget.elements.email.value,
-          password: e.currentTarget.elements.password.value,
+          email,
+          password,
         }),
       });
-
-      const data = await res.json();
+      const contentType = res.headers.get("content-type") ?? "";
+      const data = contentType.includes("application/json") ? await res.json() : null;
 
       if (!res.ok) {
-        setError(data.error);
-        console.log("Intentional Response");
+        if (import.meta.env.DEV && !contentType.includes("application/json")) {
+          const userType = inferMockUserType(email);
+          const mockSession = createMockSession(userType, {
+            user: {
+              email,
+            },
+          });
+
+          persistMockSession(mockSession);
+          setError("");
+          navigate(getDefaultRouteForUserType(userType), { replace: true });
+          return;
+        }
+
+        setError(data?.error ?? "Unable to log in");
       } else {
+        const userTypeFromLogin = getUserType(data);
+        let userType = userTypeFromLogin;
+
+        if (!userType) {
+          const sessionRes = await fetch("/api/session", {
+            headers: {
+              Accept: "application/json",
+            },
+          });
+          const sessionContentType = sessionRes.headers.get("content-type") ?? "";
+
+          if (!sessionRes.ok || !sessionContentType.includes("application/json")) {
+            if (import.meta.env.DEV) {
+              userType = inferMockUserType(email);
+              persistMockSession(
+                createMockSession(userType, {
+                  user: {
+                    email,
+                  },
+                }),
+              );
+            } else {
+              setError("Unable to load session");
+              return;
+            }
+          } else {
+            const sessionData = await sessionRes.json();
+            userType = getUserType(sessionData);
+          }
+        }
+
+        if (import.meta.env.DEV && userType) {
+          persistMockSession(
+            createMockSession(userType, {
+              user: {
+                email,
+              },
+            }),
+          );
+        }
+
         setError("");
-        navigate("/home");
+        navigate(getDefaultRouteForUserType(userType), { replace: true });
       }
     } catch {
+      if (import.meta.env.DEV) {
+        const userType = inferMockUserType(email);
+
+        persistMockSession(
+          createMockSession(userType, {
+            user: {
+              email,
+            },
+          }),
+        );
+
+        setError("");
+        navigate(getDefaultRouteForUserType(userType), { replace: true });
+        return;
+      }
+
       setError("Network Error");
     }
   }
