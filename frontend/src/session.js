@@ -11,8 +11,44 @@ export function getUserType(session) {
   return session?.user?.user_type ?? session?.user_type ?? null;
 }
 
+export function getSessionUserId(session) {
+  return session?.user?.id ?? session?.id ?? null;
+}
+
 export function getDefaultRouteForUserType(userType) {
   return DEFAULT_ROUTE_BY_USER_TYPE[userType] ?? "/login";
+}
+
+export function getMyListingsRouteForUserType(userType, userId) {
+  if (!userId) {
+    return getDefaultRouteForUserType(userType);
+  }
+
+  if (userType === "donor") {
+    return `/users/${userId}/offers`;
+  }
+
+  if (userType === "recipient") {
+    return `/users/${userId}/requests`;
+  }
+
+  return "/login";
+}
+
+export function getMyCreateRouteForUserType(userType, userId) {
+  if (!userId) {
+    return getDefaultRouteForUserType(userType);
+  }
+
+  if (userType === "donor") {
+    return `/users/${userId}/offers/create`;
+  }
+
+  if (userType === "recipient") {
+    return `/users/${userId}/requests/create`;
+  }
+
+  return "/login";
 }
 
 function canUseMockSession() {
@@ -187,7 +223,7 @@ export async function requireSession(request) {
   return session;
 }
 
-export function withProtectedLoader(loader, allowedUserTypes) {
+export function withProtectedLoader(loader, allowedUserTypes, getRedirectPath) {
   return async (args) => {
     const session = await requireSession(args.request);
 
@@ -198,7 +234,13 @@ export function withProtectedLoader(loader, allowedUserTypes) {
     const userType = getUserType(session);
 
     if (allowedUserTypes && !allowedUserTypes.includes(userType)) {
-      return redirect(getDefaultRouteForUserType(userType));
+      const redirectPath = getRedirectPath?.({
+        args,
+        session,
+        userType,
+      });
+
+      return redirect(redirectPath ?? getDefaultRouteForUserType(userType));
     }
 
     if (!loader) {

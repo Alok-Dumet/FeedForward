@@ -4,6 +4,9 @@ import { Link, NavLink, useNavigate, useRouteLoaderData } from "react-router-dom
 import {
   clearMockSession,
   getDefaultRouteForUserType,
+  getMyCreateRouteForUserType,
+  getMyListingsRouteForUserType,
+  getSessionUserId,
   getUserType,
 } from "../session.js";
 
@@ -15,6 +18,7 @@ export default function Navbar() {
   const navigate = useNavigate();
   const session = useRouteLoaderData("root");
   const userType = getUserType(session);
+  const userId = getSessionUserId(session);
 
   if (!userType) {
     return null;
@@ -24,17 +28,19 @@ export default function Navbar() {
     userType === "donor"
       ? [
           { label: "Requests", to: "/requests" },
+          { label: "My Offers", to: getMyListingsRouteForUserType(userType, userId) },
           { label: "History", to: "/history" },
         ]
       : [
           { label: "Offers", to: "/offers" },
+          { label: "My Requests", to: getMyListingsRouteForUserType(userType, userId) },
           { label: "History", to: "/history" },
         ];
 
-  const createAction =
-    userType === "donor"
-      ? { label: "Create Request", to: "/users/user-01/requests/create" }
-      : { label: "Create Offer", to: "/users/user-01/offers/create" };
+  const createAction = {
+    label: userType === "donor" ? "Create Offer" : "Create Request",
+    to: getMyCreateRouteForUserType(userType, userId),
+  };
 
   async function handleLogout() {
     clearMockSession();

@@ -28,7 +28,13 @@ import UserRequestCreate from "./pages/userRequestCreate/userRequestCreate.jsx";
 import userRequestCreateLoader from "./pages/userRequestCreate/userRequestCreateLoader.jsx";
 import History from "./pages/history/history.jsx";
 import historyLoader from "./pages/history/historyLoader.jsx";
-import { rootSessionLoader, withProtectedLoader } from "./session.js";
+import {
+  getMyCreateRouteForUserType,
+  getMyListingsRouteForUserType,
+  getSessionUserId,
+  rootSessionLoader,
+  withProtectedLoader,
+} from "./session.js";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -97,22 +103,30 @@ const router = createBrowserRouter([
       {
         path: "/users/:id/offers",
         element: <UserOffers />,
-        loader: withProtectedLoader(userOffersLoader, ["recipient"]),
+        loader: withProtectedLoader(userOffersLoader, ["donor"], ({ session, userType }) =>
+          getMyListingsRouteForUserType(userType, getSessionUserId(session))
+        ),
       },
       {
         path: "/users/:id/offers/create",
         element: <UserOfferCreate />,
-        loader: withProtectedLoader(userOfferCreateLoader, ["recipient"]),
+        loader: withProtectedLoader(userOfferCreateLoader, ["donor"], ({ session, userType }) =>
+          getMyCreateRouteForUserType(userType, getSessionUserId(session))
+        ),
       },
       {
         path: "/users/:id/requests",
         element: <UserRequests />,
-        loader: withProtectedLoader(userRequestsLoader, ["donor"]),
+        loader: withProtectedLoader(userRequestsLoader, ["recipient"], ({ session, userType }) =>
+          getMyListingsRouteForUserType(userType, getSessionUserId(session))
+        ),
       },
       {
         path: "/users/:id/requests/create",
         element: <UserRequestCreate />,
-        loader: withProtectedLoader(userRequestCreateLoader, ["donor"]),
+        loader: withProtectedLoader(userRequestCreateLoader, ["recipient"], ({ session, userType }) =>
+          getMyCreateRouteForUserType(userType, getSessionUserId(session))
+        ),
       },
     ],
   },
