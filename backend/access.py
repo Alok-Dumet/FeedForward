@@ -19,7 +19,9 @@ PROTECTED_PAGE_PATHS = {
     "/home"
 }
 
-ROLE_PROTECTED_PATHS = {}
+ROLE_PROTECTED_PATHS = {
+    "/api/listings/offers/create" : "food_provider",
+}
 
 #We will use this helper function for redirecting users
 def redirect(handler, location):
