@@ -1,5 +1,3 @@
-
-
 from database.database import db
 from router import Router
 from sessions import get_user
@@ -12,12 +10,13 @@ router = Router()
 
 """
 
-define two API endpoints
+define three API endpoints
 
  .../listings/details
 
  .../listings/accept
 
+ .../listings
 
 """
 
@@ -278,10 +277,128 @@ def accept_listing(handler): # start of accept_listing() function definition
     })
 
 # end of accept_listing() function definition
+
+
+
+
+def build_offers_requests_record(row): # helper function that formats one listing row for the offers/requests route
+
+    return {
+        "id": row[0],
+        "creator_user_id": row[1],
+        "listing_type": row[2],
+        "pickup_window_start": row[3].isoformat(),
+        "pickup_window_end": row[4].isoformat(),
+        "discard_deadline": row[5].isoformat() if row[5] else None,
+        "travel_distance_miles": row[6],
+        "additional_instructions": row[7],
+        "status": row[8],
+        "created_at": row[9].isoformat(),
+        "updated_at": row[10].isoformat(),
+        "location": {
+            "address_text": row[11],
+            "latitude": str(row[12]),
+            "longitude": str(row[13]),
+        },
+        "food": {
+            "name": row[14],
+            "description": row[15],
+            "category": row[16],
+            "is_perishable": row[17],
+            "quantity": str(row[18]),
+            "quantity_unit": row[19],
+            "expiration_date": row[20].isoformat() if row[20] else None,
+        },
+        "creator": {
+            "organization_name": row[21],
+        },
+    }
+
+
+
+def get_offers_requests(handler): # start of get_offers_requests() function definition
+
+    """ GET endpoint handler that returns requests for providers or offers for recipients """
+
+    user = get_user(handler)
+    user_role = user["role"]
+
+    if user_role == "food_provider":
+        target_listing_type = "request"
+        view_mode = "requests"
+    elif user_role == "recipient_organization":
+        target_listing_type = "offer"
+        view_mode = "offers"
+    else:
+        return send_json(handler, 403, {"error": "This role is not allowed to view offers or requests."})
+
+    try:
+        with db.cursor() as cur:
+            cur.execute(
+                """
+                SELECT
+                    listings.id,
+                    listings.creator_user_id,
+                    listings.listing_type,
+                    listings.pickup_window_start,
+                    listings.pickup_window_end,
+                    listings.discard_deadline,
+                    listings.travel_distance_miles,
+                    listings.additional_instructions,
+                    listings.status,
+                    listings.created_at,
+                    listings.updated_at,
+                    locations.address_text,
+                    locations.latitude,
+                    locations.longitude,
+                    listing_food_items.food_name,
+                    listing_food_items.food_description,
+                    listing_food_items.food_category,
+                    listing_food_items.is_perishable,
+                    listing_food_items.quantity,
+                    listing_food_items.quantity_unit,
+                    listing_food_items.expiration_date,
+                    creator.organization_name
+                FROM listings
+                JOIN locations
+                    ON locations.id = listings.location_id
+                JOIN listing_food_items
+                    ON listing_food_items.listing_id = listings.id
+                JOIN users AS creator
+                    ON creator.id = listings.creator_user_id
+                WHERE listings.listing_type = %s
+                    AND listings.creator_user_id <> %s
+                    AND listings.status = 'available'
+                ORDER BY listings.created_at DESC, listings.id DESC
+                """,
+                (
+                    target_listing_type,
+                    user["id"],
+                )
+            )
+
+            rows = cur.fetchall()
+    except Exception:
+        db.rollback()
+        return send_json(handler, 500, {"error": "Unable to load offers or requests."})
+
+    records = [build_offers_requests_record(row) for row in rows]
+
+    return send_json(handler, 200, {
+        "view_mode": view_mode,
+        "records": records,
+        "current_user": {
+            "id": user["id"],
+            "role": user_role,
+            "organization_name": user["organization_name"],
+        },
+    })
+
+# end of get_offers_requests() function definition
     
 
 
 
 router.get("/api/listings/details", get_listing_details) # register a GET route so requests to "/api/listings/details" call the function get_listing_details()
 router.post("/api/listings/accept", accept_listing) # register a POST route so requests to "/api/listings/accept" call the function accept_listing()
-
+router.get("/api/listings", get_offers_requests) # register a GET route so requests to "/api/listings" return role-based offers or requests

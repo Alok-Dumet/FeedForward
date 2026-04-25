@@ -9,6 +9,7 @@ PUBLIC_PATHS = {
 }
 
 AUTH_REQUIRED_PATHS = {
+    "/api/listings",
     "/api/session",
     "/api/logout",
     "/api/listings/details", # requires login before showing full details for one listing/post
