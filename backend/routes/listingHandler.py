@@ -320,15 +320,7 @@ def get_offers_requests(handler): # start of get_offers_requests() function defi
 
     """ GET endpoint handler that returns requests for providers or offers for recipients """
 
-    try:
-        user = get_user(handler)
-    except Exception:
-        db.rollback()
-        return send_json(handler, 500, {"error": "Unable to load session due to a server error."})
-
-    if user is None:
-        return send_json(handler, 401, {"error": "Not authenticated"})
-
+    user = get_user(handler)
     user_role = user["role"]
 
     if user_role == "food_provider":
