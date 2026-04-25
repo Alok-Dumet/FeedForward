@@ -74,36 +74,42 @@ export default function Login() {
 
         setError(data?.error ?? "Unable to log in");
       } else {
-        const userTypeFromLogin = getUserType(data);
-        let userType = userTypeFromLogin;
+        let userType = null;
+        let sessionData = null;
+
+        const sessionRes = await fetch("/api/session", {
+          headers: {
+            Accept: "application/json",
+          },
+        });
+        const sessionContentType = sessionRes.headers.get("content-type") ?? "";
+
+        if (sessionRes.ok && sessionContentType.includes("application/json")) {
+          sessionData = await sessionRes.json();
+          userType = getUserType(sessionData);
+        }
 
         if (!userType) {
-          const sessionRes = await fetch("/api/session", {
-            headers: {
-              Accept: "application/json",
-            },
-          });
-          const sessionContentType = sessionRes.headers.get("content-type") ?? "";
+          userType = getUserType(data);
+        }
 
-          if (!sessionRes.ok || !sessionContentType.includes("application/json")) {
-            if (import.meta.env.DEV) {
-              userType = inferMockUserType(email);
-              persistMockSession(
-                createMockSession(userType, {
-                  user: {
-                    email,
-                  },
-                }),
-              );
-            } else {
-              setError("Unable to load session");
-              return;
-            }
+        if (!userType) {
+          if (import.meta.env.DEV) {
+            userType = inferMockUserType(email);
+            persistMockSession(
+              createMockSession(userType, {
+                user: {
+                  email,
+                },
+              }),
+            );
           } else {
-            const sessionData = await sessionRes.json();
-            userType = getUserType(sessionData);
+            setError("Unable to determine account type");
+            return;
           }
         }
+
+        const redirectPath = getDefaultRouteForUserType(userType);
 
         if (import.meta.env.DEV && userType) {
           persistMockSession(
@@ -116,7 +122,12 @@ export default function Login() {
         }
 
         setError("");
-        navigate(getDefaultRouteForUserType(userType), { replace: true });
+        navigate(redirectPath, {
+          replace: true,
+          state: {
+            session: sessionData ?? data,
+          },
+        });
       }
     } catch {
       if (import.meta.env.DEV) {

@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { Link, NavLink, useNavigate, useRouteLoaderData } from "react-router-dom";
+import {
+  Link,
+  NavLink,
+  useLocation,
+  useNavigate,
+  useRouteLoaderData,
+} from "react-router-dom";
 
 import {
   clearMockSession,
@@ -15,8 +21,10 @@ const baseLinkClassName =
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const location = useLocation();
   const navigate = useNavigate();
-  const session = useRouteLoaderData("root");
+  const rootSession = useRouteLoaderData("root");
+  const session = location.state?.session ?? rootSession;
   const userType = getUserType(session);
   const userId = getSessionUserId(session);
 
@@ -28,12 +36,18 @@ export default function Navbar() {
     userType === "donor"
       ? [
           { label: "Requests", to: "/requests" },
-          { label: "My Offers", to: getMyListingsRouteForUserType(userType, userId) },
+          {
+            label: "My Offers",
+            to: getMyListingsRouteForUserType(userType, userId),
+          },
           { label: "History", to: "/history" },
         ]
       : [
           { label: "Offers", to: "/offers" },
-          { label: "My Requests", to: getMyListingsRouteForUserType(userType, userId) },
+          {
+            label: "My Requests",
+            to: getMyListingsRouteForUserType(userType, userId),
+          },
           { label: "History", to: "/history" },
         ];
 
@@ -68,14 +82,19 @@ export default function Navbar() {
             FeedForward
           </Link>
 
-          <nav className="hidden items-center gap-2 md:flex" aria-label="Primary">
+          <nav
+            className="hidden items-center gap-2 md:flex"
+            aria-label="Primary"
+          >
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 className={({ isActive }) =>
                   `${baseLinkClassName} ${
-                    isActive ? "bg-slate-900 text-white hover:bg-slate-900 hover:text-white" : ""
+                    isActive
+                      ? "bg-slate-900 text-white hover:bg-slate-900 hover:text-white"
+                      : ""
                   }`
                 }
               >
@@ -125,7 +144,9 @@ export default function Navbar() {
                 onClick={() => setIsMenuOpen(false)}
                 className={({ isActive }) =>
                   `${baseLinkClassName} text-left ${
-                    isActive ? "bg-slate-900 text-white hover:bg-slate-900 hover:text-white" : ""
+                    isActive
+                      ? "bg-slate-900 text-white hover:bg-slate-900 hover:text-white"
+                      : ""
                   }`
                 }
               >

@@ -1,3 +1,5 @@
 .env
 venv/
 .codex
+backend/.codex
+frontend/.codex
