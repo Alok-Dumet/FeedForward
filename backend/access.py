@@ -13,11 +13,13 @@ AUTH_REQUIRED_PATHS = {
     "/api/session",
     "/api/logout",
     "/api/listings/details", # requires login before showing full details for one listing/post
-    "/api/listings/accept" # requires login because accepting creates a claim/order for the current user
+    "/api/listings/accept", # requires login because accepting creates a claim/order for the current user
+    "/api/history", 
 }
 
 PROTECTED_PAGE_PATHS = {
-    "/home"
+    "/home",
+    "/history", 
 }
 
 ROLE_PROTECTED_PATHS = {}
