@@ -4,10 +4,14 @@ from access import enforce_access
 from routes import authHandler
 from routes import serveHandler
 from routes import listingHandler
+from routes import offerHandler
+from routes import requestHandler
 
 ROUTERS = [
     authHandler.router,
     listingHandler.router,  # handles listing details and accept/order API routes
+    offerHandler.router, # handles offer creation
+    requestHandler.router, # handles request creation
 ]
 
 class Handler(BaseHTTPRequestHandler):
