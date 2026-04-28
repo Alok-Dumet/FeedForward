@@ -4,15 +4,39 @@ const DEFAULT_ROUTE_BY_USER_TYPE = {
   donor: "/requests",
   recipient: "/offers",
 };
+const USER_TYPE_BY_BACKEND_ROLE = {
+  food_provider: "donor",
+  recipient_organization: "recipient",
+};
 const MOCK_SESSION_STORAGE_KEY = "feedforward_mock_session";
 const MOCK_SESSION_LOGGED_OUT_KEY = "feedforward_mock_logged_out";
 
+function getUserTypeFromRole(role) {
+  if (!role) {
+    return null;
+  }
+
+  return USER_TYPE_BY_BACKEND_ROLE[role] ?? null;
+}
+
 export function getUserType(session) {
-  return session?.user?.user_type ?? session?.user_type ?? null;
+  return (
+    getUserTypeFromRole(session?.user?.role) ??
+    getUserTypeFromRole(session?.role) ??
+    session?.user?.user_type ??
+    session?.user_type ??
+    null
+  );
 }
 
 export function getSessionUserId(session) {
-  return session?.user?.id ?? session?.id ?? null;
+  const userId = session?.user?.id ?? session?.id ?? null;
+
+  if (userId === null || userId === undefined) {
+    return null;
+  }
+
+  return String(userId);
 }
 
 export function getDefaultRouteForUserType(userType) {

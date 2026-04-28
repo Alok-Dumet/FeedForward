@@ -1,3 +1,72 @@
+// function formatDateTime(value) {
+//   if (!value) {
+//     return "Unknown";
+//   }
+
+//   const date = new Date(value);
+
+//   if (Number.isNaN(date.getTime())) {
+//     return value;
+//   }
+
+//   return new Intl.DateTimeFormat("en-US", {
+//     dateStyle: "medium",
+//     timeStyle: "short",
+//   }).format(date);
+// }
+
+// function buildTimeline(record) {
+//   if (record.status === "Completed" && record.claim?.resolved_at) {
+//     return `Completed on ${formatDateTime(record.claim.resolved_at)}`;
+//   }
+
+//   if (record.status === "Cancelled" && record.claim?.resolved_at) {
+//     return `Cancelled on ${formatDateTime(record.claim.resolved_at)}`;
+//   }
+
+//   if (record.status === "Claimed" && record.claim?.claimed_at) {
+//     return `Claimed on ${formatDateTime(record.claim.claimed_at)}`;
+//   }
+
+//   if (record.status === "Expired") {
+//     return `Expired after ${formatDateTime(record.pickup_window_end)}`;
+//   }
+
+//   return `Posted on ${formatDateTime(record.created_at)}`;
+// }
+
+// export default async function historyLoader({ request }) {
+//   const res = await fetch("/api/history", {
+//     signal: request.signal,
+//     headers: {
+//       Accept: "application/json",
+//     },
+//   });
+
+//   const payload = await res.json().catch(() => null);
+
+//   if (!res.ok || !payload) {
+//     throw new Response("Unable to load history.", { status: res.status || 500 });
+//   }
+
+//   return {
+//     filters: payload.filters ?? [],
+//     items: (payload.records ?? []).map((record) => ({
+//       id: record.listing_id,
+//       status: record.status,
+//       title: record.food_description ?? record.food_name ?? `Listing ${record.listing_id}`,
+//       quantity: [record.quantity, record.quantity_unit].filter(Boolean).join(" "),
+//       timeline: buildTimeline(record),
+//       location: record.location ?? "Location unavailable",
+//       recordType: record.listing_type === "offer" ? "Offer record" : "Request record",
+//       summary: record.outcome,
+//       tags: [record.listing_type, record.status].map((value) =>
+//         value.charAt(0).toUpperCase() + value.slice(1)
+//       ),
+//     })),
+//   };
+// }
+
 export default async function historyLoader() {
   return {
     filters: [
