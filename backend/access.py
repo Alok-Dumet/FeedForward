@@ -22,7 +22,10 @@ PROTECTED_PAGE_PATHS = {
     "/history", 
 }
 
-ROLE_PROTECTED_PATHS = {}
+ROLE_PROTECTED_PATHS = {
+    "/api/listings/offers/create" : "food_provider",
+    "/api/listings/requests/create": "recipient_organization",
+}
 
 #We will use this helper function for redirecting users
 def redirect(handler, location):
