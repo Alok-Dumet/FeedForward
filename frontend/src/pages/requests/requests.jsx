@@ -13,7 +13,7 @@ export default function Requests() {
       items={items}
       filters={filters}
       hideHero
-      secondaryAction={{ label: "Back to Home", to: "/home" }}
+      secondaryAction={null}
       filtersLabel="Mock filters:"
       cardConfig={{
         eyebrowKey: "category",

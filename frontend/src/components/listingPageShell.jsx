@@ -11,7 +11,7 @@ export default function ListingPageShell({
   filters = [],
   stats = [],
   cardConfig = {},
-  secondaryAction = { label: "Back to Home", to: "/home" },
+  secondaryAction = null,
   filtersLabel = "Mock filters:",
   hideHero = false,
   lightHeader = false,
