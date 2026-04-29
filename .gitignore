@@ -2,6 +2,4 @@
 venv/
 .venv/
 __pycache__/
-.codex
-backend/.codex
-frontend/.codex
+

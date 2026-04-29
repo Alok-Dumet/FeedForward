@@ -2,6 +2,7 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from access import enforce_access
 from routes import authHandler
+from routes import historyHandler 
 from routes import serveHandler
 from routes import listingHandler
 from routes import offerHandler
@@ -12,6 +13,7 @@ ROUTERS = [
     listingHandler.router,  # handles listing details and accept/order API routes
     offerHandler.router, # handles offer creation
     requestHandler.router, # handles request creation
+    historyHandler.router, 
 ]
 
 class Handler(BaseHTTPRequestHandler):
