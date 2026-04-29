@@ -1,6 +1,14 @@
 import json
 from urllib.parse import urlparse, parse_qs
 
+
+#We will use this helper function to normalize request paths by stripping query strings and trailing slashes
+def normalize_path(raw_path):
+    path = urlparse(raw_path).path
+    if len(path) > 1 and path.endswith("/"):
+        path = path.rstrip("/")
+    return path
+
 #We will use this helper function for sending JSON responses and cookies
 def send_json(self, status, data, headers=None):
     body = json.dumps(data).encode("utf-8")

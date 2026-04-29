@@ -1,6 +1,5 @@
 from sessions import get_user
-from utils import send_json
-from urllib.parse import urlparse
+from utils import send_json, normalize_path
 
 #We will define which paths are public, require authentication, or require a specific role
 PUBLIC_PATHS = {
@@ -35,7 +34,7 @@ def redirect(handler, location):
 
 #We will redirect users to login or a not_authorized page only for protected paths
 def enforce_access(handler):
-    path = urlparse(handler.path).path
+    path = normalize_path(handler.path)
 
     if path.startswith("/assets/"):
         return True

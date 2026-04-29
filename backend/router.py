@@ -1,4 +1,4 @@
-from urllib.parse import urlparse
+from utils import normalize_path
 
 class Router:
     def __init__(self):
@@ -18,7 +18,7 @@ class Router:
 
     def handle(self, handler):
 
-        request_path = urlparse(handler.path).path
+        request_path = normalize_path(handler.path)
 
         for method, path, fn in self.routes:
             if handler.command == method and request_path == path:
