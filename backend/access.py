@@ -5,6 +5,7 @@ from utils import send_json, normalize_path
 PUBLIC_PATHS = {
     "/api/login",
     "/api/register",
+    "/api/logout",
 }
 
 ROLE_PROTECTED_PATHS = {
