@@ -100,10 +100,19 @@ export default function UserOfferCreate() {
 
               <FormField label="Category">
                 <select className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300">
-                  <option>Prepared meals</option>
-                  <option>Bakery</option>
-                  <option>Produce</option>
-                  <option>Dairy</option>
+                  <option value="produce">Produce</option>
+                  <option value="dairy">Dairy</option>
+                  <option value="baked_goods">Baked Goods</option>
+                  <option value="canned_goods">Canned Goods</option>
+                  <option value="frozen">Frozen</option>
+                  <option value="prepared_meals">Prepared Meals</option>
+                  <option value="beverages">Beverages</option>
+                  <option value="dry_goods">Dry Goods</option>
+                  <option value="meat_seafood">Meat & Seafood</option>
+                  <option value="snacks">Snacks</option>
+                  <option value="baby_food">Baby Food</option>
+                  <option value="mixed">Mixed</option>
+                  <option value="other">Other</option>
                 </select>
               </FormField>
 
