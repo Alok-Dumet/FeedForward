@@ -1,5 +1,25 @@
 import json
+from datetime import date, datetime
+from decimal import Decimal, InvalidOperation
 from urllib.parse import urlparse, parse_qs
+
+
+#We will use this set as the single source of truth for valid food categories
+ALLOWED_FOOD_CATEGORIES = {
+    "produce",
+    "dairy",
+    "baked_goods",
+    "canned_goods",
+    "frozen",
+    "prepared_meals",
+    "beverages",
+    "dry_goods",
+    "meat_seafood",
+    "snacks",
+    "baby_food",
+    "mixed",
+    "other",
+}
 
 
 #We will use this helper function to normalize request paths by stripping query strings and trailing slashes
@@ -88,8 +108,6 @@ def parse_validate_body(self, required_fields):
     return body
 
 
-
-
 def get_query_param(handler, name): # start of get_query_param() function definition
 
     """ extracts one query parameter from the request URL """
@@ -102,3 +120,53 @@ def get_query_param(handler, name): # start of get_query_param() function defini
 
     return values[0] # return the first value for that parameter since query params come back as lists
 # end of get_query_param() function definition
+
+
+#We will parse an ISO datetime string and require a timezone offset so we never store naive timestamps
+def parse_datetime(value, field_name):
+    if not isinstance(value, str) or not value:
+        raise ValueError(f"{field_name} must be a valid ISO datetime")
+
+    #Python's fromisoformat() didn't accept the trailing "Z" UTC suffix until 3.11, so we swap it for the explicit offset
+    text = value[:-1] + "+00:00" if value.endswith("Z") else value
+
+    try:
+        parsed = datetime.fromisoformat(text)
+    except ValueError as exc:
+        raise ValueError(f"{field_name} must be a valid ISO datetime") from exc
+
+    if parsed.tzinfo is None:
+        raise ValueError(f"{field_name} must include a timezone offset")
+
+    return parsed
+
+
+#We will parse an optional ISO date string. None or "" returns None; anything else must be a valid date
+def parse_optional_date(value, field_name):
+    if value in (None, ""):
+        return None
+
+    if not isinstance(value, str):
+        raise ValueError(f"{field_name} must be a valid ISO date")
+
+    try:
+        return date.fromisoformat(value)
+    except ValueError as exc:
+        raise ValueError(f"{field_name} must be a valid ISO date") from exc
+
+
+#We will parse a value into a Decimal and wrap any conversion error with a friendly field-named message
+def parse_decimal(value, field_name):
+    try:
+        return Decimal(str(value))
+    except (InvalidOperation, TypeError, ValueError) as exc:
+        raise ValueError(f"{field_name} must be a valid number") from exc
+
+
+#We will validate a food category against the allowed set. Returns the canonical value or None if invalid (no aliasing — frontend must send exact backend strings)
+def validate_food_category(value):
+    if not isinstance(value, str):
+        return None
+
+    normalized = value.strip().lower()
+    return normalized if normalized in ALLOWED_FOOD_CATEGORIES else None

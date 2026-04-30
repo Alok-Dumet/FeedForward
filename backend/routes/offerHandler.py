@@ -1,127 +1,22 @@
-from datetime import date, datetime
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal
 
 from psycopg2 import errors
 
 from database.database import db
 from router import Router
 from sessions import get_user
-from utils import parse_body, strip_strings, send_json
+from utils import (
+    parse_body,
+    strip_strings,
+    send_json,
+    parse_datetime,
+    parse_optional_date,
+    parse_decimal,
+    validate_food_category,
+)
 
 
 router = Router()
-
-
-ALLOWED_FOOD_CATEGORIES = {
-
-    "produce",
-    "dairy",
-    "baked_goods",
-    "canned_goods",
-    "frozen",
-    "prepared_meals",
-    "beverages",
-    "dry_goods",
-    "meat_seafood",
-    "snacks",
-    "baby_food",
-    "mixed",
-    "other"
-}
-
-
-def normalize_food_category(value): # start of normalize_food_category() function definition
-
-    if not isinstance(value, str):
-        return None
-
-    raw = value.strip().lower()
-    aliases = {
-
-        "bakery" : "baked_goods",
-
-        "baked goods" : "baked_goods",
-
-        "prepared meals" : "prepared_meals", "prepared meal" : "prepared_meals",
-
-        "canned goods" : "canned_goods",
-
-        "dry goods": "dry_goods",
-
-        "baby food" : "baby_food",
-
-        "meat and seafood" : "meat_seafood",
-
-        "meat & seafood": "meat_seafood",
-    }
-
-    if raw in aliases:
-        return aliases[raw]
-
-    
-    normalized = raw.replace("-", "_").replace(" ", "_")
-    return normalized if normalized in ALLOWED_FOOD_CATEGORIES else None
-
-# end of normalize_food_category() function definition
-
-
-
-def parse_datetime(value, field_name): # start of parse_datetime() function definition
-
-
-    if not isinstance(value, str) or not value:
-        raise ValueError(f"{field_name} must be a valid ISO datetime") 
-
-    text = value[:-1] + "+00:00" if value.endswith("Z") else value
-
-    try:
-        parsed = datetime.fromisoformat(text)
-    except ValueError as exc:
-        raise ValueError(f"{field_name} must be a valid ISO datetime") from exc
-
-    if parsed.tzinfo is None:
-        raise ValueError(f"{field_name} must include a timezone offset")
-
-    return parsed
-
-# end of parse_datetime() function definition
-
-
-
-def parse_optional_date(value, field_name): # start of parse_optional_date() function definition
-
-    if value in (None, ""):
-        return None
-
-    if not isinstance(value, str):
-        raise ValueError(f"{field_name} must be a valid ISO date") 
-
-    try: 
-        return date.fromisoformat(value)
-    except ValueError as exc:
-        raise ValueError(f"{field_name} must be a valid ISO date") from exc
-
-# start of parse_optional_date() function definition
-
-
-
-
-def parse_decimal(value, field_name): # start of parse_decimal() function definition
-    try:
-        return Decimal(str(value))
-    except(InvalidOperation, TypeError, ValueError) as exc:
-        raise ValueError(f"{field_name} must be a valid number") from exc
-# end of parse_decimal() function definition
-
-
-
-
-
-
-
-
-
-
 
 
 def create_offer(handler): # start of create_offer() function definition
@@ -147,13 +42,14 @@ def create_offer(handler): # start of create_offer() function definition
 
 
 
-    
+
+
 
 
     # reaching here means authentication and authorization passed so now we can validate+normalize required fields
 
     required_fields = [  # mandatory fields of an Offer creation
-        "food_name", 
+        "food_name",
         "food_category",
         "quantity",
         "quantity_unit",
@@ -169,15 +65,15 @@ def create_offer(handler): # start of create_offer() function definition
         missing.append("is_perishable")
     if missing:
         return send_json(handler, 400, {"error": f"Missing fields: {','.join(missing)}"})
-    
+
     if not isinstance(body["is_perishable"], bool):
         return send_json(handler, 400, {"error": "is_perishable must be a boolean"})
 
-    food_category = normalize_food_category(body["food_category"])
+    food_category = validate_food_category(body["food_category"])
     if food_category is None:
         return send_json(handler, 400, {"error": "Invalid food_category"})
 
-    
+
     try:
 
         quantity = parse_decimal(body["quantity"], "quantity")
@@ -253,7 +149,7 @@ def create_offer(handler): # start of create_offer() function definition
                     discard_deadline,
                     travel_distance_miles,
                     additional_instructions
-                
+
                 )
                 VALUES(%s, 'offer', %s, %s, %s, %s, %s, %s)
                 RETURNING id, status, created_at, updated_at
