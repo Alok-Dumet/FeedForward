@@ -20,7 +20,7 @@ from utils import (
 router = Router()
 
 
-def createRequest(handler): # start of createRequest() function definition
+def create_request(handler): # start of create_request() function definition
 
     """
     main endpoint function that handles POST /api/listings/requests/create
@@ -241,11 +241,11 @@ def createRequest(handler): # start of createRequest() function definition
             },
         }
     })
-# end of createRequest() function definition
+# end of create_request() function definition
 
 
 
 
 
 
-router.post("/api/listings/requests/create", createRequest) # register the POST endpoint path and bind it to createRequest()
+router.post("/api/listings/requests/create", create_request) # register the POST endpoint path and bind it to create_request()

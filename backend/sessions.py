@@ -45,8 +45,8 @@ def get_session_user_id(self):
 
     return sessions.get(session_token)
 
-#We will load the current user after checking the session. The result is cached on the handler so a single request never queries the users table twice (enforce_access resolves it first, the route handler reuses it).
-#NOTE: this returns None for three different cases — no cookie, invalid/expired token, and a valid token whose user has been deleted. Every current caller treats them the same ("not logged in → 401"), so we leave the overload alone. If a future caller needs to distinguish them, change this to return a result object instead of None.
+#We will load the current user after checking the session.
+#The result is cached on the handler when enforce_access calls this first so other route handlers won't need to make another query
 def get_user(self):
     cached = getattr(self, "_cached_user", None)
     if cached is not None:
