@@ -45,8 +45,13 @@ def get_session_user_id(self):
 
     return sessions.get(session_token)
 
-#We will load the current user after checking the session
+#We will load the current user after checking the session.
+#The result is cached on the handler when enforce_access calls this first so other route handlers won't need to make another query
 def get_user(self):
+    cached = getattr(self, "_cached_user", None)
+    if cached is not None:
+        return cached
+
     user_id = get_session_user_id(self)
 
     if user_id is None:
@@ -70,12 +75,15 @@ def get_user(self):
     if not user:
         return None
 
-    return {
+    resolved = {
         "id": user[0],
         "email": user[1],
         "role": user[2],
         "organization_name": user[3],
     }
+
+    self._cached_user = resolved
+    return resolved
 
 #This is for deleting a session token when a user wants to log out
 def delete_session(session_token):

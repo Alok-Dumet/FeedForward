@@ -3,42 +3,38 @@ from datetime import datetime
 from database.database import db
 from router import Router
 from sessions import get_user
-from utils import get_query_param, send_json
+from utils import send_json
 
 
 router = Router()
 
 
+#We will turn the raw listing status and pickup window end into a status string for history page
 def normalize_history_status(listing_status, pickup_window_end):
     if listing_status == "completed":
         return "Completed"
-    if listing_status == "claimed":
-        return "Claimed"
     if listing_status == "canceled":
         return "Cancelled"
-    if listing_status == "available":
+    if listing_status in ("available", "claimed"):
         if pickup_window_end and pickup_window_end <= datetime.now(pickup_window_end.tzinfo):
             return "Expired"
-        return "Posted"
 
     return listing_status.title()
 
 
+#We will derive a short outcome blurb from the normalized status for display on each history card
 def derive_history_outcome(status):
     if status == "Completed":
         return "Donation completed"
-    if status == "Claimed":
-        return "Claimed and awaiting fulfillment"
     if status == "Cancelled":
         return "Listing was cancelled"
     if status == "Expired":
         return "Listing expired without fulfillment"
-    if status == "Posted":
-        return "Listing posted"
 
     return status
 
 
+#We will format two ISO timestamps into a single "start to end" pickup window string
 def format_pickup_window(start, end):
     if not start or not end:
         return None
@@ -46,7 +42,8 @@ def format_pickup_window(start, end):
     return f"{start.isoformat()} to {end.isoformat()}"
 
 
-def build_history_record(row):
+#We will turn one row from either history query into the dict shape the frontend expects
+def build_history_record(row, relationship):
     history_status = normalize_history_status(row[8], row[7])
 
     return {
@@ -63,6 +60,7 @@ def build_history_record(row):
         "location": row[9],
         "status": history_status,
         "outcome": derive_history_outcome(history_status),
+        "relationship": relationship,
         "created_at": row[10].isoformat() if row[10] else None,
         "updated_at": row[11].isoformat() if row[11] else None,
         "claim": {
@@ -75,27 +73,18 @@ def build_history_record(row):
     }
 
 
-def filter_history_records(records, status_filter):
-    if not status_filter or status_filter == "all":
-        return records
-
-    normalized_filter = status_filter.strip().lower()
-    alias_map = {
-        "cancelled": "cancelled",
-        "canceled": "cancelled",
-    }
-    normalized_filter = alias_map.get(normalized_filter, normalized_filter)
-
-    return [
-        record for record in records
-        if record["status"].lower() == normalized_filter
-    ]
+#We will only return rows whose lifecycle is finished — completed, canceled, or pickup-window already passed
+FINISHED_LISTINGS_FILTER = """
+    listings.status IN ('completed', 'canceled')
+    OR listings.pickup_window_end <= now()
+"""
 
 
-def get_donor_history_rows(user_id):
+#We will fetch finished listings the user created. The latest claim is joined laterally so cards can show who claimed it.
+def get_created_history_rows(user_id):
     with db.cursor() as cur:
         cur.execute(
-            """
+            f"""
             SELECT
                 listings.id,
                 listings.listing_type,
@@ -133,6 +122,7 @@ def get_donor_history_rows(user_id):
             ) AS latest_claim
                 ON TRUE
             WHERE listings.creator_user_id = %s
+                AND ({FINISHED_LISTINGS_FILTER})
             ORDER BY COALESCE(latest_claim.resolved_at, latest_claim.claimed_at, listings.updated_at, listings.created_at) DESC,
                 listings.id DESC
             """,
@@ -142,10 +132,11 @@ def get_donor_history_rows(user_id):
         return cur.fetchall()
 
 
-def get_recipient_history_rows(user_id):
+#We will fetch finished listings the user claimed. The matching claim is joined directly since we filter by claimant_user_id.
+def get_claimed_history_rows(user_id):
     with db.cursor() as cur:
         cur.execute(
-            """
+            f"""
             SELECT
                 listings.id,
                 listings.listing_type,
@@ -172,6 +163,7 @@ def get_recipient_history_rows(user_id):
             JOIN listing_food_items
                 ON listing_food_items.listing_id = listings.id
             WHERE claims.claimant_user_id = %s
+                AND ({FINISHED_LISTINGS_FILTER})
             ORDER BY COALESCE(claims.resolved_at, claims.claimed_at, listings.updated_at, listings.created_at) DESC,
                 listings.id DESC
             """,
@@ -182,26 +174,23 @@ def get_recipient_history_rows(user_id):
 
 
 def get_history(handler):
-    
     user = get_user(handler)
-    status_filter = get_query_param(handler, "status")
+
+    if user["role"] not in ("food_provider", "recipient_organization"):
+        return send_json(handler, 403, {"error": "This role is not allowed to view history."})
 
     try:
-        if user["role"] == "food_provider":
-            rows = get_donor_history_rows(user["id"])
-        elif user["role"] == "recipient_organization":
-            rows = get_recipient_history_rows(user["id"])
-        else:
-            return send_json(handler, 403, {"error": "This role is not allowed to view history."})
+        created_rows = get_created_history_rows(user["id"])
+        claimed_rows = get_claimed_history_rows(user["id"])
     except Exception:
         db.rollback()
         return send_json(handler, 500, {"error": "Unable to load history."})
 
-    records = [build_history_record(row) for row in rows]
-    records = filter_history_records(records, status_filter)
+    records = [build_history_record(row, "own") for row in created_rows]
+    records += [build_history_record(row, "claimed") for row in claimed_rows]
 
     return send_json(handler, 200, {
-        "filters": ["All records", "Posted", "Claimed", "Completed", "Cancelled", "Expired"],
+        "filters": ["All records", "Completed", "Cancelled", "Expired"],
         "records": records,
         "current_user": {
             "id": user["id"],

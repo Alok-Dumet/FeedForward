@@ -1,8 +1,9 @@
 
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from access import enforce_access
+from utils import send_json
 from routes import authHandler
-from routes import historyHandler 
+from routes import historyHandler
 from routes import serveHandler
 from routes import listingHandler
 from routes import offerHandler
@@ -29,26 +30,29 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if not enforce_access(self):
             return
-        
+
         for router in ROUTERS:
             if router.handle(self):
                 return
-            
+        send_json(self, 404, {"error": "Not found"})
+
     def do_PATCH(self):
         if not enforce_access(self):
             return
-        
+
         for router in ROUTERS:
             if router.handle(self):
                 return
-            
+        send_json(self, 404, {"error": "Not found"})
+
     def do_DELETE(self):
         if not enforce_access(self):
             return
-        
+
         for router in ROUTERS:
             if router.handle(self):
                 return
+        send_json(self, 404, {"error": "Not found"})
  
 if __name__ == "__main__":
     server = HTTPServer(("localhost", 3000), Handler)

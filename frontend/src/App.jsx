@@ -6,8 +6,7 @@ import ErrorCheck from "./pages/errorCheck/errorCheck.jsx";
 import Index from "./pages/index/index.jsx";
 import Login from "./pages/login/login.jsx";
 import Register from "./pages/register/register.jsx";
-import Home from "./pages/home/home.jsx";
-import homeLoader from "./pages/home/homeLoader.jsx";
+import NotAuthorized from "./pages/notAuthorized/notAuthorized.jsx";
 import Offers from "./pages/offers/offers.jsx";
 import offersLoader from "./pages/offers/offersLoader.jsx";
 import Requests from "./pages/requests/requests.jsx";
@@ -66,9 +65,8 @@ const router = createBrowserRouter([
         element: <Register />,
       },
       {
-        path: "/home",
-        element: <Home />,
-        loader: homeLoader,
+        path: "/not_authorized",
+        element: <NotAuthorized />,
       },
       {
         path: "/offers",

@@ -1,30 +1,20 @@
 from sessions import get_user
-from utils import send_json
-from urllib.parse import urlparse
+from utils import send_json, normalize_path
 
-#We will define which paths are public, require authentication, or require a specific role
+#We will define which API paths are public, which require a specific role, and which page paths need auth
 PUBLIC_PATHS = {
     "/api/login",
-    "/api/register"
-}
-
-AUTH_REQUIRED_PATHS = {
-    "/api/listings",
-    "/api/session",
+    "/api/register",
     "/api/logout",
-    "/api/listings/details", # requires login before showing full details for one listing/post
-    "/api/listings/accept", # requires login because accepting creates a claim/order for the current user
-    "/api/history", 
-}
-
-PROTECTED_PAGE_PATHS = {
-    "/home",
-    "/history", 
 }
 
 ROLE_PROTECTED_PATHS = {
-    "/api/listings/offers/create" : "food_provider",
+    "/api/listings/offers/create": "food_provider",
     "/api/listings/requests/create": "recipient_organization",
+}
+
+PROTECTED_PAGE_PATHS = {
+    "/history",
 }
 
 #We will use this helper function for redirecting users
@@ -33,41 +23,31 @@ def redirect(handler, location):
     handler.send_header("Location", location)
     handler.end_headers()
 
-#We will redirect users to login or a not_authorized page only for protected paths
+#We will check authentication for all API paths by default, unless they are explicitly public
 def enforce_access(handler):
-    path = urlparse(handler.path).path
+    path = normalize_path(handler.path)
 
     if path.startswith("/assets/"):
         return True
 
-    if path in PUBLIC_PATHS:
-        return True
-
     if path.startswith("/api/"):
-        required_role = ROLE_PROTECTED_PATHS.get(path)
-        if required_role:
-            try:
-                user = get_user(handler)
-            except Exception:
-                send_json(handler, 500, {"error": "Unable to load session due to a server error."})
-                return False
-            if user is None:
-                send_json(handler, 401, {"error": "Not authenticated"})
-                return False
-            if user["role"] != required_role:
-                send_json(handler, 403, {"error": "Not authorized"})
-                return False
+        if path in PUBLIC_PATHS:
             return True
 
-        if path in AUTH_REQUIRED_PATHS:
-            try:
-                user = get_user(handler)
-            except Exception:
-                send_json(handler, 500, {"error": "Unable to load session due to a server error."})
-                return False
-            if user is None:
-                send_json(handler, 401, {"error": "Not authenticated"})
-                return False
+        try:
+            user = get_user(handler)
+        except Exception:
+            send_json(handler, 500, {"error": "Unable to load session due to a server error."})
+            return False
+
+        if user is None:
+            send_json(handler, 401, {"error": "Not authenticated"})
+            return False
+
+        required_role = ROLE_PROTECTED_PATHS.get(path)
+        if required_role and user["role"] != required_role:
+            send_json(handler, 403, {"error": "Not authorized"})
+            return False
 
         return True
 

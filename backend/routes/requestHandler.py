@@ -1,5 +1,4 @@
-from datetime import date, datetime
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal
 
 from psycopg2 import errors
 
@@ -7,145 +6,21 @@ from psycopg2 import errors
 from database.database import db
 from router import Router
 from sessions import get_user
-from utils import parse_body, strip_strings, send_json
+from utils import (
+    parse_body,
+    strip_strings,
+    send_json,
+    parse_datetime,
+    parse_optional_date,
+    parse_decimal,
+    validate_food_category,
+)
 
 
 router = Router()
 
 
-ALLOWED_FOOD_CATEGORIES = {
-
-    "produce",
-
-    "dairy",
-
-    "baked_goods",
-
-    "canned_goods",
-
-    "frozen",
-
-    "prepared_meals",
-
-    "beverages",
-
-    "dry_goods",
-
-    "meat_seafood",
-
-    "snacks",
-
-    "baby_food",
-
-    "mixed",
-
-    "other",
-
-}
-
-
-def normalizeFoodCategory(value): # start of normalizeFoodCategory() function definition
-
-    if not isinstance(value, str):
-        return None
-
-    raw = value.strip().lower()
-
-    aliases = {
-
-
-        "bakery" : "baked_goods",
-
-        "baked goods" : "baked_goods",
-
-        "prepared meals" : "prepared_meals",
-
-        "prepared meal" : "prepared_meals",
-
-        "canned goods" : "canned_goods",
-
-        "dry goods" : "dry_goods",
-
-        "baby food" : "baby_food",
-
-        "meat and seafood" : "meat_seafood",
-
-        "meat & seafood" : "meat_seafood",
-    }
-
-    if raw in aliases:
-        return aliases[raw]
-
-    # reaching here means `raw` is not in `aliases`
-
-    normalized = raw.replace("-", "_").replace(" ", "_")
-
-
-    return normalized if normalized in ALLOWED_FOOD_CATEGORIES else None
-
-# end of normalizeFoodCategory() function definition
-
-
-
-
-def parseDatetime(value, fieldName): # start of parseDatetime() function definition
-
-    if not isinstance(value, str) or not value:
-        raise ValueError(f"{fieldName} must be a valid ISO datetime")
-
-    text = value[:-1] + "+00:00" if value.endswith("Z") else value
-
-
-    try:
-        parsed = datetime.fromisoformat(text)
-    except ValueError as exc:
-        raise ValueError(f"{fieldName} must be a valid ISO datetime") from exc
-
-    if parsed.tzinfo is None:
-        raise ValueError(f"{fieldName} must include a timezone offset")
-
-    return parsed
-
-# end of parseDatetime() function definition
-
-
-
-
-
-def parseOptionalDate(value, fieldName): # start of parseOptionalDate() function definition
-
-    if value in (None, ""):
-        return None
-    
-    if not isinstance(value, str):
-        raise ValueError(f"{fieldName} must be a valid ISO date")
-
-    
-    try:
-        return date.fromisoformat(value)
-    except ValueError as exc:
-        raise ValueError(f"{fieldName} must be a valid ISO date") from exc
-
-# end of parseOptionalDate() function definition
-
-
-
-
-
-def parseDecimal(value, fieldName): # start of parseDecimal() function definition
-
-    try:
-        return Decimal(str(value))
-    except(InvalidOperation, TypeError, ValueError) as exc:
-        raise ValueError(f"{fieldName} must be a valid number") from exc
-
-# end of parseDecimal() function definition
-
-
-
-
-
-def createRequest(handler): # start of createRequest() function definition
+def create_request(handler): # start of create_request() function definition
 
     """
     main endpoint function that handles POST /api/listings/requests/create
@@ -162,7 +37,7 @@ def createRequest(handler): # start of createRequest() function definition
     except Exception:
         return send_json(handler, 500, {"error": "Unable to load session due to server error"})
 
-    
+
     if user["role"] != "recipient_organization":
         return send_json(handler, 403, {"error": "Only recipient organizations can create requests"})
     # reaching here means User has been authenticated and authorized
@@ -194,47 +69,47 @@ def createRequest(handler): # start of createRequest() function definition
     missing = [name for name in required_fields if body.get(name) in (None, "")]
     if "is_perishable" not in body:
         missing.append("is_perishable")
-    
+
     if missing:
         return send_json(handler, 400, {"error": f"Missing fields: {','.join(missing)}"})
 
     if not isinstance(body["is_perishable"], bool):
         return send_json(handler, 400, {"error":"is_perishable must be a boolean"})
 
-    food_category = normalizeFoodCategory(body["food_category"])
+    food_category = validate_food_category(body["food_category"])
     if food_category is None:
         return send_json(handler, 400, {"error": "Invalid food_category"})
 
     try:
 
-        quantity = parseDecimal(body["quantity"], "quantity")
+        quantity = parse_decimal(body["quantity"], "quantity")
         if quantity <= 0:
             raise ValueError("quantity must be greater than 0")
 
-        latitude = parseDecimal(body["latitude"], "latitude")
+        latitude = parse_decimal(body["latitude"], "latitude")
         if latitude < Decimal("-90") or latitude > Decimal("90"):
             raise ValueError("latitude must be between -90 and 90")
-        
-        longitude = parseDecimal(body["longitude"], "longitude")
+
+        longitude = parse_decimal(body["longitude"], "longitude")
         if longitude < Decimal("-180") or longitude > Decimal("180"):
-            raise ValueError("longitude must between -180 and 180")
+            raise ValueError("longitude must be between -180 and 180")
 
         travel_distance_miles = int(body.get("travel_distance_miles", 0))
         if travel_distance_miles < 0:
             raise ValueError("travel_distance_miles must be 0 or greater")
 
-        pickup_window_start = parseDatetime(body["pickup_window_start"], "pickup_window_start")
-        pickup_window_end = parseDatetime(body["pickup_window_end"], "pickup_window_end")
+        pickup_window_start = parse_datetime(body["pickup_window_start"], "pickup_window_start")
+        pickup_window_end = parse_datetime(body["pickup_window_end"], "pickup_window_end")
         if pickup_window_end < pickup_window_start:
             raise ValueError("pickup window end must be on or after pickup window start")
 
         discard_deadline = None
         if body.get("discard_deadline") not in (None, ""):
-            discard_deadline = parseDatetime(body["discard_deadline"], "discard")
+            discard_deadline = parse_datetime(body["discard_deadline"], "discard_deadline")
             if discard_deadline < pickup_window_start:
                 raise ValueError("discard_deadline must be on or after pickup_window_start")
-        
-        expiration_date = parseOptionalDate(body.get("expiration_date"), "expiration_date")
+
+        expiration_date = parse_optional_date(body.get("expiration_date"), "expiration_date")
 
     except(TypeError, ValueError) as exc:
         return send_json(handler, 400, {"error": str(exc)})
@@ -320,7 +195,7 @@ def createRequest(handler): # start of createRequest() function definition
                 )
             )
             food_item_id = cur.fetchone()[0]
-        
+
         db.commit() # lock in the db transactions
 
     except errors.CheckViolation:
@@ -366,11 +241,11 @@ def createRequest(handler): # start of createRequest() function definition
             },
         }
     })
-# end of createRequest() function definition
+# end of create_request() function definition
 
 
 
 
 
 
-router.post("/api/listings/requests/create", createRequest) # register the POST endpoint path and bind it to createRequest()
+router.post("/api/listings/requests/create", create_request) # register the POST endpoint path and bind it to create_request()

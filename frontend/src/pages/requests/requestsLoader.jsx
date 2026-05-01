@@ -1,53 +1,62 @@
-export default async function requestsLoader() {
+import { loaderFetch } from "../../utils/loaderFetch.js";
+import { formatPickupWindow } from "../../utils/formatDates.js";
+
+const ALL_FILTER = "All requests";
+const FOOD_CATEGORY_LABELS = {
+  produce: "Produce",
+  dairy: "Dairy",
+  baked_goods: "Baked Goods",
+  canned_goods: "Canned Goods",
+  frozen: "Frozen",
+  prepared_meals: "Prepared Meals",
+  beverages: "Beverages",
+  dry_goods: "Dry Goods",
+  meat_seafood: "Meat & Seafood",
+  snacks: "Snacks",
+  baby_food: "Baby Food",
+  mixed: "Mixed",
+  other: "Other",
+};
+
+function formatFoodCategory(category) {
+  if (!category) {
+    return "";
+  }
+
+  return (
+    FOOD_CATEGORY_LABELS[category] ??
+    category
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ")
+  );
+}
+
+//We will reshape one /api/listings record into the card shape that listingPageShell expects
+function buildRequestItem(record) {
+  const category = formatFoodCategory(record.food.category);
+  const storageType = record.food.is_perishable ? "Perishable" : "Shelf-stable";
+
   return {
-    filters: [
-      "Prepared meals",
-      "Family packs",
-      "Weekend support",
-      "South Brooklyn",
-    ],
-    stats: [
-      { label: "Open Requests", value: "9" },
-      { label: "Urgent Today", value: "4" },
-      { label: "Community Partners", value: "6" },
-    ],
-    items: [
-      {
-        id: "request-1",
-        title: "After-school meal support",
-        category: "Youth Program",
-        quantity: "35 meals needed",
-        neededBy: "Today, before 4:30 PM",
-        location: "Sunset Park",
-        audience: "Elementary students in after-care",
-        summary:
-          "A neighborhood program is coordinating take-home dinners for students staying late for tutoring and enrichment.",
-        tags: ["Prepared meals", "Kid-friendly", "Weekday pickup"],
-      },
-      {
-        id: "request-2",
-        title: "Shelter breakfast restock",
-        category: "Emergency Shelter",
-        quantity: "18 breakfast kits",
-        neededBy: "Tomorrow, 6:00 AM - 8:00 AM",
-        location: "Harlem",
-        audience: "Adults in overnight shelter",
-        summary:
-          "Staff are looking for simple breakfast items to cover an expected rise in overnight occupancy.",
-        tags: ["Morning delivery", "Grab-and-go", "High priority"],
-      },
-      {
-        id: "request-3",
-        title: "Weekend pantry produce request",
-        category: "Food Pantry",
-        quantity: "22 produce boxes",
-        neededBy: "Saturday, before 11:00 AM",
-        location: "South Bronx",
-        audience: "Families picking up weekly groceries",
-        summary:
-          "Volunteers are preparing produce tables for a Saturday distribution focused on households with children and older adults.",
-        tags: ["Fresh produce", "Family support", "Bulk pickup"],
-      },
-    ],
+    id: record.id,
+    title: record.food.name,
+    category,
+    quantity: [record.food.quantity, record.food.quantity_unit].filter(Boolean).join(" "),
+    neededBy: formatPickupWindow(record.pickup_window_start, record.pickup_window_end),
+    location: record.location.address_text,
+    audience: record.creator.organization_name,
+    summary: record.food.description ?? record.additional_instructions ?? "",
+    tags: [storageType, category].filter(Boolean),
+  };
+}
+
+export default async function requestsLoader({ request }) {
+  const payload = await loaderFetch("/api/listings", request, "Unable to load requests.");
+  const items = (payload.records ?? []).map(buildRequestItem);
+  const realFilters = Array.from(new Set(items.flatMap((item) => item.tags))).sort();
+
+  return {
+    filters: items.length > 0 ? [ALL_FILTER, ...realFilters] : [],
+    items,
   };
 }

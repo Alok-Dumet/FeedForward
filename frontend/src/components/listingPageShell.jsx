@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { motion } from "motion/react";
+import { motion as Motion } from "motion/react";
 
 import ListingCard from "./listingCard.jsx";
 
@@ -11,8 +11,10 @@ export default function ListingPageShell({
   filters = [],
   stats = [],
   cardConfig = {},
-  secondaryAction = { label: "Back to Home", to: "/home" },
-  filtersLabel = "Mock filters:",
+  secondaryAction = null,
+  filtersLabel = "Filters:",
+  activeFilter = null,
+  onFilterChange,
   hideHero = false,
   lightHeader = false,
 }) {
@@ -34,7 +36,7 @@ export default function ListingPageShell({
     <main className="px-6 py-10 sm:px-8 lg:px-12">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
         {!hideHero ? (
-          <motion.section
+          <Motion.section
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, ease: "easeOut" }}
@@ -106,10 +108,10 @@ export default function ListingPageShell({
                 ))}
               </div>
             ) : null}
-          </motion.section>
+          </Motion.section>
         ) : null}
 
-        <motion.section
+        <Motion.section
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.08, duration: 0.4, ease: "easeOut" }}
@@ -121,13 +123,18 @@ export default function ListingPageShell({
               <button
                 key={filter}
                 type="button"
-                className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-amber-300 hover:text-amber-800"
+                onClick={onFilterChange ? () => onFilterChange(filter) : undefined}
+                className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
+                  activeFilter === filter
+                    ? "border-slate-900 bg-slate-900 text-white hover:border-slate-900 hover:text-white"
+                    : "border-slate-200 bg-white text-slate-700 hover:border-amber-300 hover:text-amber-800"
+                }`}
               >
                 {filter}
               </button>
             ))}
           </div>
-        </motion.section>
+        </Motion.section>
 
         <section className="grid gap-5">
           {items.map((item) => (

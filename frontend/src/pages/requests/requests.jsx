@@ -1,20 +1,31 @@
+import { useMemo, useState } from "react";
 import { useLoaderData } from "react-router-dom";
 
 import ListingPageShell from "../../components/listingPageShell.jsx";
 
 export default function Requests() {
   const { items, filters } = useLoaderData();
+  const [activeFilter, setActiveFilter] = useState(filters[0] ?? null);
+  const filteredItems = useMemo(() => {
+    if (!activeFilter || activeFilter === filters[0]) {
+      return items;
+    }
+
+    return items.filter((item) => item.tags.includes(activeFilter));
+  }, [activeFilter, filters, items]);
 
   return (
     <ListingPageShell
       eyebrow="Active Requests"
       title="Community food requests awaiting a match"
-      description="This page is UI-only and uses mock data to represent demand from schools, shelters, and pantry partners. It is intentionally distinct from offers by focusing on what is needed, when it is needed, and who is being served."
-      items={items}
+      description="Browse active community food requests and narrow the list by food category or handling type."
+      items={filteredItems}
       filters={filters}
+      activeFilter={activeFilter}
+      onFilterChange={setActiveFilter}
       hideHero
-      secondaryAction={{ label: "Back to Home", to: "/home" }}
-      filtersLabel="Mock filters:"
+      secondaryAction={null}
+      filtersLabel="Filter requests:"
       cardConfig={{
         eyebrowKey: "category",
         action: {

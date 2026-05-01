@@ -9,18 +9,12 @@ router = Router()
 
 
 """
-
-define three API endpoints
-
+define four API endpoints
  .../listings/details
-
  .../listings/accept
-
  .../listings
-
+ .../my-listings
 """
-
-
 
 def get_listing_details(handler): # start of get_listing_details() function definition
 
@@ -170,10 +164,8 @@ def get_listing_details(handler): # start of get_listing_details() function defi
 # end of get_listing_details() function definition
 
 
-
-
-
-def accept_listing(handler): # start of accept_listing() function definition
+# start of accept_listing() function definition
+def accept_listing(handler):
 
     """ POST endpoint handler that lets the current user accept/claim a listing """
 
@@ -276,12 +268,9 @@ def accept_listing(handler): # start of accept_listing() function definition
         }
     })
 
-# end of accept_listing() function definition
 
-
-
-
-def build_offers_requests_record(row): # helper function that formats one listing row for the offers/requests route
+# helper function that formats one listing row for the offers/requests route
+def build_offers_requests_record(row):
 
     return {
         "id": row[0],
@@ -315,8 +304,8 @@ def build_offers_requests_record(row): # helper function that formats one listin
     }
 
 
-
-def get_offers_requests(handler): # start of get_offers_requests() function definition
+# start of get_offers_requests() function definition
+def get_offers_requests(handler): 
 
     """ GET endpoint handler that returns requests for providers or offers for recipients """
 
@@ -394,11 +383,120 @@ def get_offers_requests(handler): # start of get_offers_requests() function defi
         },
     })
 
-# end of get_offers_requests() function definition
-    
 
+#We will use this helper to add a "relationship" key (own/claimed) so the frontend can label each card without re-deriving it
+def build_my_listings_record(row, relationship):
+    record = build_offers_requests_record(row)
+    record["relationship"] = relationship
+    return record
+
+
+#GET endpoint that returns the current user's active listings including ones they created ones they have an active claim on
+def get_my_listings(handler):
+    user = get_user(handler)
+
+    try:
+        with db.cursor() as cur:
+            cur.execute(
+                """
+                SELECT
+                    listings.id,
+                    listings.creator_user_id,
+                    listings.listing_type,
+                    listings.pickup_window_start,
+                    listings.pickup_window_end,
+                    listings.discard_deadline,
+                    listings.travel_distance_miles,
+                    listings.additional_instructions,
+                    listings.status,
+                    listings.created_at,
+                    listings.updated_at,
+                    locations.address_text,
+                    locations.latitude,
+                    locations.longitude,
+                    listing_food_items.food_name,
+                    listing_food_items.food_description,
+                    listing_food_items.food_category,
+                    listing_food_items.is_perishable,
+                    listing_food_items.quantity,
+                    listing_food_items.quantity_unit,
+                    listing_food_items.expiration_date,
+                    creator.organization_name
+                FROM listings
+                JOIN locations
+                    ON locations.id = listings.location_id
+                JOIN listing_food_items
+                    ON listing_food_items.listing_id = listings.id
+                JOIN users AS creator
+                    ON creator.id = listings.creator_user_id
+                WHERE listings.creator_user_id = %s
+                    AND listings.status IN ('available', 'claimed')
+                ORDER BY listings.created_at DESC, listings.id DESC
+                """,
+                (user["id"],)
+            )
+            own_rows = cur.fetchall()
+
+            cur.execute(
+                """
+                SELECT
+                    listings.id,
+                    listings.creator_user_id,
+                    listings.listing_type,
+                    listings.pickup_window_start,
+                    listings.pickup_window_end,
+                    listings.discard_deadline,
+                    listings.travel_distance_miles,
+                    listings.additional_instructions,
+                    listings.status,
+                    listings.created_at,
+                    listings.updated_at,
+                    locations.address_text,
+                    locations.latitude,
+                    locations.longitude,
+                    listing_food_items.food_name,
+                    listing_food_items.food_description,
+                    listing_food_items.food_category,
+                    listing_food_items.is_perishable,
+                    listing_food_items.quantity,
+                    listing_food_items.quantity_unit,
+                    listing_food_items.expiration_date,
+                    creator.organization_name
+                FROM claims
+                JOIN listings
+                    ON listings.id = claims.listing_id
+                JOIN locations
+                    ON locations.id = listings.location_id
+                JOIN listing_food_items
+                    ON listing_food_items.listing_id = listings.id
+                JOIN users AS creator
+                    ON creator.id = listings.creator_user_id
+                WHERE claims.claimant_user_id = %s
+                    AND claims.status IN ('pending', 'accepted')
+                    AND listings.status NOT IN ('completed', 'canceled')
+                ORDER BY claims.claimed_at DESC, listings.id DESC
+                """,
+                (user["id"],)
+            )
+            claimed_rows = cur.fetchall()
+    except Exception:
+        db.rollback()
+        return send_json(handler, 500, {"error": "Unable to load your listings."})
+
+    own_records = [build_my_listings_record(row, "own") for row in own_rows]
+    claimed_records = [build_my_listings_record(row, "claimed") for row in claimed_rows]
+
+    return send_json(handler, 200, {
+        "records": own_records + claimed_records,
+        "current_user": {
+            "id": user["id"],
+            "role": user["role"],
+            "organization_name": user["organization_name"],
+        },
+    })
 
 
 router.get("/api/listings/details", get_listing_details) # register a GET route so requests to "/api/listings/details" call the function get_listing_details()
 router.post("/api/listings/accept", accept_listing) # register a POST route so requests to "/api/listings/accept" call the function accept_listing()
 router.get("/api/listings", get_offers_requests) # register a GET route so requests to "/api/listings" return role-based offers or requests
+router.get("/api/my-listings", get_my_listings) # register a GET route for the user's own active + claimed listings
