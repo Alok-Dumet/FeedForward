@@ -73,7 +73,7 @@ def strip_strings(body):
 
     return stripped_body
 
-#We will use this helper function for validating if the user sent all the proper field
+#We will use this helper function for validating if the user sent all the proper field. Only None and empty strings count as missing.
 def require_fields(body, field_names):
     missing = []
 
@@ -83,8 +83,6 @@ def require_fields(body, field_names):
         if value is None:
             missing.append(name)
         elif isinstance(value, str) and value == "":
-            missing.append(name)
-        elif not isinstance(value, str) and not value:
             missing.append(name)
 
     return missing
