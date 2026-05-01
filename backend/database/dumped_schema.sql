@@ -792,49 +792,92 @@ ALTER FUNCTION pgbouncer.get_auth(p_usename text) OWNER TO supabase_admin;
 
 CREATE FUNCTION public.enforce_claim_business_rules() RETURNS trigger
     LANGUAGE plpgsql
-    AS $$
-DECLARE
-    listing_creator_user_id BIGINT;
-    listing_kind TEXT;
-    listing_status TEXT;
-    claimant_role TEXT;
-BEGIN
-    SELECT creator_user_id, listing_type, status
-    INTO listing_creator_user_id, listing_kind, listing_status
-    FROM listings
-    WHERE id = NEW.listing_id;
-
-    IF NOT FOUND THEN
-        RAISE EXCEPTION 'Listing % does not exist', NEW.listing_id;
-    END IF;
-
-    SELECT role
-    INTO claimant_role
-    FROM users
-    WHERE id = NEW.claimant_user_id;
-
-    IF NOT FOUND THEN
-        RAISE EXCEPTION 'User % does not exist', NEW.claimant_user_id;
-    END IF;
-
-    IF NEW.claimant_user_id = listing_creator_user_id THEN
-        RAISE EXCEPTION 'Users cannot claim their own listings';
-    END IF;
-
-    IF listing_kind = 'offer' AND claimant_role <> 'recipient_organization' THEN
-        RAISE EXCEPTION 'Only recipient organizations can claim offer listings';
-    END IF;
-
-    IF listing_kind = 'request' AND claimant_role <> 'food_provider' THEN
-        RAISE EXCEPTION 'Only food providers can claim request listings';
-    END IF;
-
-    IF TG_OP = 'INSERT' AND listing_status <> 'available' THEN
-        RAISE EXCEPTION 'Only available listings can be claimed';
-    END IF;
-
-    RETURN NEW;
-END;
+    AS $$
+
+DECLARE
+
+    listing_creator_user_id BIGINT;
+
+    listing_kind TEXT;
+
+    listing_status TEXT;
+
+    claimant_role TEXT;
+
+BEGIN
+
+    SELECT creator_user_id, listing_type, status
+
+    INTO listing_creator_user_id, listing_kind, listing_status
+
+    FROM listings
+
+    WHERE id = NEW.listing_id;
+
+
+
+    IF NOT FOUND THEN
+
+        RAISE EXCEPTION 'Listing % does not exist', NEW.listing_id;
+
+    END IF;
+
+
+
+    SELECT role
+
+    INTO claimant_role
+
+    FROM users
+
+    WHERE id = NEW.claimant_user_id;
+
+
+
+    IF NOT FOUND THEN
+
+        RAISE EXCEPTION 'User % does not exist', NEW.claimant_user_id;
+
+    END IF;
+
+
+
+    IF NEW.claimant_user_id = listing_creator_user_id THEN
+
+        RAISE EXCEPTION 'Users cannot claim their own listings';
+
+    END IF;
+
+
+
+    IF listing_kind = 'offer' AND claimant_role <> 'recipient_organization' THEN
+
+        RAISE EXCEPTION 'Only recipient organizations can claim offer listings';
+
+    END IF;
+
+
+
+    IF listing_kind = 'request' AND claimant_role <> 'food_provider' THEN
+
+        RAISE EXCEPTION 'Only food providers can claim request listings';
+
+    END IF;
+
+
+
+    IF TG_OP = 'INSERT' AND listing_status <> 'available' THEN
+
+        RAISE EXCEPTION 'Only available listings can be claimed';
+
+    END IF;
+
+
+
+    RETURN NEW;
+
+END;
+
 $$;
 
 
@@ -881,27 +924,48 @@ ALTER FUNCTION public.rls_auto_enable() OWNER TO postgres;
 
 CREATE FUNCTION public.sync_listing_status_from_claim() RETURNS trigger
     LANGUAGE plpgsql
-    AS $$
-BEGIN
-    IF NEW.status = 'accepted' THEN
-        UPDATE listings
-        SET status = 'claimed',
-            updated_at = NOW()
-        WHERE id = NEW.listing_id;
-    ELSIF NEW.status = 'completed' THEN
-        UPDATE listings
-        SET status = 'completed',
-            updated_at = NOW()
-        WHERE id = NEW.listing_id;
-    ELSIF NEW.status = 'canceled' THEN
-        UPDATE listings
-        SET status = 'canceled',
-            updated_at = NOW()
-        WHERE id = NEW.listing_id;
-    END IF;
-
-    RETURN NEW;
-END;
+    AS $$
+
+BEGIN
+
+    IF NEW.status = 'accepted' THEN
+
+        UPDATE listings
+
+        SET status = 'claimed',
+
+            updated_at = NOW()
+
+        WHERE id = NEW.listing_id;
+
+    ELSIF NEW.status = 'completed' THEN
+
+        UPDATE listings
+
+        SET status = 'completed',
+
+            updated_at = NOW()
+
+        WHERE id = NEW.listing_id;
+
+    ELSIF NEW.status = 'cancelled' THEN
+
+        UPDATE listings
+
+        SET status = 'cancelled',
+
+            updated_at = NOW()
+
+        WHERE id = NEW.listing_id;
+
+    END IF;
+
+
+
+    RETURN NEW;
+
+END;
+
 $$;
 
 
@@ -3287,8 +3351,8 @@ CREATE TABLE public.claims (
     claimed_at timestamp with time zone DEFAULT now() NOT NULL,
     resolved_at timestamp with time zone,
     cancellation_reason text,
-    CONSTRAINT claims_check CHECK ((((status = ANY (ARRAY['canceled'::text, 'completed'::text])) AND (resolved_at IS NOT NULL)) OR (status = ANY (ARRAY['pending'::text, 'accepted'::text])))),
-    CONSTRAINT claims_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'accepted'::text, 'canceled'::text, 'completed'::text])))
+    CONSTRAINT claims_check CHECK ((((status = ANY (ARRAY['cancelled'::text, 'completed'::text])) AND (resolved_at IS NOT NULL)) OR (status = ANY (ARRAY['pending'::text, 'accepted'::text])))),
+    CONSTRAINT claims_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'accepted'::text, 'cancelled'::text, 'completed'::text])))
 );
 
 
@@ -3377,7 +3441,7 @@ CREATE TABLE public.listings (
     CONSTRAINT listings_check CHECK ((pickup_window_end >= pickup_window_start)),
     CONSTRAINT listings_check1 CHECK (((discard_deadline IS NULL) OR (discard_deadline >= pickup_window_start))),
     CONSTRAINT listings_listing_type_check CHECK ((listing_type = ANY (ARRAY['offer'::text, 'request'::text]))),
-    CONSTRAINT listings_status_check CHECK ((status = ANY (ARRAY['available'::text, 'claimed'::text, 'completed'::text, 'canceled'::text]))),
+    CONSTRAINT listings_status_check CHECK ((status = ANY (ARRAY['available'::text, 'claimed'::text, 'completed'::text, 'cancelled'::text]))),
     CONSTRAINT listings_travel_distance_miles_check CHECK ((travel_distance_miles >= 0))
 );
 
