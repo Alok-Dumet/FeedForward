@@ -9,13 +9,12 @@ export default function ListingPageShell({
   description,
   items,
   filters = [],
-  stats = [],
   cardConfig = {},
   secondaryAction = null,
   filtersLabel = "Filters:",
   activeFilter = null,
   onFilterChange,
-  hideHero = false,
+  hidePageHeader = false,
   lightHeader = false,
 }) {
   const {
@@ -35,7 +34,7 @@ export default function ListingPageShell({
   return (
     <main className="px-6 py-10 sm:px-8 lg:px-12">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
-        {!hideHero ? (
+        {!hidePageHeader ? (
           <Motion.section
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
@@ -93,21 +92,6 @@ export default function ListingPageShell({
               ) : null}
             </div>
 
-            {stats.length > 0 ? (
-              <div className="mt-8 grid gap-4 sm:grid-cols-3">
-                {stats.map((stat) => (
-                  <div
-                    key={stat.label}
-                    className="rounded-3xl border border-white/10 bg-white/5 px-5 py-4"
-                  >
-                    <p className="text-xs font-semibold tracking-[0.15em] text-slate-400 uppercase">
-                      {stat.label}
-                    </p>
-                    <p className="mt-2 text-2xl font-bold text-white">{stat.value}</p>
-                  </div>
-                ))}
-              </div>
-            ) : null}
           </Motion.section>
         ) : null}
 

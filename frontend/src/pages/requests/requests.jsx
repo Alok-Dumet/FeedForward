@@ -23,7 +23,6 @@ export default function Requests() {
       filters={filters}
       activeFilter={activeFilter}
       onFilterChange={setActiveFilter}
-      hideHero
       secondaryAction={null}
       filtersLabel="Filter requests:"
       cardConfig={{

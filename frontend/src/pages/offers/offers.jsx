@@ -23,7 +23,6 @@ export default function Offers() {
       filters={filters}
       activeFilter={activeFilter}
       onFilterChange={setActiveFilter}
-      hideHero
       secondaryAction={null}
       filtersLabel="Filter offers:"
       cardConfig={{
