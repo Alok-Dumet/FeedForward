@@ -3,7 +3,7 @@ from datetime import datetime
 from database.database import db
 from router import Router
 from sessions import get_user
-from utils import get_query_param, send_json
+from utils import send_json
 
 
 router = Router()
@@ -73,23 +73,6 @@ def build_history_record(row):
             "resolved_at": row[16].isoformat() if row[16] else None,
         } if row[12] else None,
     }
-
-
-def filter_history_records(records, status_filter):
-    if not status_filter or status_filter == "all":
-        return records
-
-    normalized_filter = status_filter.strip().lower()
-    alias_map = {
-        "cancelled": "cancelled",
-        "canceled": "cancelled",
-    }
-    normalized_filter = alias_map.get(normalized_filter, normalized_filter)
-
-    return [
-        record for record in records
-        if record["status"].lower() == normalized_filter
-    ]
 
 
 def get_donor_history_rows(user_id):
@@ -182,9 +165,8 @@ def get_recipient_history_rows(user_id):
 
 
 def get_history(handler):
-    
+
     user = get_user(handler)
-    status_filter = get_query_param(handler, "status")
 
     try:
         if user["role"] == "food_provider":
@@ -198,7 +180,6 @@ def get_history(handler):
         return send_json(handler, 500, {"error": "Unable to load history."})
 
     records = [build_history_record(row) for row in rows]
-    records = filter_history_records(records, status_filter)
 
     return send_json(handler, 200, {
         "filters": ["All records", "Posted", "Claimed", "Completed", "Cancelled", "Expired"],
