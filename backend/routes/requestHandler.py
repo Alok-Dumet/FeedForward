@@ -92,7 +92,7 @@ def createRequest(handler): # start of createRequest() function definition
 
         longitude = parse_decimal(body["longitude"], "longitude")
         if longitude < Decimal("-180") or longitude > Decimal("180"):
-            raise ValueError("longitude must between -180 and 180")
+            raise ValueError("longitude must be between -180 and 180")
 
         travel_distance_miles = int(body.get("travel_distance_miles", 0))
         if travel_distance_miles < 0:
@@ -105,7 +105,7 @@ def createRequest(handler): # start of createRequest() function definition
 
         discard_deadline = None
         if body.get("discard_deadline") not in (None, ""):
-            discard_deadline = parse_datetime(body["discard_deadline"], "discard")
+            discard_deadline = parse_datetime(body["discard_deadline"], "discard_deadline")
             if discard_deadline < pickup_window_start:
                 raise ValueError("discard_deadline must be on or after pickup_window_start")
 
