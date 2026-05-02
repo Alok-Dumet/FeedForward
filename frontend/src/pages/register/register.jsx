@@ -26,7 +26,6 @@ export default function Register() {
       const data = await res.json();
       if (!res.ok) {
         setError(data.error);
-        console.log("Intentional Response");
       } else {
         setError("");
         navigate("/login", {
