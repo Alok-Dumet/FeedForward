@@ -19,7 +19,8 @@ from utils import (
 router = Router()
 
 
-def create_request(handler): # start of create_request() function definition
+#POST endpoint handler that creates a request listing
+def create_request(handler):
 
     """
     main endpoint function that handles POST /api/listings/requests/create

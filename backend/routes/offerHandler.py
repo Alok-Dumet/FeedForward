@@ -18,7 +18,8 @@ from utils import (
 router = Router()
 
 
-def create_offer(handler): # start of create_offer() function definition
+#POST endpoint handler that creates an offer listing
+def create_offer(handler):
 
     """
     main endpoint function that handles POST /api/listings/offers/create

@@ -206,6 +206,7 @@ def get_claimed_history_rows(user_id):
         return cur.fetchall()
 
 
+#GET endpoint handler that returns the current user's listing history
 def get_history(handler):
     user = get_user(handler)
 

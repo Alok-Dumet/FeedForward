@@ -39,7 +39,7 @@ def verify_password(password, stored_password_hash):
     return hmac.compare_digest(actual_hash, expected_hash)
 
 
-#We will validate the registration body, geocode the city/state, and insert a location + user in one transaction
+#POST endpoint handler that registers a new user account
 def register(handler):
     body = parse_validate_body(
         handler,
@@ -118,7 +118,7 @@ def register(handler):
     })
 
 
-#We will look up the user by email, verify their password, and start a session
+#POST endpoint handler that logs in a user and starts a session
 def login(handler):
     body = parse_validate_body(handler, ["email", "password"])
     if body is None:
@@ -156,7 +156,7 @@ def login(handler):
     }, headers=[("Set-Cookie", build_session_cookie(session_token, 604800))])
 
 
-#We will drop the session token from memory and clear the cookie on the client
+#POST endpoint handler that logs out the current user
 def logout(handler):
     cookies = parse_cookies(handler)
     session_token = cookies.get(SESSION_COOKIE_NAME)
@@ -167,7 +167,7 @@ def logout(handler):
     return send_json(handler, 200, {"success": "Logout successful"}, headers=[("Set-Cookie", build_session_cookie("", 0))])
 
 
-#We will return the authenticated user. access.py guarantees auth before this runs
+#GET endpoint handler that returns the current authenticated user
 def get_session(handler):
     return send_json(handler, 200, {"user": get_user(handler)})
 
