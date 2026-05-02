@@ -42,35 +42,60 @@ def format_pickup_window(start, end):
     return f"{start.isoformat()} to {end.isoformat()}"
 
 
+#We will format one food item from a history listing row
+def build_history_food_item(row):
+    return {
+        "id": row[2],
+        "description": row[3],
+        "name": row[4],
+        "category": row[5],
+        "is_perishable": row[6],
+        "quantity": str(row[7]),
+        "quantity_unit": row[8],
+        "expiration_date": row[9].isoformat() if row[9] else None,
+    }
+
+
 #We will turn one row from either history query into the dict shape the frontend expects
 def build_history_record(row, relationship):
-    history_status = normalize_history_status(row[8], row[7])
+    history_status = normalize_history_status(row[12], row[11])
 
     return {
         "id": row[0],
         "listing_id": row[0],
         "listing_type": row[1],
-        "food_description": row[2] or row[3],
-        "food_name": row[3],
-        "quantity": str(row[5]),
-        "quantity_unit": row[6],
-        "pickup_window_start": row[4].isoformat() if row[4] else None,
-        "pickup_window_end": row[7].isoformat() if row[7] else None,
-        "pickup_window": format_pickup_window(row[4], row[7]),
-        "location": row[9],
+        "foods": [],
+        "pickup_window_start": row[10].isoformat() if row[10] else None,
+        "pickup_window_end": row[11].isoformat() if row[11] else None,
+        "pickup_window": format_pickup_window(row[10], row[11]),
+        "location": row[13],
         "status": history_status,
         "outcome": derive_history_outcome(history_status),
         "relationship": relationship,
-        "created_at": row[10].isoformat() if row[10] else None,
-        "updated_at": row[11].isoformat() if row[11] else None,
+        "created_at": row[14].isoformat() if row[14] else None,
+        "updated_at": row[15].isoformat() if row[15] else None,
         "claim": {
-            "id": row[12],
-            "claimant_user_id": row[13],
-            "status": row[14],
-            "claimed_at": row[15].isoformat() if row[15] else None,
-            "resolved_at": row[16].isoformat() if row[16] else None,
-        } if row[12] else None,
+            "id": row[16],
+            "claimant_user_id": row[17],
+            "status": row[18],
+            "claimed_at": row[19].isoformat() if row[19] else None,
+            "resolved_at": row[20].isoformat() if row[20] else None,
+        } if row[16] else None,
     }
+
+
+#We will group history rows by listing so multiple foods render on one history card
+def build_history_records(rows, relationship):
+    records_by_id = {}
+
+    for row in rows:
+        listing_id = row[0]
+        if listing_id not in records_by_id:
+            records_by_id[listing_id] = build_history_record(row, relationship)
+
+        records_by_id[listing_id]["foods"].append(build_history_food_item(row))
+
+    return list(records_by_id.values())
 
 
 #We will only return rows whose lifecycle is finished — completed, canceled, or pickup-window already passed
@@ -88,11 +113,15 @@ def get_created_history_rows(user_id):
             SELECT
                 listings.id,
                 listings.listing_type,
+                listing_food_items.id,
                 listing_food_items.food_description,
                 listing_food_items.food_name,
-                listings.pickup_window_start,
+                listing_food_items.food_category,
+                listing_food_items.is_perishable,
                 listing_food_items.quantity,
                 listing_food_items.quantity_unit,
+                listing_food_items.expiration_date,
+                listings.pickup_window_start,
                 listings.pickup_window_end,
                 listings.status,
                 locations.address_text,
@@ -140,11 +169,15 @@ def get_claimed_history_rows(user_id):
             SELECT
                 listings.id,
                 listings.listing_type,
+                listing_food_items.id,
                 listing_food_items.food_description,
                 listing_food_items.food_name,
-                listings.pickup_window_start,
+                listing_food_items.food_category,
+                listing_food_items.is_perishable,
                 listing_food_items.quantity,
                 listing_food_items.quantity_unit,
+                listing_food_items.expiration_date,
+                listings.pickup_window_start,
                 listings.pickup_window_end,
                 listings.status,
                 locations.address_text,
@@ -186,8 +219,8 @@ def get_history(handler):
         db.rollback()
         return send_json(handler, 500, {"error": "Unable to load history."})
 
-    records = [build_history_record(row, "own") for row in created_rows]
-    records += [build_history_record(row, "claimed") for row in claimed_rows]
+    records = build_history_records(created_rows, "own")
+    records += build_history_records(claimed_rows, "claimed")
 
     return send_json(handler, 200, {
         "filters": ["All records", "Completed", "Cancelled", "Expired"],

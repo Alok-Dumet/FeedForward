@@ -1,4 +1,10 @@
 import { loaderFetch } from "../../utils/loaderFetch.js";
+import {
+  formatFoodQuantity,
+  getFoodTags,
+  getFoodTitle,
+  getPrimaryFood,
+} from "../../utils/foods.js";
 
 const dateFmt = new Intl.DateTimeFormat("en-US", { dateStyle: "long" });
 
@@ -6,17 +12,18 @@ const dateFmt = new Intl.DateTimeFormat("en-US", { dateStyle: "long" });
 function buildItem(record) {
   const ownership = record.relationship === "own" ? "Posted by you" : "Claimed by you";
   const recordType = record.listing_type === "offer" ? "Offer record" : "Request record";
+  const primaryFood = getPrimaryFood(record);
 
   return {
     id: record.listing_id,
     status: record.status,
-    title: record.food_name ?? `Listing ${record.listing_id}`,
+    title: getFoodTitle(record),
     summary: record.outcome,
-    quantity: [record.quantity, record.quantity_unit].filter(Boolean).join(" "),
+    quantity: formatFoodQuantity(primaryFood),
     timeline: buildTimeline(record),
     location: record.location ?? "Location unavailable",
     recordType,
-    tags: [ownership, record.status, recordType],
+    tags: [ownership, record.status, recordType, ...getFoodTags(record)],
   };
 }
 

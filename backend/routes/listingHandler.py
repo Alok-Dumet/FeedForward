@@ -60,6 +60,7 @@ def get_listing_details(handler): # start of get_listing_details() function defi
                     locations.latitude,  -- latitude coordinate of the location
                     locations.longitude,  -- longitude coordinate of the location
 
+                    listing_food_items.id,  -- food item id
                     listing_food_items.food_name,  -- name of the food item associated with the listing
                     listing_food_items.food_description,  -- description of that food item
                     listing_food_items.food_category,  -- category/classification of the food item
@@ -91,7 +92,7 @@ def get_listing_details(handler): # start of get_listing_details() function defi
 
             ) # end of execute a SELECT
 
-            row = cur.fetchone() # read the first matching row from the query result
+            rows = cur.fetchall() # read the matching rows from the query result
 
         # end of database cursor
 
@@ -103,7 +104,7 @@ def get_listing_details(handler): # start of get_listing_details() function defi
         return send_json(handler, 500, {"error":"Unable to load listing details"})
 
     
-    if row is None:
+    if not rows:
         return send_json(handler, 404, {"error":"listing not found"})
 
 
@@ -113,44 +114,36 @@ def get_listing_details(handler): # start of get_listing_details() function defi
     return send_json(handler, 200, { # send back assembled listing record
 
            "record": {  # top-level payload key containing the listing details
-                        "id": row[0],  # map selected column 0 to record.id
-                        "creator_user_id": row[1],  # map selected column 1 to the creator's user id
-                        "type": row[2],  # map selected column 2 to the listing type
-                        "pickup_window_start": row[3].isoformat(),  # convert pickup_window_start datetime into an ISO string for JSON
-                        "pickup_window_end": row[4].isoformat(),  # convert pickup_window_end datetime into an ISO string for JSON
-                        "travel_distance_miles": row[5],  # include the travel distance value directly
-                        "additional_instructions": row[6],  # include any extra instructions directly
-                        "status": row[7],  # include the listing status directly
-                        "created_at": row[8].isoformat(),  # convert created_at datetime into an ISO string
-                        "updated_at": row[9].isoformat(),  # convert updated_at datetime into an ISO string
+                        "id": rows[0][0],  # map selected column 0 to record.id
+                        "creator_user_id": rows[0][1],  # map selected column 1 to the creator's user id
+                        "type": rows[0][2],  # map selected column 2 to the listing type
+                        "pickup_window_start": rows[0][3].isoformat(),  # convert pickup_window_start datetime into an ISO string for JSON
+                        "pickup_window_end": rows[0][4].isoformat(),  # convert pickup_window_end datetime into an ISO string for JSON
+                        "travel_distance_miles": rows[0][5],  # include the travel distance value directly
+                        "additional_instructions": rows[0][6],  # include any extra instructions directly
+                        "status": rows[0][7],  # include the listing status directly
+                        "created_at": rows[0][8].isoformat(),  # convert created_at datetime into an ISO string
+                        "updated_at": rows[0][9].isoformat(),  # convert updated_at datetime into an ISO string
                         
                         "location": {  # nested object for location-related fields
-                            "address_text": row[10],  # human-readable address
-                            "latitude": str(row[11]),  # convert latitude to string before sending JSON
-                            "longitude": str(row[12]),  # convert longitude to string before sending JSON
+                            "address_text": rows[0][10],  # human-readable address
+                            "latitude": str(rows[0][11]),  # convert latitude to string before sending JSON
+                            "longitude": str(rows[0][12]),  # convert longitude to string before sending JSON
                         },  # end of nested location object
 
-                        "food": {  # nested object for food-item-related fields
-                            "name": row[13],  # food item name
-                            "description": row[14],  # food item description
-                            "category": row[15],  # food item category
-                            "is_perishable": row[16],  # boolean telling whether the food is perishable
-                            "quantity": str(row[17]),  # convert quantity to string before sending JSON
-                            "quantity_unit": row[18],  # unit associated with quantity
-                            "expiration_date": row[19].isoformat() if row[19] else None,  # convert expiration date if it exists, else null
-                        },  # end of nested food object
+                        "foods": [build_food_item(row, 13) for row in rows],
 
                         "creator": {  # nested object for the creator's basic info
-                            "organization_name": row[20],  # include the creator organization's name
+                            "organization_name": rows[0][21],  # include the creator organization's name
                         },  # end of nested creator object
 
                         "claim": {  # build a nested claim object if there is an active claim row
-                            "id": row[21],  # claim id
-                            "claimant_user_id": row[22],  # id of the claimant user
-                            "status": row[23],  # claim status
-                            "claimed_at": row[24].isoformat() if row[24] else None,  # convert claimed_at if present
-                            "resolved_at": row[25].isoformat() if row[25] else None,  # convert resolved_at if present
-                        } if row[21] else None,  # if there is no claim id, send claim as null instead of an object
+                            "id": rows[0][22],  # claim id
+                            "claimant_user_id": rows[0][23],  # id of the claimant user
+                            "status": rows[0][24],  # claim status
+                            "claimed_at": rows[0][25].isoformat() if rows[0][25] else None,  # convert claimed_at if present
+                            "resolved_at": rows[0][26].isoformat() if rows[0][26] else None,  # convert resolved_at if present
+                        } if rows[0][22] else None,  # if there is no claim id, send claim as null instead of an object
 
                         "current_user": {  # include basic info about the currently authenticated user
                             "id": user["id"],  # current user's id from the session
@@ -267,10 +260,23 @@ def accept_listing(handler):
     })
 
 
-# helper function that formats one listing row for the offers/requests route
-# Distance is calculated in the frontend from the returned location coordinates.
-def build_offers_requests_record(row):
-    record = {
+#We will format one food item from a joined listing_food_items row
+def build_food_item(row, start_index):
+    return {
+        "id": row[start_index],
+        "name": row[start_index + 1],
+        "description": row[start_index + 2],
+        "category": row[start_index + 3],
+        "is_perishable": row[start_index + 4],
+        "quantity": str(row[start_index + 5]),
+        "quantity_unit": row[start_index + 6],
+        "expiration_date": row[start_index + 7].isoformat() if row[start_index + 7] else None,
+    }
+
+
+#We will format one listing row and leave room for multiple food items
+def build_listing_record(row):
+    return {
         "id": row[0],
         "creator_user_id": row[1],
         "listing_type": row[2],
@@ -286,21 +292,28 @@ def build_offers_requests_record(row):
             "latitude": str(row[11]),
             "longitude": str(row[12]),
         },
-        "food": {
-            "name": row[13],
-            "description": row[14],
-            "category": row[15],
-            "is_perishable": row[16],
-            "quantity": str(row[17]),
-            "quantity_unit": row[18],
-            "expiration_date": row[19].isoformat() if row[19] else None,
-        },
+        "foods": [],
         "creator": {
-            "organization_name": row[20],
+            "organization_name": row[21],
         },
     }
 
-    return record
+
+#We will group joined listing rows so each listing appears once with a foods array
+def build_listing_records(rows, relationship=None):
+    records_by_id = {}
+
+    for row in rows:
+        listing_id = row[0]
+        if listing_id not in records_by_id:
+            record = build_listing_record(row)
+            if relationship:
+                record["relationship"] = relationship
+            records_by_id[listing_id] = record
+
+        records_by_id[listing_id]["foods"].append(build_food_item(row, 13))
+
+    return list(records_by_id.values())
 
 
 # start of get_offers_requests() function definition
@@ -336,6 +349,7 @@ def get_offers_requests(handler):
                     locations.address_text,
                     locations.latitude,
                     locations.longitude,
+                    listing_food_items.id,
                     listing_food_items.food_name,
                     listing_food_items.food_description,
                     listing_food_items.food_category,
@@ -368,7 +382,7 @@ def get_offers_requests(handler):
         print(f"[get_offers_requests] DB error: {exc!r}")
         return send_json(handler, 500, {"error": "Unable to load offers or requests."})
 
-    records = [build_offers_requests_record(row) for row in rows]
+    records = build_listing_records(rows)
 
     return send_json(handler, 200, {
         "view_mode": view_mode,
@@ -381,13 +395,6 @@ def get_offers_requests(handler):
             "longitude": user["longitude"],
         },
     })
-
-
-#We will use this helper to add a "relationship" key (own/claimed) so the frontend can label each card without re-deriving it
-def build_my_listings_record(row, relationship):
-    record = build_offers_requests_record(row)
-    record["relationship"] = relationship
-    return record
 
 
 #GET endpoint that returns the current user's active listings including ones they created ones they have an active claim on
@@ -412,6 +419,7 @@ def get_my_listings(handler):
                     locations.address_text,
                     locations.latitude,
                     locations.longitude,
+                    listing_food_items.id,
                     listing_food_items.food_name,
                     listing_food_items.food_description,
                     listing_food_items.food_category,
@@ -451,6 +459,7 @@ def get_my_listings(handler):
                     locations.address_text,
                     locations.latitude,
                     locations.longitude,
+                    listing_food_items.id,
                     listing_food_items.food_name,
                     listing_food_items.food_description,
                     listing_food_items.food_category,
@@ -480,8 +489,8 @@ def get_my_listings(handler):
         db.rollback()
         return send_json(handler, 500, {"error": "Unable to load your listings."})
 
-    own_records = [build_my_listings_record(row, "own") for row in own_rows]
-    claimed_records = [build_my_listings_record(row, "claimed") for row in claimed_rows]
+    own_records = build_listing_records(own_rows, "own")
+    claimed_records = build_listing_records(claimed_rows, "claimed")
 
     return send_json(handler, 200, {
         "records": own_records + claimed_records,

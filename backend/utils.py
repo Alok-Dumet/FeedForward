@@ -163,3 +163,48 @@ def validate_food_category(value):
 
     normalized = value.strip().lower()
     return normalized if normalized in ALLOWED_FOOD_CATEGORIES else None
+
+
+#We will validate and normalize the foods array sent by create listing endpoints
+def parse_food_items(value):
+    if not isinstance(value, list) or not value:
+        raise ValueError("foods must be a non-empty array")
+
+    foods = []
+
+    for index, item in enumerate(value, start=1):
+        if not isinstance(item, dict):
+            raise ValueError(f"foods[{index}] must be an object")
+
+        item = strip_strings(item)
+        missing = require_fields(item, ["name", "category", "quantity", "quantity_unit"])
+        if "is_perishable" not in item:
+            missing.append("is_perishable")
+        if missing:
+            raise ValueError(f"foods[{index}] missing fields: {', '.join(missing)}")
+
+        if not isinstance(item["is_perishable"], bool):
+            raise ValueError(f"foods[{index}].is_perishable must be a boolean")
+
+        category = validate_food_category(item["category"])
+        if category is None:
+            raise ValueError(f"foods[{index}].category is invalid")
+
+        quantity = parse_decimal(item["quantity"], f"foods[{index}].quantity")
+        if quantity <= 0:
+            raise ValueError(f"foods[{index}].quantity must be greater than 0")
+
+        foods.append({
+            "name": item["name"],
+            "description": item.get("description") or None,
+            "category": category,
+            "is_perishable": item["is_perishable"],
+            "quantity": quantity,
+            "quantity_unit": item["quantity_unit"],
+            "expiration_date": parse_optional_date(
+                item.get("expiration_date"),
+                f"foods[{index}].expiration_date"
+            ),
+        })
+
+    return foods

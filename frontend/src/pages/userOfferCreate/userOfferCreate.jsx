@@ -24,7 +24,7 @@ export default function UserOfferCreate() {
                 Add a new offer for {user.name}
               </h1>
               <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
-                Use this owner-facing form to stage a new food offer record. The UI is
+                Use this owner-facing form to prepare a new food offer record. The UI is
                 intentionally frontend-only for now, but the field structure is kept
                 straightforward so it can connect to backend submission later.
               </p>
@@ -37,12 +37,6 @@ export default function UserOfferCreate() {
               >
                 Back to My Offers
               </Link>
-              <button
-                type="button"
-                className="inline-flex cursor-pointer rounded-2xl border border-emerald-300/30 bg-emerald-400/15 px-5 py-3 text-sm font-semibold text-emerald-50 transition hover:bg-emerald-400/20"
-              >
-                Save draft
-              </button>
             </div>
           </div>
 
@@ -178,12 +172,6 @@ export default function UserOfferCreate() {
               >
                 Publish offer
               </button>
-              <button
-                type="button"
-                className="inline-flex cursor-pointer rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-amber-300 hover:text-amber-800"
-              >
-                Save as draft
-              </button>
               <Link
                 to={`/users/${user.id}/offers`}
                 className="inline-flex rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-amber-300 hover:text-amber-800"
@@ -199,7 +187,7 @@ export default function UserOfferCreate() {
                 Helper Notes
               </p>
               <h2 className="mt-3 text-2xl font-bold text-slate-900">
-                What to include in this draft
+                What to include in this offer
               </h2>
               <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
                 <li>Use the title and quantity fields to make internal review faster.</li>
@@ -217,7 +205,7 @@ export default function UserOfferCreate() {
               </h2>
               <div className="mt-5 flex flex-wrap gap-3">
                 <span className="rounded-full border border-slate-200 bg-slate-100 px-4 py-2 text-xs font-semibold tracking-[0.18em] text-slate-700 uppercase">
-                  Draft until submitted
+                  Not submitted
                 </span>
                 <span className="rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-semibold tracking-[0.18em] text-emerald-800 uppercase">
                   Owner-facing only

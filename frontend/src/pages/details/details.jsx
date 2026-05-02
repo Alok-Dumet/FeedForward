@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useLoaderData } from "react-router-dom";
 
 import { formatPickupWindow } from "../../utils/formatDates.js";
+import { formatFoodCategory, formatFoodQuantity, getFoodTitle } from "../../utils/foods.js";
 
 const dateFmt = new Intl.DateTimeFormat("en-US", { dateStyle: "medium" });
 
@@ -38,9 +39,7 @@ function DetailField({ label, value }) {
 
 export default function Details() {
   const { page, record } = useLoaderData();
-  const quantity =
-    [record.food?.quantity, record.food?.quantity_unit].filter(Boolean).join(" ") ||
-    "To be confirmed";
+  const foods = record.foods ?? [];
   const [status, setStatus] = useState(record.status);
   const [claimState, setClaimState] = useState({ status: "idle", message: "" });
 
@@ -94,7 +93,7 @@ export default function Details() {
                 {page.sectionLabel}
               </p>
               <h1 className="mt-2 text-3xl font-bold text-slate-900">
-                {record.food?.name ?? `Listing ${record.id}`}
+                {getFoodTitle(record)}
               </h1>
               <p className="mt-2 text-sm text-slate-600">
                 {humanize(record.type)} #{record.id}
@@ -144,29 +143,40 @@ export default function Details() {
 
         <section className="rounded-[1.75rem] border border-white/70 bg-white/85 px-6 py-5 shadow-xl backdrop-blur-md">
           <h2 className="text-lg font-semibold text-slate-900">Food Details</h2>
-          <dl className="mt-4 grid gap-4 sm:grid-cols-2">
-            <DetailField label="Quantity" value={quantity} />
-            <DetailField label="Category" value={humanize(record.food?.category)} />
-            <DetailField
-              label="Handling"
-              value={record.food?.is_perishable ? "Perishable" : "Shelf-stable"}
-            />
-            <DetailField
-              label="Expiration Date"
-              value={formatDate(record.food?.expiration_date)}
-            />
-          </dl>
+          <div className="mt-4 grid gap-4">
+            {foods.map((food) => (
+              <article
+                key={food.id}
+                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4"
+              >
+                <h3 className="text-base font-semibold text-slate-900">{food.name}</h3>
 
-          {record.food?.description ? (
-            <div className="mt-5 rounded-2xl bg-slate-100 px-4 py-3">
-              <p className="text-xs font-semibold tracking-[0.15em] text-slate-500 uppercase">
-                Description
-              </p>
-              <p className="mt-1 text-sm leading-6 text-slate-700">
-                {record.food.description}
-              </p>
-            </div>
-          ) : null}
+                <dl className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <DetailField label="Quantity" value={formatFoodQuantity(food)} />
+                  <DetailField label="Category" value={formatFoodCategory(food.category)} />
+                  <DetailField
+                    label="Handling"
+                    value={food.is_perishable ? "Perishable" : "Shelf-stable"}
+                  />
+                  <DetailField
+                    label="Expiration Date"
+                    value={formatDate(food.expiration_date)}
+                  />
+                </dl>
+
+                {food.description ? (
+                  <div className="mt-5 rounded-2xl bg-white px-4 py-3">
+                    <p className="text-xs font-semibold tracking-[0.15em] text-slate-500 uppercase">
+                      Description
+                    </p>
+                    <p className="mt-1 text-sm leading-6 text-slate-700">
+                      {food.description}
+                    </p>
+                  </div>
+                ) : null}
+              </article>
+            ))}
+          </div>
         </section>
 
         <section className="rounded-[1.75rem] border border-white/70 bg-white/85 px-6 py-5 shadow-xl backdrop-blur-md">
