@@ -49,6 +49,9 @@ export default function Details() {
   const isOwnListing = record.current_user?.id === record.creator_user_id;
   const canAccept = !isHistory && status === "available" && !isOwnListing;
   const claimPending = claimState.status === "submitting";
+  const distanceLabel = isOffer
+    ? "Distance we're willing to deliver"
+    : "Distance we're willing to pick up";
 
   async function handleAcceptListing() {
     setClaimState({ status: "submitting", message: "" });
@@ -76,7 +79,7 @@ export default function Details() {
       setStatus("claimed");
       setClaimState({
         status: "success",
-        message: isOffer ? "Offer accepted." : "Request response recorded.",
+        message: "Accepted.",
       });
     } catch {
       setClaimState({ status: "error", message: "Network error." });
@@ -95,9 +98,6 @@ export default function Details() {
               <h1 className="mt-2 text-3xl font-bold text-slate-900">
                 {getFoodTitle(record)}
               </h1>
-              <p className="mt-2 text-sm text-slate-600">
-                {humanize(record.type)} #{record.id}
-              </p>
             </div>
 
             <Link
@@ -116,7 +116,7 @@ export default function Details() {
                 disabled={!canAccept || claimPending}
                 className="inline-flex cursor-pointer rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
               >
-                {claimPending ? "Working..." : isOffer ? "Accept Offer" : "Respond to Request"}
+                {claimPending ? "Working..." : "Accept"}
               </button>
               {isOwnListing ? (
                 <p className="mt-2 text-sm text-slate-600">
@@ -190,7 +190,7 @@ export default function Details() {
             />
             <DetailField label="Address" value={record.location?.address_text} />
             <DetailField
-              label="Travel Distance"
+              label={distanceLabel}
               value={`${record.travel_distance_miles ?? 0} miles`}
             />
           </dl>
@@ -214,6 +214,7 @@ export default function Details() {
               label={isOffer ? "Provider Organization" : "Requesting Organization"}
               value={record.creator?.organization_name}
             />
+            <DetailField label="Contact Email" value={record.creator?.email} />
             <DetailField label="Status" value={humanize(status)} />
             <DetailField label="Created" value={formatDate(record.created_at)} />
             <DetailField label="Last Updated" value={formatDate(record.updated_at)} />

@@ -70,6 +70,7 @@ def get_listing_details(handler): # start of get_listing_details() function defi
                     listing_food_items.expiration_date,  -- expiration date for the food item if present
 
                     creator.organization_name,  -- organization name of the listing creator
+                    creator.email,  -- contact email of the listing creator
 
                     claims.id,  -- claim id if there is an active claim
                     claims.claimant_user_id,  -- user id of the person who claimed the listing
@@ -135,15 +136,16 @@ def get_listing_details(handler): # start of get_listing_details() function defi
 
                         "creator": {  # nested object for the creator's basic info
                             "organization_name": rows[0][21],  # include the creator organization's name
+                            "email": rows[0][22],  # include the creator email for direct coordination
                         },  # end of nested creator object
 
                         "claim": {  # build a nested claim object if there is an active claim row
-                            "id": rows[0][22],  # claim id
-                            "claimant_user_id": rows[0][23],  # id of the claimant user
-                            "status": rows[0][24],  # claim status
-                            "claimed_at": rows[0][25].isoformat() if rows[0][25] else None,  # convert claimed_at if present
-                            "resolved_at": rows[0][26].isoformat() if rows[0][26] else None,  # convert resolved_at if present
-                        } if rows[0][22] else None,  # if there is no claim id, send claim as null instead of an object
+                            "id": rows[0][23],  # claim id
+                            "claimant_user_id": rows[0][24],  # id of the claimant user
+                            "status": rows[0][25],  # claim status
+                            "claimed_at": rows[0][26].isoformat() if rows[0][26] else None,  # convert claimed_at if present
+                            "resolved_at": rows[0][27].isoformat() if rows[0][27] else None,  # convert resolved_at if present
+                        } if rows[0][23] else None,  # if there is no claim id, send claim as null instead of an object
 
                         "current_user": {  # include basic info about the currently authenticated user
                             "id": user["id"],  # current user's id from the session
