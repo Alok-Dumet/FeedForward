@@ -3,6 +3,7 @@ import hmac
 import secrets
 
 from database.database import db
+from geocoding import GeocodingError, geocode_address
 from sessions import SESSION_COOKIE_NAME, parse_cookies, build_session_cookie, create_session, delete_session, get_user
 from router import Router
 from utils import parse_validate_body, send_json
@@ -38,9 +39,9 @@ def verify_password(password, stored_password_hash):
     return hmac.compare_digest(actual_hash, expected_hash)
 
 
-#We will validate the registration body, hash the password, and insert a new user
+#We will validate the registration body, geocode the address, and insert a location + user in one transaction
 def register(handler):
-    body = parse_validate_body(handler, ["email", "password", "role", "organization_name"])
+    body = parse_validate_body(handler, ["email", "password", "role", "organization_name", "address_text"])
     if body is None:
         return
 
@@ -52,26 +53,43 @@ def register(handler):
     if len(body["password"]) < 8:
         return send_json(handler, 400, {"error": "Password must be at least 8 characters long"})
 
+    try:
+        latitude, longitude = geocode_address(body["address_text"])
+    except GeocodingError as exc:
+        return send_json(handler, 400, {"error": str(exc)})
+
     password_hash = hash_password(body["password"])
 
     try:
         with db.cursor() as cur:
             cur.execute(
                 """
+                INSERT INTO locations (address_text, latitude, longitude)
+                VALUES (%s, %s, %s)
+                RETURNING id
+                """,
+                (body["address_text"], latitude, longitude)
+            )
+            location_id = cur.fetchone()[0]
+
+            cur.execute(
+                """
                 INSERT INTO users (
                     email,
                     password_hash,
                     role,
-                    organization_name
+                    organization_name,
+                    location_id
                 )
-                VALUES (%s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s)
                 RETURNING id, email, role, organization_name
                 """,
                 (
                     body["email"].lower(),
                     password_hash,
                     body["role"],
-                    body["organization_name"]
+                    body["organization_name"],
+                    location_id,
                 )
             )
             user = cur.fetchone()
@@ -107,7 +125,7 @@ def login(handler):
         with db.cursor() as cur:
             cur.execute(
                 """
-                SELECT id, email, password_hash, role, organization_name
+                SELECT id, email, password_hash, role, organization_name, preferred_radius_miles
                 FROM users
                 WHERE email = %s
                 """,
@@ -130,7 +148,8 @@ def login(handler):
             "id": user[0],
             "email": user[1],
             "role": user[3],
-            "organization_name": user[4]
+            "organization_name": user[4],
+            "preferred_radius_miles": user[5],
         }
     }, headers=[("Set-Cookie", build_session_cookie(session_token, 604800))])
 

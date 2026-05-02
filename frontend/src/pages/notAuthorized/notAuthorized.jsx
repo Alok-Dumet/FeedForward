@@ -1,5 +1,5 @@
 import { Link, useRouteLoaderData } from "react-router-dom";
-import { motion } from "motion/react";
+import { motion as Motion } from "motion/react";
 
 import { getDefaultRouteForUserType, getUserType } from "../../session.js";
 
@@ -18,7 +18,7 @@ export default function NotAuthorized() {
 
   return (
     <main className="flex min-h-screen items-center justify-center px-6 py-10">
-      <motion.section
+      <Motion.section
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: "easeOut" }}
@@ -46,7 +46,7 @@ export default function NotAuthorized() {
             Go to your dashboard
           </Link>
         </div>
-      </motion.section>
+      </Motion.section>
     </main>
   );
 }

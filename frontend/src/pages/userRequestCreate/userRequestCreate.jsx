@@ -1,5 +1,5 @@
 import { Link, useLoaderData } from "react-router-dom";
-import { motion } from "motion/react";
+import { motion as Motion } from "motion/react";
 
 import FormField from "../../components/formField.jsx";
 
@@ -9,7 +9,7 @@ export default function UserRequestCreate() {
   return (
     <main className="px-6 py-10 sm:px-8 lg:px-12">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
-        <motion.section
+        <Motion.section
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: "easeOut" }}
@@ -66,9 +66,9 @@ export default function UserRequestCreate() {
               <p className="mt-2 text-2xl font-bold text-white">{user.location}</p>
             </div>
           </div>
-        </motion.section>
+        </Motion.section>
 
-        <motion.section
+        <Motion.section
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.08, duration: 0.4, ease: "easeOut" }}
@@ -232,7 +232,7 @@ export default function UserRequestCreate() {
               </div>
             </article>
           </div>
-        </motion.section>
+        </Motion.section>
       </div>
     </main>
   );

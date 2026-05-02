@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
-import { motion } from "motion/react";
+import { motion as Motion } from "motion/react";
 
 import { getDefaultRouteForUserType, getUserType } from "../../session.js";
 
@@ -57,7 +57,7 @@ export default function Login() {
 
   return (
     <div className="flex min-h-screen items-center justify-center px-6">
-      <motion.section
+      <Motion.section
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: "easeOut" }}
@@ -128,7 +128,7 @@ export default function Login() {
             Register
           </Link>
         </div>
-      </motion.section>
+      </Motion.section>
     </div>
   );
 }

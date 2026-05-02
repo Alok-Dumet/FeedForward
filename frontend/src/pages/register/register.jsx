@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { motion } from "motion/react";
+import { motion as Motion } from "motion/react";
 
 export default function Register() {
   const [error, setError] = useState("");
@@ -19,7 +19,8 @@ export default function Register() {
           email: e.currentTarget.elements.email.value,
           password: e.currentTarget.elements.password.value,
           role: e.currentTarget.elements.role.value,
-          organization_name: e.currentTarget.elements.organization_name.value
+          organization_name: e.currentTarget.elements.organization_name.value,
+          address_text: e.currentTarget.elements.address_text.value,
         }),
       });
 
@@ -41,7 +42,7 @@ export default function Register() {
 
   return (
     <div className="flex min-h-screen items-center justify-center px-6">
-      <motion.section
+      <Motion.section
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: "easeOut" }}
@@ -97,6 +98,26 @@ export default function Register() {
 
           <div>
             <label
+              htmlFor="address_text"
+              className="mb-2 block text-sm font-medium text-slate-700"
+            >
+              Address
+            </label>
+            <input
+              id="address_text"
+              name="address_text"
+              type="text"
+              autoComplete="street-address"
+              placeholder="123 Main St, Springfield, IL"
+              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 transition outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
+            />
+            <p className="mt-1 text-xs text-slate-500">
+              We use your address to match you with nearby offers and requests.
+            </p>
+          </div>
+
+          <div>
+            <label
               htmlFor="email"
               className="mb-2 block text-sm font-medium text-slate-700"
             >
@@ -146,7 +167,7 @@ export default function Register() {
             Log in
           </Link>
         </div>
-      </motion.section>
+      </Motion.section>
     </div>
   );
 }

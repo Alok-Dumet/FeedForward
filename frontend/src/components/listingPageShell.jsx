@@ -16,6 +16,7 @@ export default function ListingPageShell({
   onFilterChange,
   hidePageHeader = false,
   lightHeader = false,
+  extraControls = null,
 }) {
   const {
     eyebrowKey = "category",
@@ -101,6 +102,7 @@ export default function ListingPageShell({
           transition={{ delay: 0.08, duration: 0.4, ease: "easeOut" }}
           className="rounded-[2rem] border border-white/70 bg-white/70 px-6 py-5 shadow-xl backdrop-blur-md"
         >
+          {extraControls ? <div className="mb-4">{extraControls}</div> : null}
           <div className="flex flex-wrap items-center gap-3">
             <span className="text-sm font-semibold text-slate-600">{filtersLabel}</span>
             {filters.map((filter) => (

@@ -270,9 +270,9 @@ def accept_listing(handler):
 
 
 # helper function that formats one listing row for the offers/requests route
+# Distance is calculated in the frontend from the returned location coordinates.
 def build_offers_requests_record(row):
-
-    return {
+    record = {
         "id": row[0],
         "creator_user_id": row[1],
         "listing_type": row[2],
@@ -303,9 +303,11 @@ def build_offers_requests_record(row):
         },
     }
 
+    return record
+
 
 # start of get_offers_requests() function definition
-def get_offers_requests(handler): 
+def get_offers_requests(handler):
 
     """ GET endpoint handler that returns requests for providers or offers for recipients """
 
@@ -315,11 +317,9 @@ def get_offers_requests(handler):
     if user_role == "food_provider":
         target_listing_type = "request"
         view_mode = "requests"
-    elif user_role == "recipient_organization":
+    else:
         target_listing_type = "offer"
         view_mode = "offers"
-    else:
-        return send_json(handler, 403, {"error": "This role is not allowed to view offers or requests."})
 
     try:
         with db.cursor() as cur:
@@ -367,8 +367,9 @@ def get_offers_requests(handler):
             )
 
             rows = cur.fetchall()
-    except Exception:
+    except Exception as exc:
         db.rollback()
+        print(f"[get_offers_requests] DB error: {exc!r}")
         return send_json(handler, 500, {"error": "Unable to load offers or requests."})
 
     records = [build_offers_requests_record(row) for row in rows]
@@ -380,6 +381,9 @@ def get_offers_requests(handler):
             "id": user["id"],
             "role": user_role,
             "organization_name": user["organization_name"],
+            "preferred_radius_miles": user["preferred_radius_miles"],
+            "latitude": user["latitude"],
+            "longitude": user["longitude"],
         },
     })
 

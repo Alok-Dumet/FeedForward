@@ -1,5 +1,5 @@
 import { useLoaderData } from "react-router-dom";
-import { motion } from "motion/react";
+import { motion as Motion } from "motion/react";
 
 import ListingCard from "../../components/listingCard.jsx";
 
@@ -9,7 +9,7 @@ export default function UserRequests() {
   return (
     <main className="px-6 py-10 sm:px-8 lg:px-12">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
-        <motion.section
+        <Motion.section
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: "easeOut" }}
@@ -27,11 +27,11 @@ export default function UserRequests() {
               </button>
             ))}
           </div>
-        </motion.section>
+        </Motion.section>
 
         <section className="grid gap-5">
           {items.map((item, index) => (
-            <motion.div
+            <Motion.div
               key={item.id}
               initial={{ opacity: 0, y: 22 }}
               animate={{ opacity: 1, y: 0 }}
@@ -56,7 +56,7 @@ export default function UserRequests() {
                   placement: "inline",
                 }}
               />
-            </motion.div>
+            </Motion.div>
           ))}
         </section>
       </div>

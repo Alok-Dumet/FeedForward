@@ -2,9 +2,10 @@ import { useMemo, useState } from "react";
 import { useLoaderData } from "react-router-dom";
 
 import ListingPageShell from "../../components/listingPageShell.jsx";
+import RadiusSlider from "../../components/radiusSlider.jsx";
 
 export default function Requests() {
-  const { items, filters } = useLoaderData();
+  const { items, filters, radiusMiles, preferredRadiusMiles } = useLoaderData();
   const [activeFilter, setActiveFilter] = useState(filters[0] ?? null);
   const filteredItems = useMemo(() => {
     if (!activeFilter || activeFilter === filters[0]) {
@@ -25,6 +26,9 @@ export default function Requests() {
       onFilterChange={setActiveFilter}
       secondaryAction={null}
       filtersLabel="Filter requests:"
+      extraControls={
+        <RadiusSlider defaultMiles={radiusMiles ?? preferredRadiusMiles ?? 25} />
+      }
       cardConfig={{
         eyebrowKey: "category",
         action: {
