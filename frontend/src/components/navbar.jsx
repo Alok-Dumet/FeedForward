@@ -2,31 +2,24 @@ import { useState } from "react";
 import {
   Link,
   NavLink,
-  useLocation,
   useNavigate,
-  useRouteLoaderData,
 } from "react-router-dom";
 
 import {
-  clearMockSession,
   getDefaultRouteForUserType,
   getMyCreateRouteForUserType,
   getMyListingsRouteForUserType,
-  getSessionUserId,
-  getUserType,
 } from "../session.js";
+import { useSession, useSessionActions } from "../hooks/useSession.js";
 
 const baseLinkClassName =
   "rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-amber-50 hover:text-amber-800";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const location = useLocation();
   const navigate = useNavigate();
-  const rootSession = useRouteLoaderData("root");
-  const session = location.state?.session ?? rootSession;
-  const userType = getUserType(session);
-  const userId = getSessionUserId(session);
+  const { userType, userId } = useSession();
+  const { clearSession } = useSessionActions();
 
   if (!userType) {
     return null;
@@ -57,7 +50,7 @@ export default function Navbar() {
   };
 
   async function handleLogout() {
-    clearMockSession();
+    clearSession();
     setIsMenuOpen(false);
 
     try {

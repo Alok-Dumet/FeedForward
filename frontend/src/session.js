@@ -8,8 +8,8 @@ const USER_TYPE_BY_BACKEND_ROLE = {
   food_provider: "donor",
   recipient_organization: "recipient",
 };
-const MOCK_SESSION_STORAGE_KEY = "feedforward_mock_session";
-const MOCK_SESSION_LOGGED_OUT_KEY = "feedforward_mock_logged_out";
+
+export const SESSION_QUERY_KEY = ["session"];
 
 function getUserTypeFromRole(role) {
   if (!role) {
@@ -75,114 +75,6 @@ export function getMyCreateRouteForUserType(userType, userId) {
   return "/login";
 }
 
-function canUseMockSession() {
-  return import.meta.env.DEV && typeof window !== "undefined";
-}
-
-function getMockProfile(userType) {
-  if (userType === "donor") {
-    return {
-      id: "mock-donor-01",
-      email: "donor@feedforward.local",
-      role: "Donor Partner",
-      organization_name: "Local Donor Kitchen",
-      user_type: "donor",
-    };
-  }
-
-  return {
-    id: "mock-recipient-01",
-    email: "recipient@feedforward.local",
-    role: "Recipient Organization",
-    organization_name: "Community Pantry Network",
-    user_type: "recipient",
-  };
-}
-
-function readStoredMockSession() {
-  if (!canUseMockSession()) {
-    return null;
-  }
-
-  if (window.localStorage.getItem(MOCK_SESSION_LOGGED_OUT_KEY) === "true") {
-    return null;
-  }
-
-  const storedSession = window.localStorage.getItem(MOCK_SESSION_STORAGE_KEY);
-
-  if (!storedSession) {
-    return null;
-  }
-
-  try {
-    const parsedSession = JSON.parse(storedSession);
-
-    if (getUserType(parsedSession)) {
-      return parsedSession;
-    }
-  } catch {
-    window.localStorage.removeItem(MOCK_SESSION_STORAGE_KEY);
-  }
-
-  return null;
-}
-
-export function createMockSession(userType = "recipient", overrides = {}) {
-  const safeUserType = userType === "donor" ? "donor" : "recipient";
-  const baseUser = getMockProfile(safeUserType);
-  const { user: userOverrides = {}, ...sessionOverrides } = overrides;
-
-  return {
-    ...sessionOverrides,
-    user_type: safeUserType,
-    user: {
-      ...baseUser,
-      ...userOverrides,
-      user_type: safeUserType,
-    },
-  };
-}
-
-export function persistMockSession(session) {
-  if (!canUseMockSession()) {
-    return;
-  }
-
-  window.localStorage.removeItem(MOCK_SESSION_LOGGED_OUT_KEY);
-  window.localStorage.setItem(MOCK_SESSION_STORAGE_KEY, JSON.stringify(session));
-}
-
-export function clearMockSession() {
-  if (!canUseMockSession()) {
-    return;
-  }
-
-  window.localStorage.removeItem(MOCK_SESSION_STORAGE_KEY);
-  window.localStorage.setItem(MOCK_SESSION_LOGGED_OUT_KEY, "true");
-}
-
-export function getMockSession() {
-  if (!canUseMockSession()) {
-    return null;
-  }
-
-  return readStoredMockSession();
-}
-
-export function inferMockUserType(email = "") {
-  const normalizedEmail = email.trim().toLowerCase();
-
-  if (normalizedEmail.includes("donor")) {
-    return "donor";
-  }
-
-  if (normalizedEmail.includes("recipient")) {
-    return "recipient";
-  }
-
-  return getUserType(readStoredMockSession()) ?? "recipient";
-}
-
 async function parseJsonResponse(res) {
   const contentType = res.headers.get("content-type") ?? "";
 
@@ -212,23 +104,11 @@ export async function fetchSession(request) {
     }
 
     if (res.ok && session) {
-      if (canUseMockSession()) {
-        persistMockSession(session);
-      }
-
       return session;
-    }
-
-    if (canUseMockSession()) {
-      return getMockSession();
     }
 
     return null;
   } catch {
-    if (canUseMockSession()) {
-      return getMockSession();
-    }
-
     return null;
   }
 }

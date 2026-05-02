@@ -3,12 +3,14 @@ import { useNavigate, Link, useLocation } from "react-router-dom";
 import { motion as Motion } from "motion/react";
 
 import { getDefaultRouteForUserType, getUserType } from "../../session.js";
+import { useSessionActions } from "../../hooks/useSession.js";
 
 export default function Login() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
   const message = location.state?.message ?? "";
+  const { setSession } = useSessionActions();
 
   //We will submit credentials to /api/login, then read /api/session to determine where to redirect
   async function handleSubmit(e) {
@@ -46,9 +48,9 @@ export default function Login() {
       }
 
       setError("");
+      setSession(session);
       navigate(getDefaultRouteForUserType(userType), {
         replace: true,
-        state: { session },
       });
     } catch {
       setError("Network Error");

@@ -2,20 +2,17 @@ import {
   Link,
   isRouteErrorResponse,
   useRouteError,
-  useRouteLoaderData,
 } from "react-router-dom";
 import { motion as Motion } from "motion/react";
 
-import { getDefaultRouteForUserType, getUserType } from "../../session.js";
+import { useSession } from "../../hooks/useSession.js";
 
 //Error page rendered during a route loader action or component render.
 //Don't worry it won't trigger for a fetch request inside a page
 export default function ErrorCheck() {
   const error = useRouteError();
-  const session = useRouteLoaderData("root");
-  const userType = getUserType(session);
-  const returnPath = userType ? getDefaultRouteForUserType(userType) : "/";
-  const returnLabel = userType ? "Back to listings" : "Back to home";
+  const { defaultRoute, isAuthenticated } = useSession();
+  const returnLabel = isAuthenticated ? "Back to listings" : "Back to home";
 
   let title = "Something went wrong";
   let message = "An unexpected error occurred.";
@@ -57,7 +54,7 @@ export default function ErrorCheck() {
 
         <div className="mt-8">
           <Link
-            to={returnPath}
+            to={defaultRoute}
             className="inline-flex rounded-2xl bg-emerald-600 px-8 py-3 text-lg font-semibold text-white shadow-lg transition hover:bg-emerald-500"
           >
             {returnLabel}

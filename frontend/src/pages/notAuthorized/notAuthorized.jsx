@@ -1,7 +1,7 @@
-import { Link, useRouteLoaderData } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { motion as Motion } from "motion/react";
 
-import { getDefaultRouteForUserType, getUserType } from "../../session.js";
+import { useSession } from "../../hooks/useSession.js";
 
 const ROLE_DISPLAY_NAMES = {
   donor: "Food Provider",
@@ -9,9 +9,7 @@ const ROLE_DISPLAY_NAMES = {
 };
 
 export default function NotAuthorized() {
-  const session = useRouteLoaderData("root");
-  const userType = getUserType(session);
-  const defaultRoute = getDefaultRouteForUserType(userType);
+  const { userType, defaultRoute } = useSession();
 
   const otherRole = userType === "donor" ? "recipient" : "donor";
   const requiredRoleName = ROLE_DISPLAY_NAMES[otherRole] ?? "a different role";

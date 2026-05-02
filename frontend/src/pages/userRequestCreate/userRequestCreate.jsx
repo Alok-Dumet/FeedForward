@@ -46,7 +46,7 @@ export default function UserRequestCreate() {
             </div>
           </div>
 
-          <div className="mt-8 grid gap-4 sm:grid-cols-3">
+          <div className="mt-8 grid gap-4 sm:grid-cols-2">
             <div className="rounded-3xl border border-white/10 bg-white/5 px-5 py-4">
               <p className="text-xs font-semibold tracking-[0.15em] text-slate-400 uppercase">
                 Owner
@@ -58,12 +58,6 @@ export default function UserRequestCreate() {
                 Role
               </p>
               <p className="mt-2 text-2xl font-bold text-white">{user.role}</p>
-            </div>
-            <div className="rounded-3xl border border-white/10 bg-white/5 px-5 py-4">
-              <p className="text-xs font-semibold tracking-[0.15em] text-slate-400 uppercase">
-                Default Area
-              </p>
-              <p className="mt-2 text-2xl font-bold text-white">{user.location}</p>
             </div>
           </div>
         </Motion.section>
@@ -138,7 +132,6 @@ export default function UserRequestCreate() {
               <FormField label="Service area">
                 <input
                   type="text"
-                  defaultValue={user.location}
                   className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
                 />
               </FormField>
