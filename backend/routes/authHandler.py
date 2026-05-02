@@ -83,6 +83,7 @@ def register(handler):
         if "duplicate key" in error_text or "users_email_key" in error_text:
             return send_json(handler, 400, {"error": "That email is already registered."})
 
+        print(f"[register] DB error: {exc!r}")
         return send_json(handler, 500, {"error": "Unable to register user due to a server error."})
 
     return send_json(handler, 201, {
