@@ -108,7 +108,7 @@ export default function ListingPageShell({
                 key={filter}
                 type="button"
                 onClick={onFilterChange ? () => onFilterChange(filter) : undefined}
-                className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
+                className={`cursor-pointer rounded-full border px-4 py-2 text-sm font-medium transition ${
                   activeFilter === filter
                     ? "border-slate-900 bg-slate-900 text-white hover:border-slate-900 hover:text-white"
                     : "border-slate-200 bg-white text-slate-700 hover:border-amber-300 hover:text-amber-800"

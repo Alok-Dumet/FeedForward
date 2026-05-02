@@ -39,7 +39,7 @@ export default function UserOfferCreate() {
               </Link>
               <button
                 type="button"
-                className="inline-flex rounded-2xl border border-emerald-300/30 bg-emerald-400/15 px-5 py-3 text-sm font-semibold text-emerald-50 transition hover:bg-emerald-400/20"
+                className="inline-flex cursor-pointer rounded-2xl border border-emerald-300/30 bg-emerald-400/15 px-5 py-3 text-sm font-semibold text-emerald-50 transition hover:bg-emerald-400/20"
               >
                 Save draft
               </button>
@@ -181,13 +181,13 @@ export default function UserOfferCreate() {
             <div className="mt-8 flex flex-wrap gap-3">
               <button
                 type="button"
-                className="inline-flex rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                className="inline-flex cursor-pointer rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
               >
                 Publish offer
               </button>
               <button
                 type="button"
-                className="inline-flex rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-amber-300 hover:text-amber-800"
+                className="inline-flex cursor-pointer rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-amber-300 hover:text-amber-800"
               >
                 Save as draft
               </button>

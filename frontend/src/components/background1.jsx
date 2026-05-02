@@ -8,7 +8,7 @@ export default function Background1() {
   const hideNavbar = ["/", "/login", "/register"].includes(location.pathname);
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-gradient-to-br from-amber-100 via-orange-50 to-lime-100">
+    <main className="relative min-h-screen bg-gradient-to-br from-amber-100 via-orange-50 to-lime-100">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <motion.div
           className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-amber-300/30 blur-3xl"

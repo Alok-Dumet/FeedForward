@@ -72,7 +72,7 @@ export default function Navbar() {
   }
 
   return (
-    <header className="relative z-20 px-4 pt-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-30 px-4 pt-4 sm:px-6 lg:px-8">
       <div className="mx-auto w-full max-w-6xl rounded-[1.75rem] border border-white/70 bg-white/80 px-4 py-4 shadow-lg backdrop-blur-md sm:px-6">
         <div className="flex items-center justify-between gap-4">
           <Link
@@ -122,7 +122,7 @@ export default function Navbar() {
           <button
             type="button"
             onClick={() => setIsMenuOpen((current) => !current)}
-            className="inline-flex rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-amber-300 hover:text-amber-800 md:hidden"
+            className="inline-flex cursor-pointer rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-amber-300 hover:text-amber-800 md:hidden"
             aria-expanded={isMenuOpen}
             aria-controls="mobile-navigation"
             aria-label="Toggle navigation menu"
@@ -165,7 +165,7 @@ export default function Navbar() {
             <button
               type="button"
               onClick={handleLogout}
-              className="inline-flex justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-amber-300 hover:text-amber-800"
+              className="inline-flex cursor-pointer justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-amber-300 hover:text-amber-800"
             >
               Logout
             </button>

@@ -115,7 +115,7 @@ export default function Details() {
                 type="button"
                 onClick={handleAcceptListing}
                 disabled={!canAccept || claimPending}
-                className="inline-flex rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+                className="inline-flex cursor-pointer rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
               >
                 {claimPending ? "Working..." : isOffer ? "Accept Offer" : "Respond to Request"}
               </button>
