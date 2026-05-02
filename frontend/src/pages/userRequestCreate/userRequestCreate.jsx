@@ -1,5 +1,5 @@
 import { Link, useLoaderData } from "react-router-dom";
-import { motion } from "motion/react";
+import { motion as Motion } from "motion/react";
 
 import FormField from "../../components/formField.jsx";
 
@@ -9,7 +9,7 @@ export default function UserRequestCreate() {
   return (
     <main className="px-6 py-10 sm:px-8 lg:px-12">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
-        <motion.section
+        <Motion.section
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: "easeOut" }}
@@ -24,7 +24,7 @@ export default function UserRequestCreate() {
                 Add a new request for {user.name}
               </h1>
               <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
-                Use this owner-facing form to stage a new request record. The page is
+                Use this owner-facing form to prepare a new request record. The page is
                 UI-only for now, but the field structure is intentionally simple so it
                 can connect to backend creation later without rework.
               </p>
@@ -37,16 +37,10 @@ export default function UserRequestCreate() {
               >
                 Back to My Requests
               </Link>
-              <button
-                type="button"
-                className="inline-flex rounded-2xl border border-emerald-300/30 bg-emerald-400/15 px-5 py-3 text-sm font-semibold text-emerald-50 transition hover:bg-emerald-400/20"
-              >
-                Save draft
-              </button>
             </div>
           </div>
 
-          <div className="mt-8 grid gap-4 sm:grid-cols-3">
+          <div className="mt-8 grid gap-4 sm:grid-cols-2">
             <div className="rounded-3xl border border-white/10 bg-white/5 px-5 py-4">
               <p className="text-xs font-semibold tracking-[0.15em] text-slate-400 uppercase">
                 Owner
@@ -59,16 +53,10 @@ export default function UserRequestCreate() {
               </p>
               <p className="mt-2 text-2xl font-bold text-white">{user.role}</p>
             </div>
-            <div className="rounded-3xl border border-white/10 bg-white/5 px-5 py-4">
-              <p className="text-xs font-semibold tracking-[0.15em] text-slate-400 uppercase">
-                Default Area
-              </p>
-              <p className="mt-2 text-2xl font-bold text-white">{user.location}</p>
-            </div>
           </div>
-        </motion.section>
+        </Motion.section>
 
-        <motion.section
+        <Motion.section
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.08, duration: 0.4, ease: "easeOut" }}
@@ -138,7 +126,6 @@ export default function UserRequestCreate() {
               <FormField label="Service area">
                 <input
                   type="text"
-                  defaultValue={user.location}
                   className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
                 />
               </FormField>
@@ -181,15 +168,9 @@ export default function UserRequestCreate() {
             <div className="mt-8 flex flex-wrap gap-3">
               <button
                 type="button"
-                className="inline-flex rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                className="inline-flex cursor-pointer rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
               >
                 Publish request
-              </button>
-              <button
-                type="button"
-                className="inline-flex rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-amber-300 hover:text-amber-800"
-              >
-                Save as draft
               </button>
               <Link
                 to={`/users/${user.id}/requests`}
@@ -224,7 +205,7 @@ export default function UserRequestCreate() {
               </h2>
               <div className="mt-5 flex flex-wrap gap-3">
                 <span className="rounded-full border border-slate-200 bg-slate-100 px-4 py-2 text-xs font-semibold tracking-[0.18em] text-slate-700 uppercase">
-                  Draft until submitted
+                  Not submitted
                 </span>
                 <span className="rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-semibold tracking-[0.18em] text-emerald-800 uppercase">
                   Owner-facing only
@@ -232,7 +213,7 @@ export default function UserRequestCreate() {
               </div>
             </article>
           </div>
-        </motion.section>
+        </Motion.section>
       </div>
     </main>
   );

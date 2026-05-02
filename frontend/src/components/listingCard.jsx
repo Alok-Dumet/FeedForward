@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { motion } from "motion/react";
+import { motion as Motion } from "motion/react";
 
 export default function ListingCard({
   eyebrow,
@@ -26,7 +26,7 @@ export default function ListingCard({
 
   if (variant === "compactHistory") {
     return (
-      <motion.article
+      <Motion.article
         initial={{ opacity: 0, y: 22 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
@@ -51,12 +51,12 @@ export default function ListingCard({
             </Link>
           ) : null}
         </div>
-      </motion.article>
+      </Motion.article>
     );
   }
 
   return (
-    <motion.article
+    <Motion.article
       initial={{ opacity: 0, y: 22 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
@@ -116,6 +116,6 @@ export default function ListingCard({
           </Link>
         </div>
       ) : null}
-    </motion.article>
+    </Motion.article>
   );
 }

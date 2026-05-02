@@ -1,20 +1,28 @@
 import { loaderFetch } from "../../utils/loaderFetch.js";
 import { formatPickupWindow } from "../../utils/formatDates.js";
+import {
+  formatFoodQuantity,
+  getFoodSummary,
+  getFoodTags,
+  getFoodTitle,
+  getPrimaryFood,
+} from "../../utils/foods.js";
 
 //We will turn a backend listing record into the card shape userRequests.jsx expects
 function buildItem(record) {
   const ownership = record.relationship === "own" ? "Posted by you" : "Claimed by you";
+  const primaryFood = getPrimaryFood(record);
 
   return {
     id: record.id,
     status: record.status,
-    title: record.food.name,
-    summary: record.food.description ?? record.additional_instructions ?? "",
-    quantity: [record.food.quantity, record.food.quantity_unit].filter(Boolean).join(" "),
+    title: getFoodTitle(record),
+    summary: getFoodSummary(record),
+    quantity: formatFoodQuantity(primaryFood),
     neededBy: formatPickupWindow(record.pickup_window_start, record.pickup_window_end),
     location: record.location.address_text,
     audience: record.creator.organization_name,
-    tags: [ownership, record.food.is_perishable ? "Perishable" : "Shelf-stable", record.food.category].filter(Boolean),
+    tags: [ownership, ...getFoodTags(record)],
   };
 }
 

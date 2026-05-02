@@ -106,18 +106,13 @@ def parse_validate_body(self, required_fields):
     return body
 
 
-def get_query_param(handler, name): # start of get_query_param() function definition
-
-    """ extracts one query parameter from the request URL """
-
-    query = urlparse(handler.path).query # take the request path, parse it as a URL and pull out only the query-string portion
-    values = parse_qs(query).get(name) # parse the query string into a dictionary and get the list of values for the requested parameter names
-
-    if not values: # check whether the parameter was missing or had no values
-        return None # let the call know value was absent
-
-    return values[0] # return the first value for that parameter since query params come back as lists
-# end of get_query_param() function definition
+#We will pull a single query-string parameter out of the request URL, returning None if it's absent
+def get_query_param(handler, name):
+    query = urlparse(handler.path).query
+    values = parse_qs(query).get(name)
+    if not values:
+        return None
+    return values[0]
 
 
 #We will parse an ISO datetime string and require a timezone offset so we never store naive timestamps
@@ -168,3 +163,48 @@ def validate_food_category(value):
 
     normalized = value.strip().lower()
     return normalized if normalized in ALLOWED_FOOD_CATEGORIES else None
+
+
+#We will validate and normalize the foods array sent by create listing endpoints
+def parse_food_items(value):
+    if not isinstance(value, list) or not value:
+        raise ValueError("foods must be a non-empty array")
+
+    foods = []
+
+    for index, item in enumerate(value, start=1):
+        if not isinstance(item, dict):
+            raise ValueError(f"foods[{index}] must be an object")
+
+        item = strip_strings(item)
+        missing = require_fields(item, ["name", "category", "quantity", "quantity_unit"])
+        if "is_perishable" not in item:
+            missing.append("is_perishable")
+        if missing:
+            raise ValueError(f"foods[{index}] missing fields: {', '.join(missing)}")
+
+        if not isinstance(item["is_perishable"], bool):
+            raise ValueError(f"foods[{index}].is_perishable must be a boolean")
+
+        category = validate_food_category(item["category"])
+        if category is None:
+            raise ValueError(f"foods[{index}].category is invalid")
+
+        quantity = parse_decimal(item["quantity"], f"foods[{index}].quantity")
+        if quantity <= 0:
+            raise ValueError(f"foods[{index}].quantity must be greater than 0")
+
+        foods.append({
+            "name": item["name"],
+            "description": item.get("description") or None,
+            "category": category,
+            "is_perishable": item["is_perishable"],
+            "quantity": quantity,
+            "quantity_unit": item["quantity_unit"],
+            "expiration_date": parse_optional_date(
+                item.get("expiration_date"),
+                f"foods[{index}].expiration_date"
+            ),
+        })
+
+    return foods

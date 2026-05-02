@@ -1,7 +1,7 @@
-import { Link, useRouteLoaderData } from "react-router-dom";
-import { motion } from "motion/react";
+import { Link } from "react-router-dom";
+import { motion as Motion } from "motion/react";
 
-import { getDefaultRouteForUserType, getUserType } from "../../session.js";
+import { useSession } from "../../hooks/useSession.js";
 
 const ROLE_DISPLAY_NAMES = {
   donor: "Food Provider",
@@ -9,16 +9,14 @@ const ROLE_DISPLAY_NAMES = {
 };
 
 export default function NotAuthorized() {
-  const session = useRouteLoaderData("root");
-  const userType = getUserType(session);
-  const defaultRoute = getDefaultRouteForUserType(userType);
+  const { userType, defaultRoute } = useSession();
 
   const otherRole = userType === "donor" ? "recipient" : "donor";
   const requiredRoleName = ROLE_DISPLAY_NAMES[otherRole] ?? "a different role";
 
   return (
     <main className="flex min-h-screen items-center justify-center px-6 py-10">
-      <motion.section
+      <Motion.section
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: "easeOut" }}
@@ -46,7 +44,7 @@ export default function NotAuthorized() {
             Go to your dashboard
           </Link>
         </div>
-      </motion.section>
+      </Motion.section>
     </main>
   );
 }

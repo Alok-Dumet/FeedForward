@@ -9,14 +9,15 @@ export default function ListingPageShell({
   description,
   items,
   filters = [],
-  stats = [],
   cardConfig = {},
   secondaryAction = null,
   filtersLabel = "Filters:",
   activeFilter = null,
   onFilterChange,
-  hideHero = false,
+  isFiltering = false,
+  hidePageHeader = false,
   lightHeader = false,
+  extraControls = null,
 }) {
   const {
     eyebrowKey = "category",
@@ -35,7 +36,7 @@ export default function ListingPageShell({
   return (
     <main className="px-6 py-10 sm:px-8 lg:px-12">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
-        {!hideHero ? (
+        {!hidePageHeader ? (
           <Motion.section
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
@@ -93,21 +94,6 @@ export default function ListingPageShell({
               ) : null}
             </div>
 
-            {stats.length > 0 ? (
-              <div className="mt-8 grid gap-4 sm:grid-cols-3">
-                {stats.map((stat) => (
-                  <div
-                    key={stat.label}
-                    className="rounded-3xl border border-white/10 bg-white/5 px-5 py-4"
-                  >
-                    <p className="text-xs font-semibold tracking-[0.15em] text-slate-400 uppercase">
-                      {stat.label}
-                    </p>
-                    <p className="mt-2 text-2xl font-bold text-white">{stat.value}</p>
-                  </div>
-                ))}
-              </div>
-            ) : null}
           </Motion.section>
         ) : null}
 
@@ -117,22 +103,36 @@ export default function ListingPageShell({
           transition={{ delay: 0.08, duration: 0.4, ease: "easeOut" }}
           className="rounded-[2rem] border border-white/70 bg-white/70 px-6 py-5 shadow-xl backdrop-blur-md"
         >
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="text-sm font-semibold text-slate-600">{filtersLabel}</span>
-            {filters.map((filter) => (
-              <button
-                key={filter}
-                type="button"
-                onClick={onFilterChange ? () => onFilterChange(filter) : undefined}
-                className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
-                  activeFilter === filter
-                    ? "border-slate-900 bg-slate-900 text-white hover:border-slate-900 hover:text-white"
-                    : "border-slate-200 bg-white text-slate-700 hover:border-amber-300 hover:text-amber-800"
-                }`}
-              >
-                {filter}
-              </button>
-            ))}
+          {extraControls ? <div className="mb-4">{extraControls}</div> : null}
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-sm font-semibold text-slate-600">{filtersLabel}</span>
+              {filters.map((filter) => (
+                <button
+                  key={filter}
+                  type="button"
+                  onClick={onFilterChange ? () => onFilterChange(filter) : undefined}
+                  className={`cursor-pointer rounded-full border px-4 py-2 text-sm font-medium transition ${
+                    activeFilter === filter
+                      ? "border-slate-900 bg-slate-900 text-white hover:border-slate-900 hover:text-white"
+                      : "border-slate-200 bg-white text-slate-700 hover:border-amber-300 hover:text-amber-800"
+                  }`}
+                >
+                  {filter}
+                </button>
+              ))}
+            </div>
+
+            <div
+              className={`flex min-w-28 items-center justify-end gap-2 text-sm font-semibold text-slate-600 transition ${
+                isFiltering ? "opacity-100" : "opacity-0"
+              }`}
+              aria-live="polite"
+              aria-hidden={!isFiltering}
+            >
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-slate-900" />
+              <span>Filtering</span>
+            </div>
           </div>
         </Motion.section>
 

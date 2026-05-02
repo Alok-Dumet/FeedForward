@@ -11,16 +11,16 @@ from utils import (
     strip_strings,
     send_json,
     parse_datetime,
-    parse_optional_date,
     parse_decimal,
-    validate_food_category,
+    parse_food_items,
 )
 
 
 router = Router()
 
 
-def create_request(handler): # start of create_request() function definition
+#POST endpoint handler that creates a request listing
+def create_request(handler):
 
     """
     main endpoint function that handles POST /api/listings/requests/create
@@ -47,13 +47,7 @@ def create_request(handler): # start of create_request() function definition
     # now we can start validating + normalizing required fields or the request creation
     required_fields = [
 
-        "food_name",
-
-        "food_category",
-
-        "quantity",
-
-        "quantity_unit",
+        "foods",
 
         "pickup_window_start",
 
@@ -67,24 +61,12 @@ def create_request(handler): # start of create_request() function definition
     ]
 
     missing = [name for name in required_fields if body.get(name) in (None, "")]
-    if "is_perishable" not in body:
-        missing.append("is_perishable")
 
     if missing:
         return send_json(handler, 400, {"error": f"Missing fields: {','.join(missing)}"})
 
-    if not isinstance(body["is_perishable"], bool):
-        return send_json(handler, 400, {"error":"is_perishable must be a boolean"})
-
-    food_category = validate_food_category(body["food_category"])
-    if food_category is None:
-        return send_json(handler, 400, {"error": "Invalid food_category"})
-
     try:
-
-        quantity = parse_decimal(body["quantity"], "quantity")
-        if quantity <= 0:
-            raise ValueError("quantity must be greater than 0")
+        foods = parse_food_items(body["foods"])
 
         latitude = parse_decimal(body["latitude"], "latitude")
         if latitude < Decimal("-90") or latitude > Decimal("90"):
@@ -103,18 +85,9 @@ def create_request(handler): # start of create_request() function definition
         if pickup_window_end < pickup_window_start:
             raise ValueError("pickup window end must be on or after pickup window start")
 
-        discard_deadline = None
-        if body.get("discard_deadline") not in (None, ""):
-            discard_deadline = parse_datetime(body["discard_deadline"], "discard_deadline")
-            if discard_deadline < pickup_window_start:
-                raise ValueError("discard_deadline must be on or after pickup_window_start")
-
-        expiration_date = parse_optional_date(body.get("expiration_date"), "expiration_date")
-
     except(TypeError, ValueError) as exc:
         return send_json(handler, 400, {"error": str(exc)})
 
-    food_description = body.get("food_description") or None
     additional_instructions = body.get("additional_instructions") or None
     # reaching here means all the fields have been validated + normalized
 
@@ -147,11 +120,10 @@ def create_request(handler): # start of create_request() function definition
                     location_id,
                     pickup_window_start,
                     pickup_window_end,
-                    discard_deadline,
                     travel_distance_miles,
                     additional_instructions
                 )
-                VALUES(%s, 'request', %s, %s, %s, %s, %s, %s)
+                VALUES(%s, 'request', %s, %s, %s, %s, %s)
                 RETURNING id, status, created_at, updated_at
                 """,
                 (
@@ -160,15 +132,15 @@ def create_request(handler): # start of create_request() function definition
                     location_id,
                     pickup_window_start,
                     pickup_window_end,
-                    discard_deadline,
                     travel_distance_miles,
                     additional_instructions,
                 )
             )
             listing = cur.fetchone()
 
-            cur.execute( # insert the food specific detail role associated with the listing
-
+            food_item_ids = []
+            for food in foods:
+                cur.execute( # insert each food item associated with the listing
                 """
                 INSERT INTO listing_food_items(
                     listing_id,
@@ -185,16 +157,16 @@ def create_request(handler): # start of create_request() function definition
                 """,
                 (
                     listing[0],
-                    body["food_name"],
-                    food_description,
-                    food_category,
-                    body["is_perishable"],
-                    quantity,
-                    body["quantity_unit"],
-                    expiration_date
+                    food["name"],
+                    food["description"],
+                    food["category"],
+                    food["is_perishable"],
+                    food["quantity"],
+                    food["quantity_unit"],
+                    food["expiration_date"]
                 )
-            )
-            food_item_id = cur.fetchone()[0]
+                )
+                food_item_ids.append(cur.fetchone()[0])
 
         db.commit() # lock in the db transactions
 
@@ -220,7 +192,6 @@ def create_request(handler): # start of create_request() function definition
             "updated_at": listing[3].isoformat(),
             "pickup_window_start": pickup_window_start.isoformat(),
             "pickup_window_end": pickup_window_end.isoformat(),
-            "discard_deadline": discard_deadline.isoformat() if discard_deadline else None,
             "travel_distance_miles": travel_distance_miles,
             "additional_instructions": additional_instructions,
             "location": {
@@ -229,16 +200,19 @@ def create_request(handler): # start of create_request() function definition
                 "latitude": str(latitude),
                 "longitude": str(longitude),
             },
-            "food": {
-                "id": food_item_id,
-                "name": body["food_name"],
-                "description": food_description,
-                "category": food_category,
-                "is_perishable": body["is_perishable"],
-                "quantity": str(quantity),
-                "quantity_unit": body["quantity_unit"],
-                "expiration_date": expiration_date.isoformat() if expiration_date else None,
-            },
+            "foods": [
+                {
+                    "id": food_item_ids[index],
+                    "name": food["name"],
+                    "description": food["description"],
+                    "category": food["category"],
+                    "is_perishable": food["is_perishable"],
+                    "quantity": str(food["quantity"]),
+                    "quantity_unit": food["quantity_unit"],
+                    "expiration_date": food["expiration_date"].isoformat() if food["expiration_date"] else None,
+                }
+                for index, food in enumerate(foods)
+            ],
         }
     })
 # end of create_request() function definition

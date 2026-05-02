@@ -61,9 +61,18 @@ def get_user(self):
         with db.cursor() as cur:
             cur.execute(
                 """
-                SELECT id, email, role, organization_name
+                SELECT
+                    users.id,
+                    users.email,
+                    users.role,
+                    users.organization_name,
+                    users.location_id,
+                    locations.latitude,
+                    locations.longitude
                 FROM users
-                WHERE id = %s
+                LEFT JOIN locations
+                    ON locations.id = users.location_id
+                WHERE users.id = %s
                 """,
                 (user_id,)
             )
@@ -80,6 +89,9 @@ def get_user(self):
         "email": user[1],
         "role": user[2],
         "organization_name": user[3],
+        "location_id": user[4],
+        "latitude": str(user[5]) if user[5] is not None else None,
+        "longitude": str(user[6]) if user[6] is not None else None,
     }
 
     self._cached_user = resolved

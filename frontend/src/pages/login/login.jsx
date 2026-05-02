@@ -1,158 +1,65 @@
 import { useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
-import { motion } from "motion/react";
+import { motion as Motion } from "motion/react";
 
-import {
-  createMockSession,
-  getDefaultRouteForUserType,
-  getUserType,
-  inferMockUserType,
-  persistMockSession,
-} from "../../session.js";
+import { getDefaultRouteForUserType, getUserType } from "../../session.js";
+import { useSessionActions } from "../../hooks/useSession.js";
 
 export default function Login() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
   const message = location.state?.message ?? "";
+  const { setSession } = useSessionActions();
 
+  //We will submit credentials to /api/login, then read /api/session to determine where to redirect
   async function handleSubmit(e) {
     e.preventDefault();
 
     const email = e.currentTarget.elements.email.value;
     const password = e.currentTarget.elements.password.value;
-    const normalizedEmail = email.trim().toLowerCase();
 
     if (location.state?.message) {
       navigate(location.pathname, { replace: true, state: null });
     }
 
-    if (import.meta.env.DEV && normalizedEmail.endsWith("@feedforward.local")) {
-      const userType = inferMockUserType(normalizedEmail);
-
-      persistMockSession(
-        createMockSession(userType, {
-          user: {
-            email: normalizedEmail,
-          },
-        }),
-      );
-
-      setError("");
-      navigate(getDefaultRouteForUserType(userType), { replace: true });
-      return;
-    }
-
     try {
       const res = await fetch("/api/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       });
-      const contentType = res.headers.get("content-type") ?? "";
-      const data = contentType.includes("application/json") ? await res.json() : null;
+      const data = await res.json();
 
       if (!res.ok) {
-        if (import.meta.env.DEV && !contentType.includes("application/json")) {
-          const userType = inferMockUserType(email);
-          const mockSession = createMockSession(userType, {
-            user: {
-              email,
-            },
-          });
-
-          persistMockSession(mockSession);
-          setError("");
-          navigate(getDefaultRouteForUserType(userType), { replace: true });
-          return;
-        }
-
         setError(data?.error ?? "Unable to log in");
-      } else {
-        let userType = null;
-        let sessionData = null;
-
-        const sessionRes = await fetch("/api/session", {
-          headers: {
-            Accept: "application/json",
-          },
-        });
-        const sessionContentType = sessionRes.headers.get("content-type") ?? "";
-
-        if (sessionRes.ok && sessionContentType.includes("application/json")) {
-          sessionData = await sessionRes.json();
-          userType = getUserType(sessionData);
-        }
-
-        if (!userType) {
-          userType = getUserType(data);
-        }
-
-        if (!userType) {
-          if (import.meta.env.DEV) {
-            userType = inferMockUserType(email);
-            persistMockSession(
-              createMockSession(userType, {
-                user: {
-                  email,
-                },
-              }),
-            );
-          } else {
-            setError("Unable to determine account type");
-            return;
-          }
-        }
-
-        const redirectPath = getDefaultRouteForUserType(userType);
-
-        if (import.meta.env.DEV && userType) {
-          persistMockSession(
-            createMockSession(userType, {
-              user: {
-                email,
-              },
-            }),
-          );
-        }
-
-        setError("");
-        navigate(redirectPath, {
-          replace: true,
-          state: {
-            session: sessionData ?? data,
-          },
-        });
-      }
-    } catch {
-      if (import.meta.env.DEV) {
-        const userType = inferMockUserType(email);
-
-        persistMockSession(
-          createMockSession(userType, {
-            user: {
-              email,
-            },
-          }),
-        );
-
-        setError("");
-        navigate(getDefaultRouteForUserType(userType), { replace: true });
         return;
       }
 
+      const sessionRes = await fetch("/api/session", {
+        headers: { Accept: "application/json" },
+      });
+      const session = sessionRes.ok ? await sessionRes.json() : data;
+      const userType = getUserType(session);
+
+      if (!userType) {
+        setError("Unable to determine account type");
+        return;
+      }
+
+      setError("");
+      setSession(session);
+      navigate(getDefaultRouteForUserType(userType), {
+        replace: true,
+      });
+    } catch {
       setError("Network Error");
     }
   }
 
   return (
     <div className="flex min-h-screen items-center justify-center px-6">
-      <motion.section
+      <Motion.section
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: "easeOut" }}
@@ -208,7 +115,7 @@ export default function Login() {
 
           <button
             type="submit"
-            className="w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white transition hover:bg-slate-800"
+            className="w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white transition hover:bg-slate-800 cursor-pointer"
           >
             Log In
           </button>
@@ -223,7 +130,7 @@ export default function Login() {
             Register
           </Link>
         </div>
-      </motion.section>
+      </Motion.section>
     </div>
   );
 }

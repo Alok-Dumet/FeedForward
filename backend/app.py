@@ -6,12 +6,16 @@ from routes import authHandler
 from routes import historyHandler
 from routes import serveHandler
 from routes import listingHandler
+from routes import detailsHandler
+from routes import claimHandler
 from routes import offerHandler
 from routes import requestHandler
 
 ROUTERS = [
     authHandler.router,
-    listingHandler.router,  # handles listing details and accept/order API routes
+    listingHandler.router,  # handles listing feed API routes
+    detailsHandler.router,  # handles listing details API routes
+    claimHandler.router,  # handles listing claim API routes
     offerHandler.router, # handles offer creation
     requestHandler.router, # handles request creation
     historyHandler.router, 

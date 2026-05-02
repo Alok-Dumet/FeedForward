@@ -1,7 +1,90 @@
+import { useState } from "react";
 import { Link, useLoaderData } from "react-router-dom";
 
+import { formatPickupWindow } from "../../utils/formatDates.js";
+import { formatFoodCategory, formatFoodQuantity, getFoodTitle } from "../../utils/foods.js";
+
+const dateFmt = new Intl.DateTimeFormat("en-US", { dateStyle: "medium" });
+
+function humanize(value) {
+  if (!value) {
+    return "To be confirmed";
+  }
+
+  return value
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+function formatDate(value) {
+  if (!value) {
+    return "To be confirmed";
+  }
+
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : dateFmt.format(date);
+}
+
+function DetailField({ label, value }) {
+  return (
+    <div>
+      <dt className="text-xs font-semibold tracking-[0.15em] text-slate-500 uppercase">
+        {label}
+      </dt>
+      <dd className="mt-1 text-sm text-slate-900">{value || "To be confirmed"}</dd>
+    </div>
+  );
+}
+
 export default function Details() {
-  const { record } = useLoaderData();
+  const { page, record } = useLoaderData();
+  const foods = record.foods ?? [];
+  const [status, setStatus] = useState(record.status);
+  const [claimState, setClaimState] = useState({ status: "idle", message: "" });
+
+  const isOffer = record.type === "offer";
+  const isRequest = record.type === "request";
+  const isHistory = page.backTo === "/history";
+  const isOwnListing = record.current_user?.id === record.creator_user_id;
+  const canAccept = !isHistory && status === "available" && !isOwnListing;
+  const claimPending = claimState.status === "submitting";
+  const distanceLabel = isOffer
+    ? "Distance we're willing to deliver"
+    : "Distance we're willing to pick up";
+
+  async function handleAcceptListing() {
+    setClaimState({ status: "submitting", message: "" });
+
+    try {
+      const res = await fetch("/api/listings/accept", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          listing_id: record.id,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        setClaimState({
+          status: "error",
+          message: data?.error ?? "Unable to update this listing.",
+        });
+        return;
+      }
+
+      setStatus("claimed");
+      setClaimState({
+        status: "success",
+        message: "Accepted.",
+      });
+    } catch {
+      setClaimState({ status: "error", message: "Network error." });
+    }
+  }
 
   return (
     <main className="px-6 py-10 sm:px-8 lg:px-12">
@@ -10,94 +93,131 @@ export default function Details() {
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <p className="text-sm font-medium tracking-[0.18em] text-amber-700 uppercase">
-                {record.sectionLabel}
+                {page.sectionLabel}
               </p>
-              <h1 className="mt-2 text-3xl font-bold text-slate-900">{record.title}</h1>
-              <p className="mt-2 text-sm text-slate-600">{record.orderNumber}</p>
+              <h1 className="mt-2 text-3xl font-bold text-slate-900">
+                {getFoodTitle(record)}
+              </h1>
             </div>
 
             <Link
-              to={record.backTo}
+              to={page.backTo}
               className="inline-flex rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-amber-300 hover:text-amber-800"
             >
-              Back to {record.backLabel}
+              Back to {page.backLabel}
             </Link>
           </div>
 
-          {record.primaryAction ? (
+          {!isHistory ? (
             <div className="mt-5">
               <button
                 type="button"
-                className="inline-flex rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                onClick={handleAcceptListing}
+                disabled={!canAccept || claimPending}
+                className="inline-flex cursor-pointer rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
               >
-                {record.primaryAction.label}
+                {claimPending ? "Working..." : "Accept"}
               </button>
+              {isOwnListing ? (
+                <p className="mt-2 text-sm text-slate-600">
+                  You created this listing, so it cannot be accepted from this view.
+                </p>
+              ) : null}
+              {!isOwnListing && status !== "available" ? (
+                <p className="mt-2 text-sm text-slate-600">
+                  This listing is no longer available.
+                </p>
+              ) : null}
+              {claimState.message ? (
+                <p
+                  className={`mt-2 text-sm font-medium ${
+                    claimState.status === "error" ? "text-red-600" : "text-emerald-700"
+                  }`}
+                >
+                  {claimState.message}
+                </p>
+              ) : null}
             </div>
           ) : null}
         </section>
 
         <section className="rounded-[1.75rem] border border-white/70 bg-white/85 px-6 py-5 shadow-xl backdrop-blur-md">
-          <h2 className="text-lg font-semibold text-slate-900">Items</h2>
-          <div className="mt-4 divide-y divide-slate-200">
-            {record.items.map((item) => (
-              <div
-                key={`${item.name}-${item.quantity ?? "item"}`}
-                className="flex items-start justify-between gap-4 py-3"
+          <h2 className="text-lg font-semibold text-slate-900">Food Details</h2>
+          <div className="mt-4 grid gap-4">
+            {foods.map((food) => (
+              <article
+                key={food.id}
+                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4"
               >
-                <p className="text-sm font-medium text-slate-900">{item.name}</p>
-                <p className="text-sm text-slate-600">{item.quantity ?? "To be confirmed"}</p>
-              </div>
+                <h3 className="text-base font-semibold text-slate-900">{food.name}</h3>
+
+                <dl className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <DetailField label="Quantity" value={formatFoodQuantity(food)} />
+                  <DetailField label="Category" value={formatFoodCategory(food.category)} />
+                  <DetailField
+                    label="Handling"
+                    value={food.is_perishable ? "Perishable" : "Shelf-stable"}
+                  />
+                  <DetailField
+                    label="Expiration Date"
+                    value={formatDate(food.expiration_date)}
+                  />
+                </dl>
+
+                {food.description ? (
+                  <div className="mt-5 rounded-2xl bg-white px-4 py-3">
+                    <p className="text-xs font-semibold tracking-[0.15em] text-slate-500 uppercase">
+                      Description
+                    </p>
+                    <p className="mt-1 text-sm leading-6 text-slate-700">
+                      {food.description}
+                    </p>
+                  </div>
+                ) : null}
+              </article>
             ))}
           </div>
         </section>
 
         <section className="rounded-[1.75rem] border border-white/70 bg-white/85 px-6 py-5 shadow-xl backdrop-blur-md">
           <h2 className="text-lg font-semibold text-slate-900">
-            Delivery / Recipient Information
+            Pickup and Coordination
           </h2>
           <dl className="mt-4 grid gap-4 sm:grid-cols-2">
-            <div>
-              <dt className="text-xs font-semibold tracking-[0.15em] text-slate-500 uppercase">
-                Organization
-              </dt>
-              <dd className="mt-1 text-sm text-slate-900">{record.organization_name}</dd>
-            </div>
-            <div>
-              <dt className="text-xs font-semibold tracking-[0.15em] text-slate-500 uppercase">
-                Completion Time
-              </dt>
-              <dd className="mt-1 text-sm text-slate-900">{record.completionTime}</dd>
-            </div>
-            <div>
-              <dt className="text-xs font-semibold tracking-[0.15em] text-slate-500 uppercase">
-                Address
-              </dt>
-              <dd className="mt-1 text-sm text-slate-900">{record.address}</dd>
-            </div>
-            <div>
-              <dt className="text-xs font-semibold tracking-[0.15em] text-slate-500 uppercase">
-                Phone Number
-              </dt>
-              <dd className="mt-1 text-sm text-slate-900">{record.phoneNumber}</dd>
-            </div>
+            <DetailField
+              label={isRequest ? "Needed By" : "Pickup Window"}
+              value={formatPickupWindow(record.pickup_window_start, record.pickup_window_end)}
+            />
+            <DetailField label="Address" value={record.location?.address_text} />
+            <DetailField
+              label={distanceLabel}
+              value={`${record.travel_distance_miles ?? 0} miles`}
+            />
           </dl>
+
+          {record.additional_instructions ? (
+            <div className="mt-5 rounded-2xl bg-slate-100 px-4 py-3">
+              <p className="text-xs font-semibold tracking-[0.15em] text-slate-500 uppercase">
+                Instructions
+              </p>
+              <p className="mt-1 text-sm leading-6 text-slate-700">
+                {record.additional_instructions}
+              </p>
+            </div>
+          ) : null}
         </section>
 
         <section className="rounded-[1.75rem] border border-white/70 bg-white/85 px-6 py-5 shadow-xl backdrop-blur-md">
-          <h2 className="text-lg font-semibold text-slate-900">Order Information</h2>
+          <h2 className="text-lg font-semibold text-slate-900">Listing Information</h2>
           <dl className="mt-4 grid gap-4 sm:grid-cols-2">
-            <div>
-              <dt className="text-xs font-semibold tracking-[0.15em] text-slate-500 uppercase">
-                Order Number
-              </dt>
-              <dd className="mt-1 text-sm text-slate-900">{record.orderNumber}</dd>
-            </div>
-            <div>
-              <dt className="text-xs font-semibold tracking-[0.15em] text-slate-500 uppercase">
-                Order Status
-              </dt>
-              <dd className="mt-1 text-sm text-slate-900">{record.status}</dd>
-            </div>
+            <DetailField
+              label={isOffer ? "Provider Organization" : "Requesting Organization"}
+              value={record.creator?.organization_name}
+            />
+            <DetailField label="Contact Email" value={record.creator?.email} />
+            <DetailField label="Status" value={humanize(status)} />
+            <DetailField label="Created" value={formatDate(record.created_at)} />
+            <DetailField label="Last Updated" value={formatDate(record.updated_at)} />
           </dl>
         </section>
       </div>

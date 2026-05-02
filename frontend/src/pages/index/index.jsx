@@ -1,25 +1,25 @@
 import { Link } from "react-router-dom";
-import { motion } from "motion/react";
+import { motion as Motion } from "motion/react";
 
 export default function Index() {
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-6">
-      <motion.section
+      <Motion.section
         initial={{ opacity: 0, y: 30, scale: 0.96 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
         className="relative z-10 flex w-full max-w-4xl flex-col items-center justify-center rounded-[2rem] border border-white/70 bg-slate-950 px-8 py-12 shadow-2xl"
       >
-        <motion.h1
+        <Motion.h1
           initial={{ opacity: 0, letterSpacing: "0.25em" }}
           animate={{ opacity: 1, letterSpacing: "0.05em" }}
           transition={{ delay: 0.2, duration: 0.7 }}
           className="text-center text-4xl font-extrabold text-emerald-400 sm:text-6xl"
         >
           FEED FORWARD
-        </motion.h1>
+        </Motion.h1>
 
-        <motion.p
+        <Motion.p
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.35, duration: 0.5 }}
@@ -27,15 +27,15 @@ export default function Index() {
         >
           Connecting surplus food providers with organizations that can put it
           to use.
-        </motion.p>
+        </Motion.p>
 
-        <motion.div
+        <Motion.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.5 }}
           className="mt-8 flex flex-wrap items-center justify-center gap-4"
         >
-          <motion.div
+          <Motion.div
             whileHover={{ scale: 1.05, y: -2 }}
             whileTap={{ scale: 0.98 }}
           >
@@ -45,9 +45,9 @@ export default function Index() {
             >
               Log In
             </Link>
-          </motion.div>
+          </Motion.div>
 
-          <motion.div
+          <Motion.div
             whileHover={{ scale: 1.05, y: -2 }}
             whileTap={{ scale: 0.98 }}
           >
@@ -57,9 +57,9 @@ export default function Index() {
             >
               Register
             </Link>
-          </motion.div>
-        </motion.div>
-      </motion.section>
+          </Motion.div>
+        </Motion.div>
+      </Motion.section>
     </main>
   );
 }

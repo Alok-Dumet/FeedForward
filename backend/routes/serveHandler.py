@@ -6,13 +6,14 @@ import os
 DIST_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist"))
 
 
-#Differentiates between requests for static assets and requests for the main html file
+#GET request handler that serves assets or the frontend app shell
 def handle(handler):
     if handler.path.startswith("/assets/"):
         handleAssets(handler)
     else:
         serveFrontend(handler)
 
+#GET request handler that serves built frontend assets
 def handleAssets(handler):
     #We will resolve the requested path and confirm it stays inside DIST_DIR so an attacker cannot escape with "../" segments
     requested = os.path.realpath(os.path.join(DIST_DIR, handler.path.lstrip("/")))
@@ -34,6 +35,7 @@ def handleAssets(handler):
         handler.send_response(404)
         handler.end_headers()
 
+#GET request handler that serves the built frontend app shell
 def serveFrontend(handler):
     #We will return 404 instead of crashing if the frontend hasn't been built yet
     index_path = os.path.join(DIST_DIR, "index.html")

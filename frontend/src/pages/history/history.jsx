@@ -11,7 +11,6 @@ export default function History() {
       description="Review completed, expired, canceled, and archived records in one place."
       items={items}
       filters={filters}
-      stats={[]}
       secondaryAction={null}
       filtersLabel="History filters:"
       lightHeader
