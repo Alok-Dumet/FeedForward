@@ -13,15 +13,20 @@ class GeocodingError(Exception):
     pass
 
 
-#We will look up an address with Nominatim and return (latitude, longitude)
-def geocode_address(address_text):
-    if not isinstance(address_text, str) or not address_text.strip():
-        raise GeocodingError("Address is required")
+#We will look up a US city/state with Nominatim and return (latitude, longitude)
+def geocode_city_state(city, state):
+    if not isinstance(city, str) or not city.strip():
+        raise GeocodingError("City is required")
+    if not isinstance(state, str) or not state.strip():
+        raise GeocodingError("State is required")
 
     query = urllib.parse.urlencode({
-        "q": address_text.strip(),
+        "city": city.strip(),
+        "state": state.strip(),
+        "country": "United States",
         "format": "json",
         "limit": 1,
+        "countrycodes": "us",
     })
     url = f"{NOMINATIM_URL}?{query}"
 
@@ -34,7 +39,7 @@ def geocode_address(address_text):
         raise GeocodingError("Unable to reach the geocoding service") from exc
 
     if not payload:
-        raise GeocodingError("We couldn't find that address. Please try a more specific one.")
+        raise GeocodingError("We couldn't find that city and state. Please check the spelling.")
 
     first = payload[0]
     try:

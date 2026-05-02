@@ -5,16 +5,15 @@ function toFiniteNumber(value) {
   return Number.isFinite(number) ? number : null;
 }
 
-export function getRadiusMiles(request, preferredRadiusMiles, fallback = 25) {
+export function getRadiusMiles(request, fallback = 150) {
   const url = new URL(request.url);
   const urlRadius = toFiniteNumber(url.searchParams.get("radius_miles"));
 
-  if (urlRadius !== null && urlRadius >= 0) {
+  if (urlRadius !== null && urlRadius > 0) {
     return urlRadius;
   }
 
-  const preferred = toFiniteNumber(preferredRadiusMiles);
-  return preferred !== null && preferred >= 0 ? preferred : fallback;
+  return fallback;
 }
 
 export function haversineMiles(origin, destination) {

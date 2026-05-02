@@ -29,13 +29,10 @@ CREATE TABLE public.users (
     organization_name        TEXT NOT NULL,
     phone_number             TEXT,
     location_id              BIGINT REFERENCES public.locations(id) ON DELETE SET NULL,
-    preferred_radius_miles   INTEGER NOT NULL DEFAULT 25,
     created_at               TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at               TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT users_role_check
-        CHECK (role IN ('food_provider', 'recipient_organization')),
-    CONSTRAINT users_preferred_radius_miles_check
-        CHECK (preferred_radius_miles >= 0)
+        CHECK (role IN ('food_provider', 'recipient_organization'))
 );
 
 CREATE INDEX users_role_idx        ON public.users (role);
@@ -52,7 +49,6 @@ CREATE TABLE public.listings (
     location_id              BIGINT NOT NULL REFERENCES public.locations(id) ON DELETE RESTRICT,
     pickup_window_start      TIMESTAMPTZ NOT NULL,
     pickup_window_end        TIMESTAMPTZ NOT NULL,
-    discard_deadline         TIMESTAMPTZ,
     travel_distance_miles    INTEGER NOT NULL DEFAULT 0,
     additional_instructions  TEXT,
     status                   TEXT NOT NULL DEFAULT 'available',
@@ -65,16 +61,13 @@ CREATE TABLE public.listings (
     CONSTRAINT listings_travel_distance_miles_check
         CHECK (travel_distance_miles >= 0),
     CONSTRAINT listings_pickup_window_check
-        CHECK (pickup_window_end >= pickup_window_start),
-    CONSTRAINT listings_discard_deadline_check
-        CHECK (discard_deadline IS NULL OR discard_deadline >= pickup_window_start)
+        CHECK (pickup_window_end >= pickup_window_start)
 );
 
 CREATE INDEX listings_creator_user_id_idx ON public.listings (creator_user_id);
 CREATE INDEX listings_location_id_idx     ON public.listings (location_id);
 CREATE INDEX listings_type_status_idx     ON public.listings (listing_type, status);
 CREATE INDEX listings_pickup_window_idx   ON public.listings (pickup_window_start, pickup_window_end);
-CREATE INDEX listings_discard_deadline_idx ON public.listings (discard_deadline);
 
 
 -- listing_food_items: each listing can carry multiple food items. Stored

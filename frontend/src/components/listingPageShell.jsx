@@ -14,6 +14,7 @@ export default function ListingPageShell({
   filtersLabel = "Filters:",
   activeFilter = null,
   onFilterChange,
+  isFiltering = false,
   hidePageHeader = false,
   lightHeader = false,
   extraControls = null,
@@ -103,22 +104,35 @@ export default function ListingPageShell({
           className="rounded-[2rem] border border-white/70 bg-white/70 px-6 py-5 shadow-xl backdrop-blur-md"
         >
           {extraControls ? <div className="mb-4">{extraControls}</div> : null}
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="text-sm font-semibold text-slate-600">{filtersLabel}</span>
-            {filters.map((filter) => (
-              <button
-                key={filter}
-                type="button"
-                onClick={onFilterChange ? () => onFilterChange(filter) : undefined}
-                className={`cursor-pointer rounded-full border px-4 py-2 text-sm font-medium transition ${
-                  activeFilter === filter
-                    ? "border-slate-900 bg-slate-900 text-white hover:border-slate-900 hover:text-white"
-                    : "border-slate-200 bg-white text-slate-700 hover:border-amber-300 hover:text-amber-800"
-                }`}
-              >
-                {filter}
-              </button>
-            ))}
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-sm font-semibold text-slate-600">{filtersLabel}</span>
+              {filters.map((filter) => (
+                <button
+                  key={filter}
+                  type="button"
+                  onClick={onFilterChange ? () => onFilterChange(filter) : undefined}
+                  className={`cursor-pointer rounded-full border px-4 py-2 text-sm font-medium transition ${
+                    activeFilter === filter
+                      ? "border-slate-900 bg-slate-900 text-white hover:border-slate-900 hover:text-white"
+                      : "border-slate-200 bg-white text-slate-700 hover:border-amber-300 hover:text-amber-800"
+                  }`}
+                >
+                  {filter}
+                </button>
+              ))}
+            </div>
+
+            <div
+              className={`flex min-w-28 items-center justify-end gap-2 text-sm font-semibold text-slate-600 transition ${
+                isFiltering ? "opacity-100" : "opacity-0"
+              }`}
+              aria-live="polite"
+              aria-hidden={!isFiltering}
+            >
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-slate-900" />
+              <span>Filtering</span>
+            </div>
           </div>
         </Motion.section>
 

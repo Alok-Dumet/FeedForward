@@ -9,6 +9,14 @@ export default function Register() {
   async function handleSubmit(e) {
     e.preventDefault();
 
+    const streetAddress = e.currentTarget.elements.street_address.value.trim();
+    const city = e.currentTarget.elements.city.value.trim();
+    const state = e.currentTarget.elements.state.value.trim();
+    const postalCode = e.currentTarget.elements.postal_code.value.trim();
+    const addressText = [streetAddress, city, [state, postalCode].filter(Boolean).join(" ")]
+      .filter(Boolean)
+      .join(", ");
+
     try {
       const res = await fetch("/api/register", {
         method: "POST",
@@ -20,7 +28,10 @@ export default function Register() {
           password: e.currentTarget.elements.password.value,
           role: e.currentTarget.elements.role.value,
           organization_name: e.currentTarget.elements.organization_name.value,
-          address_text: e.currentTarget.elements.address_text.value,
+          street_address: streetAddress,
+          address_text: addressText,
+          city,
+          state,
         }),
       });
 
@@ -98,22 +109,77 @@ export default function Register() {
 
           <div>
             <label
-              htmlFor="address_text"
+              htmlFor="street_address"
               className="mb-2 block text-sm font-medium text-slate-700"
             >
-              Address
+              Street Address
             </label>
             <input
-              id="address_text"
-              name="address_text"
+              id="street_address"
+              name="street_address"
               type="text"
               autoComplete="street-address"
-              placeholder="123 Main St, Springfield, IL"
+              placeholder="123 Main St, Suite 4"
               className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 transition outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
             />
             <p className="mt-1 text-xs text-slate-500">
-              We use your address to match you with nearby offers and requests.
+              We store your full address for coordination, but match distance by city and state.
             </p>
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-[1fr_8rem]">
+            <div>
+              <label
+                htmlFor="city"
+                className="mb-2 block text-sm font-medium text-slate-700"
+              >
+                City
+              </label>
+              <input
+                id="city"
+                name="city"
+                type="text"
+                autoComplete="address-level2"
+                placeholder="Springfield"
+                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 transition outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="state"
+                className="mb-2 block text-sm font-medium text-slate-700"
+              >
+                State
+              </label>
+              <input
+                id="state"
+                name="state"
+                type="text"
+                autoComplete="address-level1"
+                placeholder="IL"
+                maxLength={2}
+                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 uppercase transition outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label
+              htmlFor="postal_code"
+              className="mb-2 block text-sm font-medium text-slate-700"
+            >
+              ZIP Code
+            </label>
+            <input
+              id="postal_code"
+              name="postal_code"
+              type="text"
+              inputMode="numeric"
+              autoComplete="postal-code"
+              placeholder="62701"
+              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 transition outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
+            />
           </div>
 
           <div>

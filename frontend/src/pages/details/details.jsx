@@ -183,10 +183,6 @@ export default function Details() {
               label="Travel Distance"
               value={`${record.travel_distance_miles ?? 0} miles`}
             />
-            <DetailField
-              label="Discard Deadline"
-              value={formatDate(record.discard_deadline)}
-            />
           </dl>
 
           {record.additional_instructions ? (

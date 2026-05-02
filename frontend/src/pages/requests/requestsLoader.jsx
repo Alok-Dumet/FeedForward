@@ -62,7 +62,7 @@ function buildRequestItem(record) {
 
 export default async function requestsLoader({ request }) {
   const payload = await loaderFetch("/api/listings", request, "Unable to load requests.");
-  const radiusMiles = getRadiusMiles(request, payload.current_user?.preferred_radius_miles);
+  const radiusMiles = getRadiusMiles(request);
   const records = withDistanceFilteredRecords(
     payload.records ?? [],
     payload.current_user,
@@ -75,6 +75,5 @@ export default async function requestsLoader({ request }) {
     filters: items.length > 0 ? [ALL_FILTER, ...realFilters] : [],
     items,
     radiusMiles,
-    preferredRadiusMiles: payload.current_user?.preferred_radius_miles ?? null,
   };
 }

@@ -103,12 +103,6 @@ def create_request(handler): # start of create_request() function definition
         if pickup_window_end < pickup_window_start:
             raise ValueError("pickup window end must be on or after pickup window start")
 
-        discard_deadline = None
-        if body.get("discard_deadline") not in (None, ""):
-            discard_deadline = parse_datetime(body["discard_deadline"], "discard_deadline")
-            if discard_deadline < pickup_window_start:
-                raise ValueError("discard_deadline must be on or after pickup_window_start")
-
         expiration_date = parse_optional_date(body.get("expiration_date"), "expiration_date")
 
     except(TypeError, ValueError) as exc:
@@ -147,11 +141,10 @@ def create_request(handler): # start of create_request() function definition
                     location_id,
                     pickup_window_start,
                     pickup_window_end,
-                    discard_deadline,
                     travel_distance_miles,
                     additional_instructions
                 )
-                VALUES(%s, 'request', %s, %s, %s, %s, %s, %s)
+                VALUES(%s, 'request', %s, %s, %s, %s, %s)
                 RETURNING id, status, created_at, updated_at
                 """,
                 (
@@ -160,7 +153,6 @@ def create_request(handler): # start of create_request() function definition
                     location_id,
                     pickup_window_start,
                     pickup_window_end,
-                    discard_deadline,
                     travel_distance_miles,
                     additional_instructions,
                 )
@@ -220,7 +212,6 @@ def create_request(handler): # start of create_request() function definition
             "updated_at": listing[3].isoformat(),
             "pickup_window_start": pickup_window_start.isoformat(),
             "pickup_window_end": pickup_window_end.isoformat(),
-            "discard_deadline": discard_deadline.isoformat() if discard_deadline else None,
             "travel_distance_miles": travel_distance_miles,
             "additional_instructions": additional_instructions,
             "location": {

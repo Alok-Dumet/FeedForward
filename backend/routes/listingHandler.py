@@ -50,7 +50,6 @@ def get_listing_details(handler): # start of get_listing_details() function defi
                     listings.listing_type,  -- the type/category of listing
                     listings.pickup_window_start,  -- when pickup can start
                     listings.pickup_window_end,  -- when pickup can end
-                    listings.discard_deadline,  -- the deadline before the food must be discarded
                     listings.travel_distance_miles,  -- how far someone may need to travel for pickup
                     listings.additional_instructions,  -- any extra notes or instructions attached to the listing
                     listings.status,  -- current status of the listing
@@ -119,40 +118,39 @@ def get_listing_details(handler): # start of get_listing_details() function defi
                         "type": row[2],  # map selected column 2 to the listing type
                         "pickup_window_start": row[3].isoformat(),  # convert pickup_window_start datetime into an ISO string for JSON
                         "pickup_window_end": row[4].isoformat(),  # convert pickup_window_end datetime into an ISO string for JSON
-                        "discard_deadline": row[5].isoformat() if row[5] else None,  # convert discard_deadline if it exists, otherwise return null
-                        "travel_distance_miles": row[6],  # include the travel distance value directly
-                        "additional_instructions": row[7],  # include any extra instructions directly
-                        "status": row[8],  # include the listing status directly
-                        "created_at": row[9].isoformat(),  # convert created_at datetime into an ISO string
-                        "updated_at": row[10].isoformat(),  # convert updated_at datetime into an ISO string
+                        "travel_distance_miles": row[5],  # include the travel distance value directly
+                        "additional_instructions": row[6],  # include any extra instructions directly
+                        "status": row[7],  # include the listing status directly
+                        "created_at": row[8].isoformat(),  # convert created_at datetime into an ISO string
+                        "updated_at": row[9].isoformat(),  # convert updated_at datetime into an ISO string
                         
                         "location": {  # nested object for location-related fields
-                            "address_text": row[11],  # human-readable address
-                            "latitude": str(row[12]),  # convert latitude to string before sending JSON
-                            "longitude": str(row[13]),  # convert longitude to string before sending JSON
+                            "address_text": row[10],  # human-readable address
+                            "latitude": str(row[11]),  # convert latitude to string before sending JSON
+                            "longitude": str(row[12]),  # convert longitude to string before sending JSON
                         },  # end of nested location object
 
                         "food": {  # nested object for food-item-related fields
-                            "name": row[14],  # food item name
-                            "description": row[15],  # food item description
-                            "category": row[16],  # food item category
-                            "is_perishable": row[17],  # boolean telling whether the food is perishable
-                            "quantity": str(row[18]),  # convert quantity to string before sending JSON
-                            "quantity_unit": row[19],  # unit associated with quantity
-                            "expiration_date": row[20].isoformat() if row[20] else None,  # convert expiration date if it exists, else null
+                            "name": row[13],  # food item name
+                            "description": row[14],  # food item description
+                            "category": row[15],  # food item category
+                            "is_perishable": row[16],  # boolean telling whether the food is perishable
+                            "quantity": str(row[17]),  # convert quantity to string before sending JSON
+                            "quantity_unit": row[18],  # unit associated with quantity
+                            "expiration_date": row[19].isoformat() if row[19] else None,  # convert expiration date if it exists, else null
                         },  # end of nested food object
 
                         "creator": {  # nested object for the creator's basic info
-                            "organization_name": row[21],  # include the creator organization's name
+                            "organization_name": row[20],  # include the creator organization's name
                         },  # end of nested creator object
 
                         "claim": {  # build a nested claim object if there is an active claim row
-                            "id": row[22],  # claim id
-                            "claimant_user_id": row[23],  # id of the claimant user
-                            "status": row[24],  # claim status
-                            "claimed_at": row[25].isoformat() if row[25] else None,  # convert claimed_at if present
-                            "resolved_at": row[26].isoformat() if row[26] else None,  # convert resolved_at if present
-                        } if row[22] else None,  # if there is no claim id, send claim as null instead of an object
+                            "id": row[21],  # claim id
+                            "claimant_user_id": row[22],  # id of the claimant user
+                            "status": row[23],  # claim status
+                            "claimed_at": row[24].isoformat() if row[24] else None,  # convert claimed_at if present
+                            "resolved_at": row[25].isoformat() if row[25] else None,  # convert resolved_at if present
+                        } if row[21] else None,  # if there is no claim id, send claim as null instead of an object
 
                         "current_user": {  # include basic info about the currently authenticated user
                             "id": user["id"],  # current user's id from the session
@@ -278,28 +276,27 @@ def build_offers_requests_record(row):
         "listing_type": row[2],
         "pickup_window_start": row[3].isoformat(),
         "pickup_window_end": row[4].isoformat(),
-        "discard_deadline": row[5].isoformat() if row[5] else None,
-        "travel_distance_miles": row[6],
-        "additional_instructions": row[7],
-        "status": row[8],
-        "created_at": row[9].isoformat(),
-        "updated_at": row[10].isoformat(),
+        "travel_distance_miles": row[5],
+        "additional_instructions": row[6],
+        "status": row[7],
+        "created_at": row[8].isoformat(),
+        "updated_at": row[9].isoformat(),
         "location": {
-            "address_text": row[11],
-            "latitude": str(row[12]),
-            "longitude": str(row[13]),
+            "address_text": row[10],
+            "latitude": str(row[11]),
+            "longitude": str(row[12]),
         },
         "food": {
-            "name": row[14],
-            "description": row[15],
-            "category": row[16],
-            "is_perishable": row[17],
-            "quantity": str(row[18]),
-            "quantity_unit": row[19],
-            "expiration_date": row[20].isoformat() if row[20] else None,
+            "name": row[13],
+            "description": row[14],
+            "category": row[15],
+            "is_perishable": row[16],
+            "quantity": str(row[17]),
+            "quantity_unit": row[18],
+            "expiration_date": row[19].isoformat() if row[19] else None,
         },
         "creator": {
-            "organization_name": row[21],
+            "organization_name": row[20],
         },
     }
 
@@ -331,7 +328,6 @@ def get_offers_requests(handler):
                     listings.listing_type,
                     listings.pickup_window_start,
                     listings.pickup_window_end,
-                    listings.discard_deadline,
                     listings.travel_distance_miles,
                     listings.additional_instructions,
                     listings.status,
@@ -381,7 +377,6 @@ def get_offers_requests(handler):
             "id": user["id"],
             "role": user_role,
             "organization_name": user["organization_name"],
-            "preferred_radius_miles": user["preferred_radius_miles"],
             "latitude": user["latitude"],
             "longitude": user["longitude"],
         },
@@ -409,7 +404,6 @@ def get_my_listings(handler):
                     listings.listing_type,
                     listings.pickup_window_start,
                     listings.pickup_window_end,
-                    listings.discard_deadline,
                     listings.travel_distance_miles,
                     listings.additional_instructions,
                     listings.status,
@@ -449,7 +443,6 @@ def get_my_listings(handler):
                     listings.listing_type,
                     listings.pickup_window_start,
                     listings.pickup_window_end,
-                    listings.discard_deadline,
                     listings.travel_distance_miles,
                     listings.additional_instructions,
                     listings.status,

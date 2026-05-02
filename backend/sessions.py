@@ -67,7 +67,6 @@ def get_user(self):
                     users.role,
                     users.organization_name,
                     users.location_id,
-                    users.preferred_radius_miles,
                     locations.latitude,
                     locations.longitude
                 FROM users
@@ -91,9 +90,8 @@ def get_user(self):
         "role": user[2],
         "organization_name": user[3],
         "location_id": user[4],
-        "preferred_radius_miles": user[5],
-        "latitude": str(user[6]) if user[6] is not None else None,
-        "longitude": str(user[7]) if user[7] is not None else None,
+        "latitude": str(user[5]) if user[5] is not None else None,
+        "longitude": str(user[6]) if user[6] is not None else None,
     }
 
     self._cached_user = resolved

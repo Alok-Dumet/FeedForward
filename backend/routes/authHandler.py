@@ -3,7 +3,7 @@ import hmac
 import secrets
 
 from database.database import db
-from geocoding import GeocodingError, geocode_address
+from geocoding import GeocodingError, geocode_city_state
 from sessions import SESSION_COOKIE_NAME, parse_cookies, build_session_cookie, create_session, delete_session, get_user
 from router import Router
 from utils import parse_validate_body, send_json
@@ -39,9 +39,12 @@ def verify_password(password, stored_password_hash):
     return hmac.compare_digest(actual_hash, expected_hash)
 
 
-#We will validate the registration body, geocode the address, and insert a location + user in one transaction
+#We will validate the registration body, geocode the city/state, and insert a location + user in one transaction
 def register(handler):
-    body = parse_validate_body(handler, ["email", "password", "role", "organization_name", "address_text"])
+    body = parse_validate_body(
+        handler,
+        ["email", "password", "role", "organization_name", "street_address", "address_text", "city", "state"]
+    )
     if body is None:
         return
 
@@ -54,7 +57,7 @@ def register(handler):
         return send_json(handler, 400, {"error": "Password must be at least 8 characters long"})
 
     try:
-        latitude, longitude = geocode_address(body["address_text"])
+        latitude, longitude = geocode_city_state(body["city"], body["state"])
     except GeocodingError as exc:
         return send_json(handler, 400, {"error": str(exc)})
 
@@ -125,7 +128,7 @@ def login(handler):
         with db.cursor() as cur:
             cur.execute(
                 """
-                SELECT id, email, password_hash, role, organization_name, preferred_radius_miles
+                SELECT id, email, password_hash, role, organization_name
                 FROM users
                 WHERE email = %s
                 """,
@@ -149,7 +152,6 @@ def login(handler):
             "email": user[1],
             "role": user[3],
             "organization_name": user[4],
-            "preferred_radius_miles": user[5],
         }
     }, headers=[("Set-Cookie", build_session_cookie(session_token, 604800))])
 
