@@ -1,7 +1,7 @@
-import { Link, useLoaderData } from "react-router-dom";
+import { useLoaderData } from "react-router-dom";
 import { motion as Motion } from "motion/react";
 
-import FormField from "../../components/formField.jsx";
+import ListingCreateForm from "../../components/listingCreateForm.jsx";
 
 export default function UserOfferCreate() {
   const { user } = useLoaderData();
@@ -21,37 +21,8 @@ export default function UserOfferCreate() {
                 Create Offer
               </p>
               <h1 className="mt-4 text-4xl font-extrabold sm:text-5xl">
-                Add a new offer for {user.name}
+                Your new offer
               </h1>
-              <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
-                Use this owner-facing form to prepare a new food offer record. The UI is
-                intentionally frontend-only for now, but the field structure is kept
-                straightforward so it can connect to backend submission later.
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-3">
-              <Link
-                to={`/users/${user.id}/offers`}
-                className="inline-flex rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/15"
-              >
-                Back to My Offers
-              </Link>
-            </div>
-          </div>
-
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-3xl border border-white/10 bg-white/5 px-5 py-4">
-              <p className="text-xs font-semibold tracking-[0.15em] text-slate-400 uppercase">
-                Owner
-              </p>
-              <p className="mt-2 text-2xl font-bold text-white">{user.name}</p>
-            </div>
-            <div className="rounded-3xl border border-white/10 bg-white/5 px-5 py-4">
-              <p className="text-xs font-semibold tracking-[0.15em] text-slate-400 uppercase">
-                Role
-              </p>
-              <p className="mt-2 text-2xl font-bold text-white">{user.role}</p>
             </div>
           </div>
         </Motion.section>
@@ -60,159 +31,22 @@ export default function UserOfferCreate() {
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.08, duration: 0.4, ease: "easeOut" }}
-          className="grid gap-5 lg:grid-cols-[1.35fr_0.9fr]"
+          className="grid gap-5"
         >
-          <form className="rounded-[1.75rem] border border-white/70 bg-white/85 p-6 shadow-xl backdrop-blur-md">
-            <p className="text-xs font-semibold tracking-[0.18em] text-amber-700 uppercase">
-              Offer Form
-            </p>
-            <h2 className="mt-3 text-2xl font-bold text-slate-900">
-              Food and pickup details
-            </h2>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-              Fill in the operational details for this offer. All actions on this page
-              are UI-only placeholders for now.
-            </p>
-
-            <div className="mt-6 grid gap-5 sm:grid-cols-2">
-              <FormField
-                label="Offer title"
-                hint="Use a short name that makes the item easy to identify later."
-              >
-                <input
-                  type="text"
-                  placeholder="Prepared lunch trays"
-                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-                />
-              </FormField>
-
-              <FormField label="Category">
-                <select className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300">
-                  <option value="produce">Produce</option>
-                  <option value="dairy">Dairy</option>
-                  <option value="baked_goods">Baked Goods</option>
-                  <option value="canned_goods">Canned Goods</option>
-                  <option value="frozen">Frozen</option>
-                  <option value="prepared_meals">Prepared Meals</option>
-                  <option value="beverages">Beverages</option>
-                  <option value="dry_goods">Dry Goods</option>
-                  <option value="meat_seafood">Meat & Seafood</option>
-                  <option value="snacks">Snacks</option>
-                  <option value="baby_food">Baby Food</option>
-                  <option value="mixed">Mixed</option>
-                  <option value="other">Other</option>
-                </select>
-              </FormField>
-
-              <FormField
-                label="Quantity"
-                hint="Examples: 24 servings, 8 trays, 6 boxes."
-              >
-                <input
-                  type="text"
-                  placeholder="24 servings"
-                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-                />
-              </FormField>
-
-              <FormField label="Pickup window">
-                <input
-                  type="text"
-                  placeholder="Today, 5:30 PM - 7:00 PM"
-                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-                />
-              </FormField>
-
-              <FormField label="Location">
-                <input
-                  type="text"
-                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-                />
-              </FormField>
-
-              <FormField label="Best for">
-                <input
-                  type="text"
-                  placeholder="Shelters and mutual-aid groups"
-                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-                />
-              </FormField>
-            </div>
-
-            <div className="mt-5">
-              <FormField
-                label="Offer summary"
-                hint="Add the core details someone on your team would need when reviewing this record."
-              >
-                <textarea
-                  rows="5"
-                  placeholder="Freshly prepared rice bowls and roasted vegetables packaged after lunch service."
-                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-900 outline-none transition focus:border-amber-300"
-                />
-              </FormField>
-            </div>
-
-            <div className="mt-5">
-              <FormField
-                label="Handling notes"
-                hint="Optional notes for pickup coordination, storage, or packaging."
-              >
-                <textarea
-                  rows="4"
-                  placeholder="Stored warm until 5:00 PM, then transferred to insulated carriers."
-                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-900 outline-none transition focus:border-amber-300"
-                />
-              </FormField>
-            </div>
-
-            <div className="mt-8 flex flex-wrap gap-3">
-              <button
-                type="button"
-                className="inline-flex cursor-pointer rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
-              >
-                Publish offer
-              </button>
-              <Link
-                to={`/users/${user.id}/offers`}
-                className="inline-flex rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-amber-300 hover:text-amber-800"
-              >
-                Cancel
-              </Link>
-            </div>
-          </form>
-
-          <div className="grid gap-5">
-            <article className="rounded-[1.75rem] border border-white/70 bg-white/85 p-6 shadow-xl backdrop-blur-md">
-              <p className="text-xs font-semibold tracking-[0.18em] text-amber-700 uppercase">
-                Helper Notes
-              </p>
-              <h2 className="mt-3 text-2xl font-bold text-slate-900">
-                What to include in this offer
-              </h2>
-              <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
-                <li>Use the title and quantity fields to make internal review faster.</li>
-                <li>Keep the pickup window specific enough for future matching logic.</li>
-                <li>Use notes for handling constraints, not for public marketing copy.</li>
-              </ul>
-            </article>
-
-            <article className="rounded-[1.75rem] border border-white/70 bg-white/85 p-6 shadow-xl backdrop-blur-md">
-              <p className="text-xs font-semibold tracking-[0.18em] text-amber-700 uppercase">
-                Preview State
-              </p>
-              <h2 className="mt-3 text-2xl font-bold text-slate-900">
-                Intended record status
-              </h2>
-              <div className="mt-5 flex flex-wrap gap-3">
-                <span className="rounded-full border border-slate-200 bg-slate-100 px-4 py-2 text-xs font-semibold tracking-[0.18em] text-slate-700 uppercase">
-                  Not submitted
-                </span>
-                <span className="rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-semibold tracking-[0.18em] text-emerald-800 uppercase">
-                  Owner-facing only
-                </span>
-              </div>
-            </article>
-          </div>
+          <ListingCreateForm
+            additionalInstructionsPlaceholder="Example: Please enter through the second door on the left side of the building"
+            endpoint="/api/listings/offers/create"
+            foodDescriptionPlaceholder="Thin crust, pineapple, onions, olives, stuffed crust"
+            foodNamePlaceholder="Hawaiian Pizza"
+            formLabel="Offer Form"
+            locationUnavailableMessage="Your account needs a valid location before you can publish an offer."
+            publishLabel="Publish offer"
+            successLabel="Offer published."
+            travelDistanceLabel="Distance we're willing to deliver"
+            user={user}
+            windowEndLabel="Pickup window end"
+            windowStartLabel="Pickup window start"
+          />
         </Motion.section>
       </div>
     </main>

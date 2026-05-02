@@ -14,6 +14,9 @@ export default async function userRequestCreateLoader({ params }, session) {
       id: sessionUserId,
       name: session.user.organization_name,
       role: "Recipient Organization",
+      address_text: session.user.address_text,
+      latitude: session.user.latitude,
+      longitude: session.user.longitude,
     },
   };
 }

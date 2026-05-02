@@ -83,7 +83,7 @@ export default function Register() {
               id="role"
               name="role"
               defaultValue="food_provider"
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 transition outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
+              className="w-full cursor-pointer rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 transition outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
             >
               <option value="food_provider">Food Provider</option>
               <option value="recipient_organization">
