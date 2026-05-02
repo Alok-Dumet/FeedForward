@@ -1,5 +1,5 @@
 import { loaderFetch } from "../../utils/loaderFetch.js";
-import { formatPickupWindow } from "../../utils/formatDates.js";
+import { formatAvailabilityWindows } from "../../utils/formatDates.js";
 import {
   formatFoodQuantity,
   getFoodSummary,
@@ -19,7 +19,7 @@ function buildItem(record) {
     title: getFoodTitle(record),
     summary: getFoodSummary(record),
     quantity: formatFoodQuantity(primaryFood),
-    pickupWindow: formatPickupWindow(record.pickup_window_start, record.pickup_window_end),
+    availability: formatAvailabilityWindows(record.availability_windows),
     location: record.location.address_text,
     audience: record.creator.organization_name,
     tags: [ownership, ...getFoodTags(record)],

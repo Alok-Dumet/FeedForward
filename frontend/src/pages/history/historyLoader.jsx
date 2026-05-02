@@ -8,35 +8,53 @@ import {
 
 const dateFmt = new Intl.DateTimeFormat("en-US", { dateStyle: "long" });
 
+function formatStatus(status) {
+  if (status === "completed") {
+    return "Completed";
+  }
+  if (status === "cancelled") {
+    return "Cancelled";
+  }
+  return status;
+}
+
+function formatOutcome(status) {
+  if (status === "completed") {
+    return "Donation completed";
+  }
+  if (status === "cancelled") {
+    return "Listing was cancelled";
+  }
+  return formatStatus(status);
+}
+
 //We will turn one /api/history record into the card shape the history page expects
 function buildItem(record) {
   const ownership = record.relationship === "own" ? "Posted by you" : "Claimed by you";
   const recordType = record.listing_type === "offer" ? "Offer record" : "Request record";
   const primaryFood = getPrimaryFood(record);
+  const status = formatStatus(record.status);
 
   return {
     id: record.listing_id,
-    status: record.status,
+    status,
     title: getFoodTitle(record),
-    summary: record.outcome,
+    summary: formatOutcome(record.status),
     quantity: formatFoodQuantity(primaryFood),
     timeline: buildTimeline(record),
     location: record.location ?? "Location unavailable",
     recordType,
-    tags: [ownership, record.status, recordType, ...getFoodTags(record)],
+    tags: [ownership, status, recordType, ...getFoodTags(record)],
   };
 }
 
 //We will pick the most informative timestamp to show on the card based on the record's final status
 function buildTimeline(record) {
-  if (record.status === "Completed" && record.claim?.resolved_at) {
+  if (record.status === "completed" && record.claim?.resolved_at) {
     return `Completed on ${formatDate(record.claim.resolved_at)}`;
   }
-  if (record.status === "Cancelled" && record.claim?.resolved_at) {
+  if (record.status === "cancelled" && record.claim?.resolved_at) {
     return `Cancelled on ${formatDate(record.claim.resolved_at)}`;
-  }
-  if (record.status === "Expired") {
-    return `Expired after ${formatDate(record.pickup_window_end)}`;
   }
   return `Posted on ${formatDate(record.created_at)}`;
 }
@@ -56,7 +74,9 @@ export default async function historyLoader({ request }) {
   const payload = await loaderFetch("/api/history", request, "Unable to load history.");
 
   return {
-    filters: payload.filters ?? [],
+    filters: (payload.filters ?? []).map((filter) =>
+      filter === "all" ? "All records" : formatStatus(filter)
+    ),
     items: (payload.records ?? []).map(buildItem),
   };
 }

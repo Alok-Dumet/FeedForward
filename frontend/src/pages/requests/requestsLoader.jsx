@@ -1,5 +1,5 @@
 import { loaderFetch } from "../../utils/loaderFetch.js";
-import { formatPickupWindow } from "../../utils/formatDates.js";
+import { formatAvailabilityWindows } from "../../utils/formatDates.js";
 import {
   getRadiusMiles,
   withDistanceFilteredRecords,
@@ -28,7 +28,7 @@ function buildRequestItem(record) {
     id: record.id,
     title: getFoodTitle(record),
     quantity: formatFoodQuantity(primaryFood),
-    neededBy: formatPickupWindow(record.pickup_window_start, record.pickup_window_end),
+    availability: formatAvailabilityWindows(record.availability_windows),
     location: locationLabel,
     audience: record.creator.organization_name,
     summary: getFoodSummary(record),

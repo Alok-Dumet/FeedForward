@@ -1,5 +1,5 @@
 import json
-from datetime import date, datetime
+from datetime import date, time
 from decimal import Decimal, InvalidOperation
 from urllib.parse import urlparse, parse_qs
 
@@ -19,6 +19,16 @@ ALLOWED_FOOD_CATEGORIES = {
     "baby_food",
     "mixed",
     "other",
+}
+
+ALLOWED_AVAILABILITY_DAYS = {
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+    "sunday",
 }
 
 
@@ -115,25 +125,6 @@ def get_query_param(handler, name):
     return values[0]
 
 
-#We will parse an ISO datetime string and require a timezone offset so we never store naive timestamps
-def parse_datetime(value, field_name):
-    if not isinstance(value, str) or not value:
-        raise ValueError(f"{field_name} must be a valid ISO datetime")
-
-    #Python's fromisoformat() didn't accept the trailing "Z" UTC suffix until 3.11, so we swap it for the explicit offset
-    text = value[:-1] + "+00:00" if value.endswith("Z") else value
-
-    try:
-        parsed = datetime.fromisoformat(text)
-    except ValueError as exc:
-        raise ValueError(f"{field_name} must be a valid ISO datetime") from exc
-
-    if parsed.tzinfo is None:
-        raise ValueError(f"{field_name} must include a timezone offset")
-
-    return parsed
-
-
 #We will parse an optional ISO date string. None or "" returns None; anything else must be a valid date
 def parse_optional_date(value, field_name):
     if value in (None, ""):
@@ -208,3 +199,44 @@ def parse_food_items(value):
         })
 
     return foods
+
+
+#We will validate and normalize the optional list of days/times when a listing can be exchanged
+def parse_availability_windows(value):
+    if value in (None, ""):
+        return []
+
+    if not isinstance(value, list):
+        raise ValueError("availability_windows must be an array")
+
+    windows = []
+
+    for index, item in enumerate(value, start=1):
+        if not isinstance(item, dict):
+            raise ValueError(f"availability_windows[{index}] must be an object")
+
+        item = strip_strings(item)
+        missing = require_fields(item, ["day", "start_time", "end_time"])
+        if missing:
+            raise ValueError(f"availability_windows[{index}] missing fields: {', '.join(missing)}")
+
+        day = item["day"].strip().lower()
+        if day not in ALLOWED_AVAILABILITY_DAYS:
+            raise ValueError(f"availability_windows[{index}].day is invalid")
+
+        try:
+            start_time = time.fromisoformat(item["start_time"]).replace(second=0, microsecond=0)
+            end_time = time.fromisoformat(item["end_time"]).replace(second=0, microsecond=0)
+        except ValueError as exc:
+            raise ValueError(f"availability_windows[{index}] times must be valid") from exc
+
+        if end_time <= start_time:
+            raise ValueError(f"availability_windows[{index}].end_time must be after start_time")
+
+        windows.append({
+            "day": day,
+            "start_time": start_time.strftime("%H:%M"),
+            "end_time": end_time.strftime("%H:%M"),
+        })
+
+    return windows

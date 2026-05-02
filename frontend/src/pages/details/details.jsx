@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLoaderData } from "react-router-dom";
 
-import { formatPickupWindow } from "../../utils/formatDates.js";
+import { formatAvailabilityWindows } from "../../utils/formatDates.js";
 import { formatFoodCategory, formatFoodQuantity, getFoodTitle } from "../../utils/foods.js";
 
 const dateFmt = new Intl.DateTimeFormat("en-US", { dateStyle: "medium" });
@@ -44,7 +44,6 @@ export default function Details() {
   const [claimState, setClaimState] = useState({ status: "idle", message: "" });
 
   const isOffer = record.type === "offer";
-  const isRequest = record.type === "request";
   const isHistory = page.backTo === "/history";
   const isOwnListing = record.current_user?.id === record.creator_user_id;
   const canAccept = !isHistory && status === "available" && !isOwnListing;
@@ -185,8 +184,8 @@ export default function Details() {
           </h2>
           <dl className="mt-4 grid gap-4 sm:grid-cols-2">
             <DetailField
-              label={isRequest ? "Needed By" : "Pickup Window"}
-              value={formatPickupWindow(record.pickup_window_start, record.pickup_window_end)}
+              label="Available Times"
+              value={formatAvailabilityWindows(record.availability_windows)}
             />
             <DetailField label="Address" value={record.location?.address_text} />
             <DetailField

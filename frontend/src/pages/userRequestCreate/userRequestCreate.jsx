@@ -44,8 +44,8 @@ export default function UserRequestCreate() {
             successLabel="Request published."
             travelDistanceLabel="Distance we're willing to pick up"
             user={user}
-            windowEndLabel="Needed window end"
-            windowStartLabel="Needed window start"
+            availabilityTitle="Times people can drop off food"
+            availabilityHint="Add the days and times when staff are available to receive food. This is optional."
           />
         </Motion.section>
       </div>

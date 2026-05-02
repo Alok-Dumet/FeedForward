@@ -28,9 +28,21 @@ const EMPTY_FOOD = {
   expiration_date: "",
 };
 
-function toIsoDatetime(value) {
-  return new Date(value).toISOString();
-}
+const DAY_OPTIONS = [
+  ["monday", "Monday"],
+  ["tuesday", "Tuesday"],
+  ["wednesday", "Wednesday"],
+  ["thursday", "Thursday"],
+  ["friday", "Friday"],
+  ["saturday", "Saturday"],
+  ["sunday", "Sunday"],
+];
+
+const EMPTY_AVAILABILITY_WINDOW = {
+  day: "monday",
+  start_time: "09:00",
+  end_time: "17:00",
+};
 
 function getTrimmedFood(food) {
   return {
@@ -44,14 +56,6 @@ function getTrimmedFood(food) {
   };
 }
 
-async function readJson(res) {
-  try {
-    return await res.json();
-  } catch {
-    return null;
-  }
-}
-
 export default function ListingCreateForm({
   additionalInstructionsPlaceholder,
   endpoint,
@@ -63,13 +67,12 @@ export default function ListingCreateForm({
   successLabel,
   travelDistanceLabel,
   user,
-  windowEndLabel,
-  windowStartLabel,
+  availabilityTitle,
+  availabilityHint,
 }) {
   const [foods, setFoods] = useState([{ ...EMPTY_FOOD }]);
+  const [availabilityWindows, setAvailabilityWindows] = useState([]);
   const [locationAddress, setLocationAddress] = useState(user.address_text ?? "");
-  const [pickupWindowStart, setPickupWindowStart] = useState("");
-  const [pickupWindowEnd, setPickupWindowEnd] = useState("");
   const [travelDistanceMiles, setTravelDistanceMiles] = useState("150");
   const [additionalInstructions, setAdditionalInstructions] = useState("");
   const [error, setError] = useState("");
@@ -94,6 +97,27 @@ export default function ListingCreateForm({
     setFoods((currentFoods) => currentFoods.filter((_, foodIndex) => foodIndex !== index));
   }
 
+  function updateAvailabilityWindow(index, field, value) {
+    setAvailabilityWindows((currentWindows) =>
+      currentWindows.map((window, windowIndex) =>
+        windowIndex === index ? { ...window, [field]: value } : window
+      )
+    );
+  }
+
+  function addAvailabilityWindow() {
+    setAvailabilityWindows((currentWindows) => [
+      ...currentWindows,
+      { ...EMPTY_AVAILABILITY_WINDOW },
+    ]);
+  }
+
+  function removeAvailabilityWindow(index) {
+    setAvailabilityWindows((currentWindows) =>
+      currentWindows.filter((_, windowIndex) => windowIndex !== index)
+    );
+  }
+
   async function handleSubmit(event) {
     event.preventDefault();
     setError("");
@@ -114,8 +138,7 @@ export default function ListingCreateForm({
         },
         body: JSON.stringify({
           foods: foods.map(getTrimmedFood),
-          pickup_window_start: toIsoDatetime(pickupWindowStart),
-          pickup_window_end: toIsoDatetime(pickupWindowEnd),
+          availability_windows: availabilityWindows,
           address_text: locationAddress.trim(),
           latitude: user.latitude,
           longitude: user.longitude,
@@ -124,7 +147,7 @@ export default function ListingCreateForm({
         }),
       });
 
-      const data = await readJson(res);
+      const data = await res.json().catch(() => null);
 
       if (!res.ok) {
         setError(data?.error ?? "Unable to publish listing.");
@@ -152,26 +175,6 @@ export default function ListingCreateForm({
       </h2>
 
       <div className="mt-6 grid gap-5 sm:grid-cols-2">
-        <FormField label={windowStartLabel}>
-          <input
-            type="datetime-local"
-            required
-            value={pickupWindowStart}
-            onChange={(event) => setPickupWindowStart(event.target.value)}
-            className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-          />
-        </FormField>
-
-        <FormField label={windowEndLabel}>
-          <input
-            type="datetime-local"
-            required
-            value={pickupWindowEnd}
-            onChange={(event) => setPickupWindowEnd(event.target.value)}
-            className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-          />
-        </FormField>
-
         <FormField label="Listing address">
           <input
             type="text"
@@ -199,6 +202,88 @@ export default function ListingCreateForm({
           </div>
         </FormField>
       </div>
+
+      <section className="mt-8 rounded-3xl border border-slate-200 bg-white/80 p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="text-xl font-bold text-slate-900">{availabilityTitle}</h3>
+            <p className="mt-1 text-sm leading-6 text-slate-600">{availabilityHint}</p>
+          </div>
+          <button
+            type="button"
+            onClick={addAvailabilityWindow}
+            className="inline-flex cursor-pointer rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-900 transition hover:border-amber-300 hover:bg-amber-100"
+          >
+            Add time
+          </button>
+        </div>
+
+        {availabilityWindows.length === 0 ? (
+          <p className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-medium text-slate-600">
+            No availability added. You can coordinate times after someone accepts.
+          </p>
+        ) : (
+          <div className="mt-4 grid gap-4">
+            {availabilityWindows.map((window, index) => (
+              <div
+                key={index}
+                className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-4 sm:grid-cols-[1fr_1fr_1fr_auto]"
+              >
+                <FormField label="Day">
+                  <select
+                    required
+                    value={window.day}
+                    onChange={(event) =>
+                      updateAvailabilityWindow(index, "day", event.target.value)
+                    }
+                    className="cursor-pointer rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
+                  >
+                    {DAY_OPTIONS.map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </FormField>
+
+                <FormField label="Start time">
+                  <input
+                    type="time"
+                    required
+                    value={window.start_time}
+                    onChange={(event) =>
+                      updateAvailabilityWindow(index, "start_time", event.target.value)
+                    }
+                    className="cursor-pointer rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
+                  />
+                </FormField>
+
+                <FormField label="End time">
+                  <input
+                    type="time"
+                    required
+                    value={window.end_time}
+                    onChange={(event) =>
+                      updateAvailabilityWindow(index, "end_time", event.target.value)
+                    }
+                    className="cursor-pointer rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
+                  />
+                </FormField>
+
+                <div className="flex items-end">
+                  <button
+                    type="button"
+                    onClick={() => removeAvailabilityWindow(index)}
+                    className="inline-flex h-[46px] cursor-pointer items-center rounded-2xl border border-red-200 bg-red-50 px-4 text-sm font-semibold text-red-700 transition hover:border-red-300 hover:bg-red-100"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
       <div className="mt-6">
         <FormField label="Additional instructions (optional)">

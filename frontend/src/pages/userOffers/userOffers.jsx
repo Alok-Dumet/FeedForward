@@ -45,7 +45,7 @@ export default function UserOffers() {
                 highlightLabel="Quantity"
                 highlightValue={item.quantity}
                 detailItems={[
-                  { label: "Pickup Window", value: item.pickupWindow },
+                  { label: "Available Times", value: item.availability },
                   { label: "Location", value: item.location },
                   { label: "Best For", value: item.audience },
                 ]}

@@ -47,8 +47,7 @@ CREATE TABLE public.listings (
     creator_user_id          BIGINT NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
     listing_type             TEXT NOT NULL,
     location_id              BIGINT NOT NULL REFERENCES public.locations(id) ON DELETE RESTRICT,
-    pickup_window_start      TIMESTAMPTZ NOT NULL,
-    pickup_window_end        TIMESTAMPTZ NOT NULL,
+    availability_windows     JSONB NOT NULL DEFAULT '[]'::jsonb,
     travel_distance_miles    INTEGER NOT NULL DEFAULT 0,
     additional_instructions  TEXT,
     status                   TEXT NOT NULL DEFAULT 'available',
@@ -60,14 +59,13 @@ CREATE TABLE public.listings (
         CHECK (status IN ('available', 'claimed', 'completed', 'cancelled')),
     CONSTRAINT listings_travel_distance_miles_check
         CHECK (travel_distance_miles >= 0),
-    CONSTRAINT listings_pickup_window_check
-        CHECK (pickup_window_end >= pickup_window_start)
+    CONSTRAINT listings_availability_windows_check
+        CHECK (jsonb_typeof(availability_windows) = 'array')
 );
 
 CREATE INDEX listings_creator_user_id_idx ON public.listings (creator_user_id);
 CREATE INDEX listings_location_id_idx     ON public.listings (location_id);
 CREATE INDEX listings_type_status_idx     ON public.listings (listing_type, status);
-CREATE INDEX listings_pickup_window_idx   ON public.listings (pickup_window_start, pickup_window_end);
 
 
 -- listing_food_items: each listing can carry multiple food items. Stored

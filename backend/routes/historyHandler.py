@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from database.database import db
 from router import Router
 from sessions import get_user
@@ -7,39 +5,6 @@ from utils import send_json
 
 
 router = Router()
-
-
-#We will turn the raw listing status and pickup window end into a status string for history page
-def normalize_history_status(listing_status, pickup_window_end):
-    if listing_status == "completed":
-        return "Completed"
-    if listing_status == "canceled":
-        return "Cancelled"
-    if listing_status in ("available", "claimed"):
-        if pickup_window_end and pickup_window_end <= datetime.now(pickup_window_end.tzinfo):
-            return "Expired"
-
-    return listing_status.title()
-
-
-#We will derive a short outcome blurb from the normalized status for display on each history card
-def derive_history_outcome(status):
-    if status == "Completed":
-        return "Donation completed"
-    if status == "Cancelled":
-        return "Listing was cancelled"
-    if status == "Expired":
-        return "Listing expired without fulfillment"
-
-    return status
-
-
-#We will format two ISO timestamps into a single "start to end" pickup window string
-def format_pickup_window(start, end):
-    if not start or not end:
-        return None
-
-    return f"{start.isoformat()} to {end.isoformat()}"
 
 
 #We will format one food item from a history listing row
@@ -58,29 +23,24 @@ def build_history_food_item(row):
 
 #We will turn one row from either history query into the dict shape the frontend expects
 def build_history_record(row, relationship):
-    history_status = normalize_history_status(row[12], row[11])
-
     return {
         "id": row[0],
         "listing_id": row[0],
         "listing_type": row[1],
         "foods": [],
-        "pickup_window_start": row[10].isoformat() if row[10] else None,
-        "pickup_window_end": row[11].isoformat() if row[11] else None,
-        "pickup_window": format_pickup_window(row[10], row[11]),
-        "location": row[13],
-        "status": history_status,
-        "outcome": derive_history_outcome(history_status),
+        "availability_windows": row[11],
+        "location": row[12],
+        "status": row[10],
         "relationship": relationship,
-        "created_at": row[14].isoformat() if row[14] else None,
-        "updated_at": row[15].isoformat() if row[15] else None,
+        "created_at": row[13].isoformat() if row[13] else None,
+        "updated_at": row[14].isoformat() if row[14] else None,
         "claim": {
-            "id": row[16],
-            "claimant_user_id": row[17],
-            "status": row[18],
-            "claimed_at": row[19].isoformat() if row[19] else None,
-            "resolved_at": row[20].isoformat() if row[20] else None,
-        } if row[16] else None,
+            "id": row[15],
+            "claimant_user_id": row[16],
+            "status": row[17],
+            "claimed_at": row[18].isoformat() if row[18] else None,
+            "resolved_at": row[19].isoformat() if row[19] else None,
+        } if row[15] else None,
     }
 
 
@@ -98,10 +58,9 @@ def build_history_records(rows, relationship):
     return list(records_by_id.values())
 
 
-#We will only return rows whose lifecycle is finished — completed, canceled, or pickup-window already passed
+#We will only return rows whose lifecycle is finished
 FINISHED_LISTINGS_FILTER = """
-    listings.status IN ('completed', 'canceled')
-    OR listings.pickup_window_end <= now()
+    listings.status IN ('completed', 'cancelled')
 """
 
 
@@ -121,9 +80,8 @@ def get_created_history_rows(user_id):
                 listing_food_items.quantity,
                 listing_food_items.quantity_unit,
                 listing_food_items.expiration_date,
-                listings.pickup_window_start,
-                listings.pickup_window_end,
                 listings.status,
+                listings.availability_windows,
                 locations.address_text,
                 listings.created_at,
                 listings.updated_at,
@@ -177,9 +135,8 @@ def get_claimed_history_rows(user_id):
                 listing_food_items.quantity,
                 listing_food_items.quantity_unit,
                 listing_food_items.expiration_date,
-                listings.pickup_window_start,
-                listings.pickup_window_end,
                 listings.status,
+                listings.availability_windows,
                 locations.address_text,
                 listings.created_at,
                 listings.updated_at,
@@ -224,7 +181,7 @@ def get_history(handler):
     records += build_history_records(claimed_rows, "claimed")
 
     return send_json(handler, 200, {
-        "filters": ["All records", "Completed", "Cancelled", "Expired"],
+        "filters": ["all", "completed", "cancelled"],
         "records": records,
         "current_user": {
             "id": user["id"],

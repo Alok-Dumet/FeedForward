@@ -56,7 +56,7 @@ export default function Requests() {
         highlightLabel: "Need",
         highlightValueKey: "quantity",
         detailFields: [
-          { label: "Needed By", key: "neededBy" },
+          { label: "Available Times", key: "availability" },
           { label: "Area", key: "location" },
           { label: "Serving", key: "audience" },
         ],

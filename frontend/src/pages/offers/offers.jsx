@@ -56,7 +56,7 @@ export default function Offers() {
         highlightLabel: "Quantity",
         highlightValueKey: "quantity",
         detailFields: [
-          { label: "Pickup Window", key: "pickupWindow" },
+          { label: "Available Times", key: "availability" },
           { label: "Location", key: "location" },
           { label: "Best For", key: "audience" },
         ],

@@ -45,7 +45,7 @@ export default function UserRequests() {
                 highlightLabel="Need"
                 highlightValue={item.quantity}
                 detailItems={[
-                  { label: "Needed By", value: item.neededBy },
+                  { label: "Available Times", value: item.availability },
                   { label: "Area", value: item.location },
                   { label: "Serving", value: item.audience },
                 ]}

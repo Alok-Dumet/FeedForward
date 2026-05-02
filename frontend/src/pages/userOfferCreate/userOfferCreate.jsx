@@ -44,8 +44,8 @@ export default function UserOfferCreate() {
             successLabel="Offer published."
             travelDistanceLabel="Distance we're willing to deliver"
             user={user}
-            windowEndLabel="Pickup window end"
-            windowStartLabel="Pickup window start"
+            availabilityTitle="Times people can pick up food"
+            availabilityHint="Add the days and times when staff are available to pass food on. This is optional."
           />
         </Motion.section>
       </div>

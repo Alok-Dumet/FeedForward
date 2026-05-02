@@ -8,7 +8,7 @@ export default function History() {
   return (
     <ListingPageShell
       title="History"
-      description="Review completed, expired, canceled, and archived records in one place."
+      description="Review completed, cancelled, and archived records in one place."
       items={items}
       filters={filters}
       secondaryAction={null}
