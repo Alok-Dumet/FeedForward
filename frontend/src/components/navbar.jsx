@@ -34,23 +34,23 @@ export default function Navbar() {
     userType === "donor"
       ? [
           { label: "Requests", to: "/requests" },
-          createAction,
           {
             label: "My Offers",
             to: getMyListingsRouteForUserType(userType, userId),
             end: true,
           },
           { label: "History", to: "/history" },
+          createAction,
         ]
       : [
           { label: "Offers", to: "/offers" },
-          createAction,
           {
             label: "My Requests",
             to: getMyListingsRouteForUserType(userType, userId),
             end: true,
           },
           { label: "History", to: "/history" },
+          createAction,
         ];
 
   async function handleLogout() {
