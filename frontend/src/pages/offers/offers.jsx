@@ -12,14 +12,12 @@ export default function Offers() {
   return (
     <ListingPageShell
       eyebrow="Available Offers"
-      title="Surplus food offers ready for pickup"
       description="Browse available surplus food offers"
       items={filteredItems}
       filters={filters}
       activeFilters={activeFilters}
       onFilterChange={setActiveFilters}
       isFiltering={isFiltering}
-      secondaryAction={null}
       filtersLabel="Filter offers:"
       extraControls={<RadiusSlider defaultMiles={radiusMiles} />}
       cardConfig={{

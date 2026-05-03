@@ -1,34 +1,16 @@
 import { useState } from 'react';
 
 import { useToast } from '../hooks/useToast.js';
-import { FOOD_CATEGORY_LABELS } from '../utils/foods.js';
+import {
+  EMPTY_AVAILABILITY_WINDOW,
+  EMPTY_FOOD,
+  getTrimmedFood,
+} from '../utils/listingFormData.js';
 import FormField from './formField.jsx';
-
-const EMPTY_FOOD = {
-  name: '',
-  description: '',
-  category: 'produce',
-  is_perishable: false,
-  quantity: '',
-  quantity_unit: '',
-  expiration_date: '',
-};
-
-const DAY_OPTIONS = [
-  ['monday', 'Monday'],
-  ['tuesday', 'Tuesday'],
-  ['wednesday', 'Wednesday'],
-  ['thursday', 'Thursday'],
-  ['friday', 'Friday'],
-  ['saturday', 'Saturday'],
-  ['sunday', 'Sunday'],
-];
-
-const EMPTY_AVAILABILITY_WINDOW = {
-  day: 'monday',
-  start_time: '09:00',
-  end_time: '17:00',
-};
+import {
+  ListingAvailabilityEditor,
+  ListingFoodEditor,
+} from './listingFormFields.jsx';
 
 const LISTING_COPY = {
   offer: {
@@ -64,18 +46,6 @@ const LISTING_COPY = {
     availabilityTitle: 'Times people can drop off food (Optional)',
   },
 };
-
-function getTrimmedFood(food) {
-  return {
-    name: food.name.trim(),
-    description: food.description.trim(),
-    category: food.category,
-    is_perishable: food.is_perishable,
-    quantity: food.quantity,
-    quantity_unit: food.quantity_unit.trim(),
-    expiration_date: food.expiration_date,
-  };
-}
 
 export default function ListingCreateForm({ listingType, user }) {
   const copy = LISTING_COPY[listingType];
@@ -208,96 +178,14 @@ export default function ListingCreateForm({ listingType, user }) {
         </FormField>
       </div>
 
-      <section className="mt-8 rounded-3xl border border-slate-200 bg-white/80 p-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h3 className="text-xl font-bold text-slate-900">
-              {copy.availabilityTitle}
-            </h3>
-          </div>
-          <button
-            type="button"
-            onClick={addAvailabilityWindow}
-            className="inline-flex cursor-pointer rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-900 transition hover:border-amber-300 hover:bg-amber-100"
-          >
-            Add time
-          </button>
-        </div>
-
-        {availabilityWindows.length === 0 ? (
-          <p className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-medium text-slate-600">
-            Don't worry! You can sort timing once someone accepts.
-          </p>
-        ) : (
-          <div className="mt-4 grid gap-4">
-            {availabilityWindows.map((window, index) => (
-              <div
-                key={index}
-                className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-4 sm:grid-cols-[1fr_1fr_1fr_auto]"
-              >
-                <FormField label="Day">
-                  <select
-                    required
-                    value={window.day}
-                    onChange={(event) =>
-                      updateAvailabilityWindow(index, 'day', event.target.value)
-                    }
-                    className="cursor-pointer rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-                  >
-                    {DAY_OPTIONS.map(([value, label]) => (
-                      <option key={value} value={value}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
-                </FormField>
-
-                <FormField label="Start time">
-                  <input
-                    type="time"
-                    required
-                    value={window.start_time}
-                    onChange={(event) =>
-                      updateAvailabilityWindow(
-                        index,
-                        'start_time',
-                        event.target.value
-                      )
-                    }
-                    className="cursor-pointer rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-                  />
-                </FormField>
-
-                <FormField label="End time">
-                  <input
-                    type="time"
-                    required
-                    value={window.end_time}
-                    onChange={(event) =>
-                      updateAvailabilityWindow(
-                        index,
-                        'end_time',
-                        event.target.value
-                      )
-                    }
-                    className="cursor-pointer rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-                  />
-                </FormField>
-
-                <div className="flex items-end">
-                  <button
-                    type="button"
-                    onClick={() => removeAvailabilityWindow(index)}
-                    className="inline-flex h-[46px] cursor-pointer items-center rounded-2xl border border-red-200 bg-red-50 px-4 text-sm font-semibold text-red-700 transition hover:border-red-300 hover:bg-red-100"
-                  >
-                    Remove
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+      <ListingAvailabilityEditor
+        title={copy.availabilityTitle}
+        windows={availabilityWindows}
+        onAdd={addAvailabilityWindow}
+        onUpdate={updateAvailabilityWindow}
+        onRemove={removeAvailabilityWindow}
+        emptyMessage="Don't worry! You can sort timing once someone accepts."
+      />
 
       <div className="mt-6">
         <FormField label="Additional instructions (optional)">
@@ -311,143 +199,14 @@ export default function ListingCreateForm({ listingType, user }) {
         </FormField>
       </div>
 
-      <div className="mt-8">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h3 className="text-xl font-bold text-slate-900">Food items</h3>
-          <button
-            type="button"
-            onClick={addFood}
-            className="inline-flex cursor-pointer rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-900 transition hover:border-amber-300 hover:bg-amber-100"
-          >
-            Add food item
-          </button>
-        </div>
-
-        <div className="mt-4 grid gap-5">
-          {foods.map((food, index) => (
-            <section
-              key={index}
-              className="rounded-3xl border border-slate-200 bg-white/80 p-5"
-            >
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <h4 className="text-base font-bold text-slate-900">
-                  Food item {index + 1}
-                </h4>
-                {foods.length > 1 ? (
-                  <button
-                    type="button"
-                    onClick={() => removeFood(index)}
-                    className="inline-flex cursor-pointer rounded-2xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:border-red-300 hover:bg-red-100"
-                  >
-                    Remove
-                  </button>
-                ) : null}
-              </div>
-
-              <div className="mt-5 grid gap-5 sm:grid-cols-2">
-                <FormField label="Food name">
-                  <input
-                    type="text"
-                    required
-                    placeholder={copy.foodNamePlaceholder}
-                    value={food.name}
-                    onChange={(event) =>
-                      updateFood(index, 'name', event.target.value)
-                    }
-                    className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-                  />
-                </FormField>
-
-                <FormField label="Category">
-                  <select
-                    required
-                    value={food.category}
-                    onChange={(event) =>
-                      updateFood(index, 'category', event.target.value)
-                    }
-                    className="cursor-pointer rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-                  >
-                    {Object.entries(FOOD_CATEGORY_LABELS).map(
-                      ([value, label]) => (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      )
-                    )}
-                  </select>
-                </FormField>
-
-                <FormField label="Quantity">
-                  <input
-                    type="number"
-                    required
-                    min="0.01"
-                    step="0.01"
-                    value={food.quantity}
-                    onChange={(event) =>
-                      updateFood(index, 'quantity', event.target.value)
-                    }
-                    className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-                  />
-                </FormField>
-
-                <FormField label="Quantity unit">
-                  <input
-                    type="text"
-                    required
-                    placeholder="Example: Boxes, pounds, trays, servings"
-                    value={food.quantity_unit}
-                    onChange={(event) =>
-                      updateFood(index, 'quantity_unit', event.target.value)
-                    }
-                    className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-                  />
-                </FormField>
-
-                <FormField
-                  label="Expiration date"
-                  hint="Leave blank if it does not expire."
-                >
-                  <input
-                    type="date"
-                    value={food.expiration_date}
-                    onChange={(event) =>
-                      updateFood(index, 'expiration_date', event.target.value)
-                    }
-                    className="cursor-pointer rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-                  />
-                </FormField>
-
-                <label className="flex min-h-[4.75rem] cursor-pointer items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800">
-                  <input
-                    type="checkbox"
-                    checked={food.is_perishable}
-                    onChange={(event) =>
-                      updateFood(index, 'is_perishable', event.target.checked)
-                    }
-                    className="h-4 w-4 cursor-pointer accent-amber-700"
-                  />
-                  Perishable
-                </label>
-              </div>
-
-              <div className="mt-5">
-                <FormField label="Description (optional)">
-                  <textarea
-                    rows="3"
-                    placeholder={copy.foodDescriptionPlaceholder}
-                    value={food.description}
-                    onChange={(event) =>
-                      updateFood(index, 'description', event.target.value)
-                    }
-                    className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-900 outline-none transition focus:border-amber-300"
-                  />
-                </FormField>
-              </div>
-            </section>
-          ))}
-        </div>
-      </div>
+      <ListingFoodEditor
+        foods={foods}
+        onAdd={addFood}
+        onUpdate={updateFood}
+        onRemove={removeFood}
+        foodNamePlaceholder={copy.foodNamePlaceholder}
+        foodDescriptionPlaceholder={copy.foodDescriptionPlaceholder}
+      />
 
       <div className="mt-8 flex flex-wrap gap-3">
         <button

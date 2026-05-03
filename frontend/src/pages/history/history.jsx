@@ -11,14 +11,12 @@ export default function History() {
   return (
     <ListingPageShell
       eyebrow="History"
-      title="History"
       description="Review completed and cancelled listings"
       items={filteredItems}
       filters={filters}
       activeFilters={activeFilters}
       onFilterChange={setActiveFilters}
       isFiltering={isFiltering}
-      secondaryAction={null}
       filtersLabel="History filters:"
       cardConfig={{
         variant: 'compactHistory',

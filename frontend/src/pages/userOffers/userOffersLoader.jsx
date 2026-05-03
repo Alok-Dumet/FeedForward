@@ -1,14 +1,3 @@
-import { loaderFetch } from '../../utils/loaderFetch.js';
-import { buildOwnListingItem } from '../../utils/listingBuilders.js';
+import { createUserListingsLoader } from '../../utils/listingLoaders.js';
 
-export default async function userOffersLoader({ request }) {
-  const payload = await loaderFetch(
-    '/api/my-listings',
-    request,
-    'Unable to load your offers.'
-  );
-
-  return {
-    items: (payload.records ?? []).map(buildOwnListingItem),
-  };
-}
+export default createUserListingsLoader('Unable to load your offers.');

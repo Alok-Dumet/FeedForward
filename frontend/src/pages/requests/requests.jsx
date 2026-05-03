@@ -12,14 +12,12 @@ export default function Requests() {
   return (
     <ListingPageShell
       eyebrow="Active Requests"
-      title="Community food requests awaiting a match"
       description="Browse active community food requests"
       items={filteredItems}
       filters={filters}
       activeFilters={activeFilters}
       onFilterChange={setActiveFilters}
       isFiltering={isFiltering}
-      secondaryAction={null}
       filtersLabel="Filter requests:"
       extraControls={<RadiusSlider defaultMiles={radiusMiles} />}
       cardConfig={{

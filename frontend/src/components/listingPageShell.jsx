@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import { motion as Motion } from 'motion/react';
 
 import ListingCard from './listingCard.jsx';
@@ -7,18 +6,14 @@ import usePagination from '../hooks/usePagination.js';
 
 export default function ListingPageShell({
   eyebrow,
-  title,
   description,
   items,
   filters = [],
   cardConfig = {},
-  secondaryAction = null,
   filtersLabel = 'Filters:',
   activeFilters = [],
   onFilterChange,
   isFiltering = false,
-  hidePageHeader = false,
-  lightHeader = false,
   extraControls = null,
 }) {
   const {
@@ -39,56 +34,25 @@ export default function ListingPageShell({
   return (
     <main className="px-6 py-10 sm:px-8 lg:px-12">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
-        {!hidePageHeader ? (
-          <Motion.section
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, ease: 'easeOut' }}
-            className={
-              lightHeader
-                ? 'rounded-[2rem] border border-white/70 bg-white/75 px-6 py-6 shadow-xl backdrop-blur-md'
-                : 'rounded-[2rem] border border-white/70 bg-slate-950 px-8 py-10 text-white shadow-2xl'
-            }
-          >
-            <div className="flex flex-wrap items-start justify-between gap-6">
-              <div className="max-w-3xl">
-                {eyebrow ? (
-                  <p
-                    className={
-                      lightHeader
-                        ? 'text-sm font-medium tracking-[0.2em] text-amber-700 uppercase'
-                        : 'text-sm font-medium tracking-[0.2em] text-emerald-400 uppercase'
-                    }
-                  >
-                    {eyebrow}
-                  </p>
-                ) : null}
-                <h1
-                  className={
-                    lightHeader
-                      ? 'mt-3 max-w-3xl text-2xl font-bold text-slate-900 sm:text-3xl'
-                      : 'mt-4 max-w-3xl text-3xl font-extrabold text-white sm:text-4xl'
-                  }
-                >
-                  {description || title}
-                </h1>
-              </div>
-
-              {secondaryAction ? (
-                <Link
-                  to={secondaryAction.to}
-                  className={
-                    lightHeader
-                      ? 'btn-soft px-5'
-                      : 'inline-flex rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/15'
-                  }
-                >
-                  {secondaryAction.label}
-                </Link>
+        <Motion.section
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: 'easeOut' }}
+          className="rounded-[2rem] border border-white/70 bg-slate-950 px-8 py-10 text-white shadow-2xl"
+        >
+          <div className="flex flex-wrap items-start justify-between gap-6">
+            <div className="max-w-3xl">
+              {eyebrow ? (
+                <p className="text-sm font-medium tracking-[0.2em] text-emerald-400 uppercase">
+                  {eyebrow}
+                </p>
               ) : null}
+              <h1 className="mt-4 max-w-3xl text-3xl font-extrabold text-white sm:text-4xl">
+                {description}
+              </h1>
             </div>
-          </Motion.section>
-        ) : null}
+          </div>
+        </Motion.section>
 
         <Motion.section
           initial={{ opacity: 0, y: 18 }}

@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { Link, useLoaderData } from 'react-router-dom';
 
+import {
+  ListingAvailabilityEditor,
+  ListingFoodEditor,
+} from '../../components/listingFormFields.jsx';
 import { useToast } from '../../hooks/useToast.js';
 import { formatAvailabilityWindows } from '../../utils/formatDates.js';
 import {
@@ -9,46 +13,12 @@ import {
   formatNumber,
   getFoodTitle,
 } from '../../utils/foods.js';
+import {
+  EMPTY_AVAILABILITY_WINDOW,
+  EMPTY_FOOD,
+} from '../../utils/listingFormData.js';
 
 const dateFmt = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' });
-const FOOD_CATEGORIES = [
-  ['produce', 'Produce'],
-  ['dairy', 'Dairy'],
-  ['baked_goods', 'Baked Goods'],
-  ['canned_goods', 'Canned Goods'],
-  ['frozen', 'Frozen'],
-  ['prepared_meals', 'Prepared Meals'],
-  ['beverages', 'Beverages'],
-  ['dry_goods', 'Dry Goods'],
-  ['meat_seafood', 'Meat & Seafood'],
-  ['snacks', 'Snacks'],
-  ['baby_food', 'Baby Food'],
-  ['mixed', 'Mixed'],
-  ['other', 'Other'],
-];
-const DAY_OPTIONS = [
-  ['monday', 'Monday'],
-  ['tuesday', 'Tuesday'],
-  ['wednesday', 'Wednesday'],
-  ['thursday', 'Thursday'],
-  ['friday', 'Friday'],
-  ['saturday', 'Saturday'],
-  ['sunday', 'Sunday'],
-];
-const EMPTY_FOOD = {
-  name: '',
-  description: '',
-  category: 'produce',
-  is_perishable: false,
-  quantity: '',
-  quantity_unit: '',
-  expiration_date: '',
-};
-const EMPTY_AVAILABILITY = {
-  day: 'monday',
-  start_time: '09:00',
-  end_time: '17:00',
-};
 
 function humanize(value) {
   if (!value) {
@@ -103,7 +73,6 @@ export default function Details() {
   const foods = listing.foods ?? [];
   const [status, setStatus] = useState(record.status);
   const [isSubmittingAction, setIsSubmittingAction] = useState(false);
-  const [acceptedThisSession, setAcceptedThisSession] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editFoods, setEditFoods] = useState(
     (record.foods ?? []).map(getEditableFood)
@@ -125,7 +94,6 @@ export default function Details() {
   const isHistory = page.backTo === '/history';
   const isOwnListing = listing.current_user?.id === listing.creator_user_id;
   const isClaimedByCurrentUser =
-    acceptedThisSession ||
     listing.claim?.claimant_user_id === listing.current_user?.id;
   const canAccept = !isHistory && status === 'available' && !isOwnListing;
   const canEdit = !isHistory && isOwnListing && status === 'available';
@@ -166,7 +134,11 @@ export default function Details() {
       }
 
       setStatus('claimed');
-      setAcceptedThisSession(true);
+      setListing((currentListing) => ({
+        ...currentListing,
+        status: 'claimed',
+        claim: data?.claim ?? currentListing.claim,
+      }));
       showToast('Claimed.', 'success');
     } catch {
       showToast('Network error.', 'error');
@@ -217,6 +189,31 @@ export default function Details() {
           ? { ...availability, [field]: value }
           : availability
       )
+    );
+  }
+
+  function addAvailability() {
+    setEditAvailability((currentAvailability) => [
+      ...currentAvailability,
+      { ...EMPTY_AVAILABILITY_WINDOW },
+    ]);
+  }
+
+  function removeAvailability(index) {
+    setEditAvailability((currentAvailability) =>
+      currentAvailability.filter(
+        (_, availabilityIndex) => availabilityIndex !== index
+      )
+    );
+  }
+
+  function addFood() {
+    setEditFoods((currentFoods) => [...currentFoods, { ...EMPTY_FOOD }]);
+  }
+
+  function removeFood(index) {
+    setEditFoods((currentFoods) =>
+      currentFoods.filter((_, foodIndex) => foodIndex !== index)
     );
   }
 
@@ -403,212 +400,29 @@ export default function Details() {
               </label>
             </div>
 
-            <div className="mt-6">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <h3 className="text-base font-bold text-slate-900">
-                  Available Times
-                </h3>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setEditAvailability((current) => [
-                      ...current,
-                      EMPTY_AVAILABILITY,
-                    ])
-                  }
-                  className="inline-flex cursor-pointer rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-900 transition hover:border-amber-300 hover:bg-amber-100"
-                >
-                  Add time
-                </button>
-              </div>
+            <ListingAvailabilityEditor
+              title="Available Times"
+              windows={editAvailability}
+              onAdd={addAvailability}
+              onUpdate={updateAvailability}
+              onRemove={removeAvailability}
+              sectionClassName="mt-6"
+              titleClassName="text-base font-bold text-slate-900"
+              gridClassName="mt-3 grid gap-3"
+              itemClassName="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:grid-cols-[1fr_1fr_1fr_auto]"
+            />
 
-              <div className="mt-3 grid gap-3">
-                {editAvailability.map((availability, index) => (
-                  <div
-                    key={index}
-                    className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:grid-cols-[1fr_1fr_1fr_auto]"
-                  >
-                    <select
-                      value={availability.day}
-                      onChange={(event) =>
-                        updateAvailability(index, 'day', event.target.value)
-                      }
-                      className="cursor-pointer rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-                    >
-                      {DAY_OPTIONS.map(([value, label]) => (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      type="time"
-                      required
-                      value={availability.start_time}
-                      onChange={(event) =>
-                        updateAvailability(
-                          index,
-                          'start_time',
-                          event.target.value
-                        )
-                      }
-                      className="cursor-pointer rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-                    />
-                    <input
-                      type="time"
-                      required
-                      value={availability.end_time}
-                      onChange={(event) =>
-                        updateAvailability(
-                          index,
-                          'end_time',
-                          event.target.value
-                        )
-                      }
-                      className="cursor-pointer rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-                    />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setEditAvailability((current) =>
-                          current.filter(
-                            (_, availabilityIndex) =>
-                              availabilityIndex !== index
-                          )
-                        )
-                      }
-                      className="inline-flex cursor-pointer items-center justify-center rounded-2xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:border-red-300 hover:bg-red-100"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-6">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <h3 className="text-base font-bold text-slate-900">
-                  Food Items
-                </h3>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setEditFoods((current) => [...current, EMPTY_FOOD])
-                  }
-                  className="inline-flex cursor-pointer rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-900 transition hover:border-amber-300 hover:bg-amber-100"
-                >
-                  Add food item
-                </button>
-              </div>
-
-              <div className="mt-3 grid gap-4">
-                {editFoods.map((food, index) => (
-                  <section
-                    key={`${food.id ?? 'new'}-${index}`}
-                    className="rounded-2xl border border-slate-200 bg-white p-4"
-                  >
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <input
-                        type="text"
-                        required
-                        placeholder="Example: Hawaiian Pizza"
-                        value={food.name}
-                        onChange={(event) =>
-                          updateFood(index, 'name', event.target.value)
-                        }
-                        className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-                      />
-                      <select
-                        value={food.category}
-                        onChange={(event) =>
-                          updateFood(index, 'category', event.target.value)
-                        }
-                        className="cursor-pointer rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-                      >
-                        {FOOD_CATEGORIES.map(([value, label]) => (
-                          <option key={value} value={value}>
-                            {label}
-                          </option>
-                        ))}
-                      </select>
-                      <input
-                        type="number"
-                        required
-                        min="0.01"
-                        step="0.01"
-                        value={food.quantity}
-                        onChange={(event) =>
-                          updateFood(index, 'quantity', event.target.value)
-                        }
-                        className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-                      />
-                      <input
-                        type="text"
-                        required
-                        placeholder="Example: Boxes, pounds, trays, servings"
-                        value={food.quantity_unit}
-                        onChange={(event) =>
-                          updateFood(index, 'quantity_unit', event.target.value)
-                        }
-                        className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-                      />
-                      <input
-                        type="date"
-                        value={food.expiration_date}
-                        onChange={(event) =>
-                          updateFood(
-                            index,
-                            'expiration_date',
-                            event.target.value
-                          )
-                        }
-                        className="cursor-pointer rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-                      />
-                      <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800">
-                        <input
-                          type="checkbox"
-                          checked={food.is_perishable}
-                          onChange={(event) =>
-                            updateFood(
-                              index,
-                              'is_perishable',
-                              event.target.checked
-                            )
-                          }
-                          className="h-4 w-4 cursor-pointer accent-amber-700"
-                        />
-                        Perishable
-                      </label>
-                    </div>
-                    <textarea
-                      rows="3"
-                      placeholder="Example: Thin crust, pineapple, onions, olives, stuffed crust"
-                      value={food.description}
-                      onChange={(event) =>
-                        updateFood(index, 'description', event.target.value)
-                      }
-                      className="mt-3 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-900 outline-none transition focus:border-amber-300"
-                    />
-                    {editFoods.length > 1 ? (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setEditFoods((current) =>
-                            current.filter(
-                              (_, foodIndex) => foodIndex !== index
-                            )
-                          )
-                        }
-                        className="mt-3 inline-flex cursor-pointer rounded-2xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:border-red-300 hover:bg-red-100"
-                      >
-                        Remove food item
-                      </button>
-                    ) : null}
-                  </section>
-                ))}
-              </div>
-            </div>
+            <ListingFoodEditor
+              foods={editFoods}
+              onAdd={addFood}
+              onUpdate={updateFood}
+              onRemove={removeFood}
+              title="Food Items"
+              sectionClassName="mt-6"
+              gridClassName="mt-3 grid gap-4"
+              itemClassName="rounded-2xl border border-slate-200 bg-white p-4"
+              removeLabel="Remove food item"
+            />
 
             <button
               type="submit"
