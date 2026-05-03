@@ -7,8 +7,7 @@ from sessions import get_user
 from utils import (
     send_json,
     get_query_param,
-    parse_body,
-    strip_strings,
+    parse_validate_body,
     parse_decimal,
     parse_food_items,
     parse_availability_windows,
@@ -376,22 +375,11 @@ def get_listing_details(handler):
 
 #POST endpoint handler that creates an offer or request listing
 def create_listing(handler, listing_type):
-    body = parse_body(handler)
+    body = parse_validate_body(handler, ["foods", "address_text", "latitude", "longitude"])
     if body is None:
-        return send_json(handler, 400, {"error": "Invalid JSON body."})
+        return
 
-    body = strip_strings(body)
     user = get_user(handler)
-
-    required_fields = [
-        "foods",
-        "address_text",
-        "latitude",
-        "longitude",
-    ]
-    missing = [name for name in required_fields if body.get(name) in (None, "")]
-    if missing:
-        return send_json(handler, 400, {"error": f"Missing fields: {','.join(missing)}"})
 
     try:
         foods = parse_food_items(body["foods"])
@@ -523,21 +511,15 @@ def create_listing(handler, listing_type):
 
 #PATCH endpoint handler that updates an available listing owned by the current user
 def edit_listing(handler):
-    body = parse_body(handler)
-    if body is None:
-        return send_json(handler, 400, {"error": "Invalid JSON body."})
-
-    body = strip_strings(body)
-    required_fields = [
+    body = parse_validate_body(handler, [
         "listing_id",
         "foods",
         "availability_windows",
         "address_text",
         "travel_distance_miles",
-    ]
-    missing = [name for name in required_fields if body.get(name) in (None, "")]
-    if missing:
-        return send_json(handler, 400, {"error": f"Missing fields: {','.join(missing)}"})
+    ])
+    if body is None:
+        return
 
     try:
         listing_id = int(body["listing_id"])
