@@ -63,21 +63,12 @@ export default function ListingPageShell({
                 <h1
                   className={
                     lightHeader
-                      ? "text-3xl font-bold text-slate-900 sm:text-4xl"
-                      : "mt-4 text-4xl font-extrabold sm:text-5xl"
+                      ? "mt-3 max-w-3xl text-2xl font-bold text-slate-900 sm:text-3xl"
+                      : "mt-4 max-w-3xl text-3xl font-extrabold text-white sm:text-4xl"
                   }
                 >
-                  {title}
+                  {description || title}
                 </h1>
-                <p
-                  className={
-                    lightHeader
-                      ? "mt-3 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base"
-                      : "mt-4 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base"
-                  }
-                >
-                  {description}
-                </p>
               </div>
 
               {secondaryAction ? (

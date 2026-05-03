@@ -28,8 +28,23 @@ export function formatFoodCategory(category) {
   );
 }
 
+export function formatNumber(value) {
+  if (value === null || value === undefined || value === "") {
+    return "";
+  }
+
+  const number = Number(value);
+  if (!Number.isFinite(number)) {
+    return value;
+  }
+
+  return Number.isInteger(number)
+    ? String(number)
+    : String(number).replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "");
+}
+
 export function formatFoodQuantity(food) {
-  return [food?.quantity, food?.quantity_unit].filter(Boolean).join(" ");
+  return [formatNumber(food?.quantity), food?.quantity_unit].filter(Boolean).join(" ");
 }
 
 export function getPrimaryFood(record) {

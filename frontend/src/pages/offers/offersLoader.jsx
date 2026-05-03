@@ -6,6 +6,7 @@ import {
 } from "../../utils/distance.js";
 import {
   formatFoodQuantity,
+  formatNumber,
   getFoodSummary,
   getFoodTags,
   getFoodTitle,
@@ -18,7 +19,7 @@ const ALL_FILTER = "All offers";
 function buildOfferItem(record) {
   const primaryFood = getPrimaryFood(record);
   const distance =
-    typeof record.distance_miles === "number" ? `${record.distance_miles} mi away` : null;
+    typeof record.distance_miles === "number" ? `${formatNumber(record.distance_miles)} mi away` : null;
 
   const locationLabel = distance
     ? `${record.location.address_text} (${distance})`

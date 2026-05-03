@@ -47,7 +47,6 @@ export function ToastProvider({ children }) {
         {toasts.map((toast) => {
           const remainingMs = Math.max(0, toast.expiresAt - now);
           const remainingSeconds = Math.ceil(remainingMs / 1000);
-          const progressPercent = Math.max(0, Math.min(100, (remainingMs / toast.duration) * 100));
           const isError = toast.type === "error";
 
           return (
@@ -88,12 +87,6 @@ export function ToastProvider({ children }) {
                     x
                   </button>
                 </div>
-              </div>
-              <div className="h-1 bg-slate-100">
-                <div
-                  className={`h-full ${isError ? "bg-red-500" : "bg-emerald-500"}`}
-                  style={{ width: `${progressPercent}%` }}
-                />
               </div>
             </div>
           );

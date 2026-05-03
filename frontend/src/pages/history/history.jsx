@@ -7,13 +7,13 @@ export default function History() {
 
   return (
     <ListingPageShell
+      eyebrow="History"
       title="History"
-      description="Review completed, cancelled, and archived records in one place."
+      description="Review completed and cancelled listings"
       items={items}
       filters={filters}
       secondaryAction={null}
       filtersLabel="History filters:"
-      lightHeader
       cardConfig={{
         variant: "compactHistory",
         eyebrowKey: "status",

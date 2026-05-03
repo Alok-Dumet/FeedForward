@@ -20,8 +20,8 @@ export default function UserRequestCreate() {
               <p className="text-sm font-medium tracking-[0.2em] text-emerald-400 uppercase">
                 Create Request
               </p>
-              <h1 className="mt-4 text-4xl font-extrabold sm:text-5xl">
-                Your new request
+              <h1 className="mt-4 max-w-3xl text-3xl font-extrabold text-white sm:text-4xl">
+                Request food support
               </h1>
             </div>
           </div>

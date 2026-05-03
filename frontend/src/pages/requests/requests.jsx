@@ -36,7 +36,7 @@ export default function Requests() {
     <ListingPageShell
       eyebrow="Active Requests"
       title="Community food requests awaiting a match"
-      description="Browse active community food requests and narrow the list by food category or handling type."
+      description="Browse active community food requests"
       items={filteredItems}
       filters={filters}
       activeFilter={activeFilter}

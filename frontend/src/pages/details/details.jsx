@@ -3,7 +3,12 @@ import { Link, useLoaderData } from "react-router-dom";
 
 import { useToast } from "../../hooks/useToast.js";
 import { formatAvailabilityWindows } from "../../utils/formatDates.js";
-import { formatFoodCategory, formatFoodQuantity, getFoodTitle } from "../../utils/foods.js";
+import {
+  formatFoodCategory,
+  formatFoodQuantity,
+  formatNumber,
+  getFoodTitle,
+} from "../../utils/foods.js";
 
 const dateFmt = new Intl.DateTimeFormat("en-US", { dateStyle: "medium" });
 const FOOD_CATEGORIES = [
@@ -580,7 +585,7 @@ export default function Details() {
             <DetailField label="Address" value={listing.location?.address_text} />
             <DetailField
               label={distanceLabel}
-              value={`${listing.travel_distance_miles ?? 0} miles`}
+              value={`${formatNumber(listing.travel_distance_miles ?? 0)} miles`}
             />
           </dl>
 
