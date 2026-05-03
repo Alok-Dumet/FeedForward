@@ -28,12 +28,7 @@ import UserRequestCreate from './pages/userRequestCreate/userRequestCreate.jsx';
 import userRequestCreateLoader from './pages/userRequestCreate/userRequestCreateLoader.jsx';
 import History from './pages/history/history.jsx';
 import historyLoader from './pages/history/historyLoader.jsx';
-import {
-  getMyCreateRouteForUserType,
-  getMyListingsRouteForUserType,
-  rootSessionLoader,
-  withProtectedLoader,
-} from './session.js';
+import { rootSessionLoader, withProtectedLoader } from './session.js';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -101,42 +96,22 @@ const router = createBrowserRouter([
       {
         path: '/users/:id/offers',
         element: <UserOffers />,
-        loader: withProtectedLoader(
-          userOffersLoader,
-          ['donor'],
-          ({ userId, userType }) =>
-            getMyListingsRouteForUserType(userType, userId)
-        ),
+        loader: withProtectedLoader(userOffersLoader, ['donor']),
       },
       {
         path: '/users/:id/offers/create',
         element: <UserOfferCreate />,
-        loader: withProtectedLoader(
-          userOfferCreateLoader,
-          ['donor'],
-          ({ userId, userType }) =>
-            getMyCreateRouteForUserType(userType, userId)
-        ),
+        loader: withProtectedLoader(userOfferCreateLoader, ['donor']),
       },
       {
         path: '/users/:id/requests',
         element: <UserRequests />,
-        loader: withProtectedLoader(
-          userRequestsLoader,
-          ['recipient'],
-          ({ userId, userType }) =>
-            getMyListingsRouteForUserType(userType, userId)
-        ),
+        loader: withProtectedLoader(userRequestsLoader, ['recipient']),
       },
       {
         path: '/users/:id/requests/create',
         element: <UserRequestCreate />,
-        loader: withProtectedLoader(
-          userRequestCreateLoader,
-          ['recipient'],
-          ({ userId, userType }) =>
-            getMyCreateRouteForUserType(userType, userId)
-        ),
+        loader: withProtectedLoader(userRequestCreateLoader, ['recipient']),
       },
     ],
   },

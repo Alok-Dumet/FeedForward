@@ -3,16 +3,10 @@ import { motion as Motion } from 'motion/react';
 
 import { useSession } from '../../hooks/useSession.js';
 
-const ROLE_DISPLAY_NAMES = {
-  donor: 'Food Provider',
-  recipient: 'Recipient Organization',
-};
-
 export default function NotAuthorized() {
-  const { userType, defaultRoute } = useSession();
-
-  const otherRole = userType === 'donor' ? 'recipient' : 'donor';
-  const requiredRoleName = ROLE_DISPLAY_NAMES[otherRole] ?? 'a different role';
+  const { defaultRoute, isAuthenticated } = useSession();
+  const actionPath = isAuthenticated ? defaultRoute : '/login';
+  const actionLabel = isAuthenticated ? 'Back to listings' : 'Log in';
 
   return (
     <main className="flex min-h-screen items-center justify-center px-6 py-10">
@@ -31,19 +25,15 @@ export default function NotAuthorized() {
         </h1>
 
         <p className="mt-4 text-sm leading-7 text-slate-600">
-          This page is only available to users with the{' '}
-          <span className="font-semibold text-slate-900">
-            {requiredRoleName}
-          </span>{' '}
-          role.
+          You do not have permission to view this page.
         </p>
 
         <div className="mt-8">
           <Link
-            to={defaultRoute}
+            to={actionPath}
             className="inline-flex rounded-2xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
           >
-            Go to your dashboard
+            {actionLabel}
           </Link>
         </div>
       </Motion.section>

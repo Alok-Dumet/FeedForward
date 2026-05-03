@@ -1,3 +1,3 @@
 import { createUserListingLoader } from '../../utils/loaders.js';
 
-export default createUserListingLoader('Recipient Organization', 'requests');
+export default createUserListingLoader('Recipient Organization');

@@ -2,14 +2,14 @@ import { redirect } from 'react-router-dom';
 
 import { parseSession } from '../session.js';
 
-//We will build a loader for /users/:id/{offers|requests}/create that redirects strangers to their own page
-export function createUserListingLoader(roleLabel, listingPath) {
+//We will build a loader for /users/:id/{offers|requests}/create that rejects mismatched user ids
+export function createUserListingLoader(roleLabel) {
   return async function loader({ params }, session) {
     const { userId, organizationName } = parseSession(session);
     const user = session?.user ?? session ?? {};
 
     if (params.id !== userId) {
-      return redirect(`/users/${userId}/${listingPath}/create`);
+      return redirect('/not_authorized');
     }
 
     return {

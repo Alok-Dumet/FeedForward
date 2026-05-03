@@ -112,13 +112,13 @@ export async function requireSession(request) {
   const session = await fetchSession(request);
 
   if (!session) {
-    return redirect('/login');
+    return redirect('/not_authorized');
   }
 
   return session;
 }
 
-export function withProtectedLoader(loader, allowedUserTypes, getRedirectPath) {
+export function withProtectedLoader(loader, allowedUserTypes) {
   return async (args) => {
     const session = await requireSession(args.request);
 
@@ -130,15 +130,7 @@ export function withProtectedLoader(loader, allowedUserTypes, getRedirectPath) {
     const { userType } = parsedSession;
 
     if (allowedUserTypes && !allowedUserTypes.includes(userType)) {
-      const redirectPath = getRedirectPath?.({
-        args,
-        session,
-        parsedSession,
-        userId: parsedSession.userId,
-        userType,
-      });
-
-      return redirect(redirectPath ?? getDefaultRouteForUserType(userType));
+      return redirect('/not_authorized');
     }
 
     if (!loader) {
