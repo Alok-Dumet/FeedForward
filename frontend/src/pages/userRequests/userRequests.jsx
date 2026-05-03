@@ -1,10 +1,24 @@
+import { useMemo, useState } from "react";
 import { useLoaderData } from "react-router-dom";
 import { motion as Motion } from "motion/react";
 
 import ListingCard from "../../components/listingCard.jsx";
+import PaginationControls from "../../components/paginationControls.jsx";
+import usePagination from "../../hooks/usePagination.js";
+
+const FILTERS = ["All listings", "Posted by you", "Accepted by you"];
 
 export default function UserRequests() {
-  const { filters, items } = useLoaderData();
+  const { items } = useLoaderData();
+  const [activeFilter, setActiveFilter] = useState(FILTERS[0]);
+  const filteredItems = useMemo(() => {
+    if (activeFilter === FILTERS[0]) {
+      return items;
+    }
+
+    return items.filter((item) => item.tags.includes(activeFilter));
+  }, [activeFilter, items]);
+  const pagination = usePagination(filteredItems);
 
   return (
     <main className="px-6 py-10 sm:px-8 lg:px-12">
@@ -30,12 +44,20 @@ export default function UserRequests() {
           className="rounded-[2rem] border border-white/70 bg-white/70 px-6 py-5 shadow-xl backdrop-blur-md"
         >
           <div className="flex flex-wrap items-center gap-3">
-            <span className="text-sm font-semibold text-slate-600">Request states:</span>
-            {filters.map((filter) => (
+            <span className="text-sm font-semibold text-slate-600">Show:</span>
+            {FILTERS.map((filter) => (
               <button
                 key={filter}
                 type="button"
-                className="cursor-pointer rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-amber-300 hover:text-amber-800"
+                onClick={() => {
+                  setActiveFilter(filter);
+                  pagination.setPage(1);
+                }}
+                className={`cursor-pointer rounded-full border px-4 py-2 text-sm font-medium transition ${
+                  activeFilter === filter
+                    ? "border-slate-900 bg-slate-900 text-white hover:border-slate-900 hover:text-white"
+                    : "border-slate-200 bg-white text-slate-700 hover:border-amber-300 hover:text-amber-800"
+                }`}
               >
                 {filter}
               </button>
@@ -44,7 +66,7 @@ export default function UserRequests() {
         </Motion.section>
 
         <section className="grid gap-5">
-          {items.map((item, index) => (
+          {pagination.pageItems.map((item, index) => (
             <Motion.div
               key={item.id}
               initial={{ opacity: 0, y: 22 }}
@@ -65,14 +87,15 @@ export default function UserRequests() {
                 ]}
                 tags={item.tags}
                 action={{
-                  label: "Details",
+                  label: "View details",
                   to: item.detailsPath,
-                  placement: "inline",
                 }}
               />
             </Motion.div>
           ))}
         </section>
+
+        <PaginationControls {...pagination} />
       </div>
     </main>
   );
