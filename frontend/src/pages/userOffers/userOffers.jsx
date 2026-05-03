@@ -52,7 +52,7 @@ export default function UserOffers() {
                 tags={item.tags}
                 action={{
                   label: "View details",
-                  to: `/offers/${item.id}`,
+                  to: item.detailsPath,
                   placement: "inline",
                 }}
               />

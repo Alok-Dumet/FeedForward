@@ -11,8 +11,21 @@ async function loadListingDetails({ params, request }, page) {
     throw new Response("Listing not found.", { status: 404 });
   }
 
+  const url = new URL(request.url);
+  const currentUser = payload.record?.current_user;
+  let resolvedPage = page;
+
+  if (url.searchParams.get("from") === "my-listings" && currentUser?.id) {
+    const isDonor = currentUser.role === "food_provider";
+    resolvedPage = {
+      ...page,
+      backTo: isDonor ? `/users/${currentUser.id}/offers` : `/users/${currentUser.id}/requests`,
+      backLabel: isDonor ? "My Offers" : "My Requests",
+    };
+  }
+
   return {
-    page,
+    page: resolvedPage,
     record: payload.record,
   };
 }

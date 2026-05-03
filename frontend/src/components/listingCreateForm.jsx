@@ -373,7 +373,7 @@ export default function ListingCreateForm({
                   <input
                     type="text"
                     required
-                    placeholder="Boxes, pounds, trays, servings"
+                    placeholder="Example: Boxes, pounds, trays, servings"
                     value={food.quantity_unit}
                     onChange={(event) => updateFood(index, "quantity_unit", event.target.value)}
                     className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"

@@ -22,6 +22,7 @@ function buildItem(record) {
     availability: formatAvailabilityWindows(record.availability_windows),
     location: record.location.address_text,
     audience: record.creator.organization_name,
+    detailsPath: `/${record.listing_type === "offer" ? "offers" : "requests"}/${record.id}?from=my-listings`,
     tags: [ownership, ...getFoodTags(record)],
   };
 }

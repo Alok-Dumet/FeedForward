@@ -52,7 +52,7 @@ export default function UserRequests() {
                 tags={item.tags}
                 action={{
                   label: "Details",
-                  to: `/requests/${item.id}`,
+                  to: item.detailsPath,
                   placement: "inline",
                 }}
               />

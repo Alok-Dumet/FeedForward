@@ -36,8 +36,8 @@ export default function UserOfferCreate() {
           <ListingCreateForm
             additionalInstructionsPlaceholder="Example: Please enter through the second door on the left side of the building"
             endpoint="/api/listings/offers/create"
-            foodDescriptionPlaceholder="Thin crust, pineapple, onions, olives, stuffed crust"
-            foodNamePlaceholder="Hawaiian Pizza"
+            foodDescriptionPlaceholder="Example: Thin crust, pineapple, onions, olives, stuffed crust"
+            foodNamePlaceholder="Example: Hawaiian Pizza"
             formLabel="Offer Form"
             locationUnavailableMessage="Your account needs a valid location before you can publish an offer."
             publishLabel="Publish offer"

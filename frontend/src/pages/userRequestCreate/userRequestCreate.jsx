@@ -36,8 +36,8 @@ export default function UserRequestCreate() {
           <ListingCreateForm
             additionalInstructionsPlaceholder="Example: Please bring donations to the front desk during pantry intake hours"
             endpoint="/api/listings/requests/create"
-            foodDescriptionPlaceholder="Shelf-stable items, low-sodium options preferred, family-size packages welcome"
-            foodNamePlaceholder="Canned vegetables"
+            foodDescriptionPlaceholder="Example: Shelf-stable items, low-sodium options preferred, family-size packages welcome"
+            foodNamePlaceholder="Example: Canned vegetables"
             formLabel="Request Form"
             locationUnavailableMessage="Your account needs a valid location before you can publish a request."
             publishLabel="Publish request"

@@ -122,7 +122,7 @@ export default function Details() {
                   You created this listing, so it cannot be accepted from this view.
                 </p>
               ) : null}
-              {!isOwnListing && status !== "available" ? (
+              {!isOwnListing && status !== "available" && claimState.status !== "success" ? (
                 <p className="mt-2 text-sm text-slate-600">
                   This listing is no longer available.
                 </p>
