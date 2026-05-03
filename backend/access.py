@@ -1,7 +1,7 @@
 from sessions import get_user
-from utils import send_json, normalize_path
+from utils import normalize_path, send_json
 
-#We will define which API paths are public, which require a specific role, and which page paths need auth
+# We will define which API paths are public, which require a specific role, and which page paths need auth
 PUBLIC_PATHS = {
     "/api/login",
     "/api/register",
@@ -17,13 +17,15 @@ PROTECTED_PAGE_PATHS = {
     "/history",
 }
 
-#We will use this helper function for redirecting users
+
+# We will use this helper function for redirecting users
 def redirect(handler, location):
     handler.send_response(302)
     handler.send_header("Location", location)
     handler.end_headers()
 
-#We will check authentication for all API paths by default, unless they are explicitly public
+
+# We will check authentication for all API paths by default, unless they are explicitly public
 def enforce_access(handler):
     path = normalize_path(handler.path)
 

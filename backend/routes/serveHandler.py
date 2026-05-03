@@ -1,19 +1,19 @@
 import mimetypes
 import os
 
-
-#We will resolve the dist directory once at import time so the path is absolute regardless of where the server was launched from
+# We will resolve the dist directory once at import time so the path is absolute regardless of where the server was launched from
 DIST_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist"))
 
 
-#GET request handler that serves assets or the frontend app shell
+# GET request handler that serves assets or the frontend app shell
 def handle(handler):
     if handler.path.startswith("/assets/"):
         handle_assets(handler)
     else:
         serve_frontend(handler)
 
-#GET request handler that serves built frontend assets
+
+# GET request handler that serves built frontend assets
 def handle_assets(handler):
     requested = os.path.realpath(os.path.join(DIST_DIR, handler.path.lstrip("/")))
     if not (requested == DIST_DIR or requested.startswith(DIST_DIR + os.sep)):
@@ -34,7 +34,8 @@ def handle_assets(handler):
         handler.send_response(404)
         handler.end_headers()
 
-#GET request handler that serves the built frontend app shell
+
+# GET request handler that serves the built frontend app shell
 def serve_frontend(handler):
     index_path = os.path.join(DIST_DIR, "index.html")
     try:

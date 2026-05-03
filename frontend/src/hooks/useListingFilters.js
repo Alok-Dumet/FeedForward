@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { useNavigation } from "react-router-dom";
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigation } from 'react-router-dom';
 
 export default function useListingFilters(items, filters) {
   const navigation = useNavigation();
@@ -25,7 +25,7 @@ export default function useListingFilters(items, filters) {
   return {
     activeFilter,
     filteredItems,
-    isFiltering: isLocalFiltering || navigation.state !== "idle",
+    isFiltering: isLocalFiltering || navigation.state !== 'idle',
     setActiveFilter(filter) {
       setIsLocalFiltering(true);
       setActiveFilter(filter);

@@ -1,8 +1,8 @@
-import { useLoaderData } from "react-router-dom";
+import { useLoaderData } from 'react-router-dom';
 
-import ListingPageShell from "../../components/listingPageShell.jsx";
-import useListingFilters from "../../hooks/useListingFilters.js";
-import { MY_LISTINGS_FILTERS } from "../../utils/constants.js";
+import ListingPageShell from '../../components/listingPageShell.jsx';
+import useListingFilters from '../../hooks/useListingFilters.js';
+import { MY_LISTINGS_FILTERS } from '../../utils/constants.js';
 
 export default function UserRequests() {
   const { items } = useLoaderData();
@@ -20,16 +20,16 @@ export default function UserRequests() {
       isFiltering={isFiltering}
       filtersLabel="Show:"
       cardConfig={{
-        eyebrowKey: "status",
-        highlightLabel: "Need",
+        eyebrowKey: 'status',
+        highlightLabel: 'Need',
         action: {
-          label: "View details",
+          label: 'View details',
           to: (item) => item.detailsPath,
         },
         detailFields: [
-          { label: "Available Times", key: "availability" },
-          { label: "Area", key: "location" },
-          { label: "Serving", key: "audience" },
+          { label: 'Available Times', key: 'availability' },
+          { label: 'Area', key: 'location' },
+          { label: 'Serving', key: 'audience' },
         ],
       }}
     />

@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 const DEFAULT_RADIUS = 150;
 const MIN_RADIUS = 25;
@@ -15,13 +15,15 @@ function normalizeRadius(value) {
 //We will render a labeled range input that pushes radius_miles into the URL search params, debounced so dragging doesn't refetch on every pixel
 export default function RadiusSlider({ defaultMiles }) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const urlRadius = searchParams.get("radius_miles");
-  const [value, setValue] = useState(normalizeRadius(urlRadius ?? defaultMiles));
+  const urlRadius = searchParams.get('radius_miles');
+  const [value, setValue] = useState(
+    normalizeRadius(urlRadius ?? defaultMiles)
+  );
 
   useEffect(() => {
     const handle = setTimeout(() => {
       const next = new URLSearchParams(searchParams);
-      next.set("radius_miles", String(value));
+      next.set('radius_miles', String(value));
       setSearchParams(next, { replace: true });
     }, DEBOUNCE_MS);
     return () => clearTimeout(handle);
@@ -29,8 +31,11 @@ export default function RadiusSlider({ defaultMiles }) {
 
   return (
     <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-      <label htmlFor="radius_miles" className="text-sm font-semibold text-slate-600">
-        Within {value} {value === 1 ? "mile" : "miles"}
+      <label
+        htmlFor="radius_miles"
+        className="text-sm font-semibold text-slate-600"
+      >
+        Within {value} {value === 1 ? 'mile' : 'miles'}
       </label>
       <input
         id="radius_miles"

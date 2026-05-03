@@ -1,63 +1,69 @@
-import { useState } from "react";
+import { useState } from 'react';
 
-import { useToast } from "../hooks/useToast.js";
-import { FOOD_CATEGORY_LABELS } from "../utils/foods.js";
-import FormField from "./formField.jsx";
+import { useToast } from '../hooks/useToast.js';
+import { FOOD_CATEGORY_LABELS } from '../utils/foods.js';
+import FormField from './formField.jsx';
 
 const EMPTY_FOOD = {
-  name: "",
-  description: "",
-  category: "produce",
+  name: '',
+  description: '',
+  category: 'produce',
   is_perishable: false,
-  quantity: "",
-  quantity_unit: "",
-  expiration_date: "",
+  quantity: '',
+  quantity_unit: '',
+  expiration_date: '',
 };
 
 const DAY_OPTIONS = [
-  ["monday", "Monday"],
-  ["tuesday", "Tuesday"],
-  ["wednesday", "Wednesday"],
-  ["thursday", "Thursday"],
-  ["friday", "Friday"],
-  ["saturday", "Saturday"],
-  ["sunday", "Sunday"],
+  ['monday', 'Monday'],
+  ['tuesday', 'Tuesday'],
+  ['wednesday', 'Wednesday'],
+  ['thursday', 'Thursday'],
+  ['friday', 'Friday'],
+  ['saturday', 'Saturday'],
+  ['sunday', 'Sunday'],
 ];
 
 const EMPTY_AVAILABILITY_WINDOW = {
-  day: "monday",
-  start_time: "09:00",
-  end_time: "17:00",
+  day: 'monday',
+  start_time: '09:00',
+  end_time: '17:00',
 };
 
 const LISTING_COPY = {
   offer: {
-    heading: "Offer details",
-    formLabel: "Offer Form",
-    endpoint: "/api/listings/offers/create",
-    publishLabel: "Publish offer",
-    successLabel: "Offer published.",
-    locationUnavailableMessage: "Your account needs a valid location before you can publish an offer.",
+    heading: 'Offer details',
+    formLabel: 'Offer Form',
+    endpoint: '/api/listings/offers/create',
+    publishLabel: 'Publish offer',
+    successLabel: 'Offer published.',
+    locationUnavailableMessage:
+      'Your account needs a valid location before you can publish an offer.',
     travelDistanceLabel: "Distance we're willing to deliver",
-    foodNamePlaceholder: "Example: Hawaiian Pizza",
-    foodDescriptionPlaceholder: "Example: Thin crust, pineapple, onions, olives, stuffed crust",
-    additionalInstructionsPlaceholder: "Example: Please enter through the second door on the left side of the building",
-    availabilityTitle: "Times people can pick up food",
-    availabilityHint: "Add times you can hand off food. Optional.",
+    foodNamePlaceholder: 'Example: Hawaiian Pizza',
+    foodDescriptionPlaceholder:
+      'Example: Thin crust, pineapple, onions, olives, stuffed crust',
+    additionalInstructionsPlaceholder:
+      'Example: Please enter through the second door on the left side of the building',
+    availabilityTitle: 'Times people can pick up food',
+    availabilityHint: 'Add times you can hand off food. Optional.',
   },
   request: {
-    heading: "Request details",
-    formLabel: "Request Form",
-    endpoint: "/api/listings/requests/create",
-    publishLabel: "Publish request",
-    successLabel: "Request published.",
-    locationUnavailableMessage: "Your account needs a valid location before you can publish a request.",
+    heading: 'Request details',
+    formLabel: 'Request Form',
+    endpoint: '/api/listings/requests/create',
+    publishLabel: 'Publish request',
+    successLabel: 'Request published.',
+    locationUnavailableMessage:
+      'Your account needs a valid location before you can publish a request.',
     travelDistanceLabel: "Distance we're willing to pick up",
-    foodNamePlaceholder: "Example: Canned vegetables",
-    foodDescriptionPlaceholder: "Example: Shelf-stable items, low-sodium options preferred, family-size packages welcome",
-    additionalInstructionsPlaceholder: "Example: Please bring donations to the front desk during pantry intake hours",
-    availabilityTitle: "Times people can drop off food",
-    availabilityHint: "Add times you can pick up food. Optional.",
+    foodNamePlaceholder: 'Example: Canned vegetables',
+    foodDescriptionPlaceholder:
+      'Example: Shelf-stable items, low-sodium options preferred, family-size packages welcome',
+    additionalInstructionsPlaceholder:
+      'Example: Please bring donations to the front desk during pantry intake hours',
+    availabilityTitle: 'Times people can drop off food',
+    availabilityHint: 'Add times you can pick up food. Optional.',
   },
 };
 
@@ -77,9 +83,11 @@ export default function ListingCreateForm({ listingType, user }) {
   const copy = LISTING_COPY[listingType];
   const [foods, setFoods] = useState([{ ...EMPTY_FOOD }]);
   const [availabilityWindows, setAvailabilityWindows] = useState([]);
-  const [locationAddress, setLocationAddress] = useState(user.address_text ?? "");
-  const [travelDistanceMiles, setTravelDistanceMiles] = useState("150");
-  const [additionalInstructions, setAdditionalInstructions] = useState("");
+  const [locationAddress, setLocationAddress] = useState(
+    user.address_text ?? ''
+  );
+  const [travelDistanceMiles, setTravelDistanceMiles] = useState('150');
+  const [additionalInstructions, setAdditionalInstructions] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { showToast } = useToast();
 
@@ -98,7 +106,9 @@ export default function ListingCreateForm({ listingType, user }) {
   }
 
   function removeFood(index) {
-    setFoods((currentFoods) => currentFoods.filter((_, foodIndex) => foodIndex !== index));
+    setFoods((currentFoods) =>
+      currentFoods.filter((_, foodIndex) => foodIndex !== index)
+    );
   }
 
   function updateAvailabilityWindow(index, field, value) {
@@ -126,7 +136,7 @@ export default function ListingCreateForm({ listingType, user }) {
     event.preventDefault();
 
     if (!hasLocationCoordinates) {
-      showToast(copy.locationUnavailableMessage, "error");
+      showToast(copy.locationUnavailableMessage, 'error');
       return;
     }
 
@@ -134,9 +144,9 @@ export default function ListingCreateForm({ listingType, user }) {
 
     try {
       const res = await fetch(copy.endpoint, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           foods: foods.map(getTrimmedFood),
@@ -152,29 +162,24 @@ export default function ListingCreateForm({ listingType, user }) {
       const data = await res.json().catch(() => null);
 
       if (!res.ok) {
-        showToast(data?.error ?? "Unable to publish listing.", "error");
+        showToast(data?.error ?? 'Unable to publish listing.', 'error');
         return;
       }
 
-      showToast(copy.successLabel, "success");
+      showToast(copy.successLabel, 'success');
     } catch {
-      showToast("Network error. Please try again.", "error");
+      showToast('Network error. Please try again.', 'error');
     } finally {
       setIsSubmitting(false);
     }
   }
 
   return (
-    <form
-      className="rounded-[1.75rem] border border-white/70 bg-white/85 p-6 shadow-xl backdrop-blur-md"
-      onSubmit={handleSubmit}
-    >
+    <form className="surface-glass p-6" onSubmit={handleSubmit}>
       <p className="text-xs font-semibold tracking-[0.18em] text-amber-700 uppercase">
         {copy.formLabel}
       </p>
-      <h2 className="mt-3 text-2xl font-bold text-slate-900">
-        {copy.heading}
-      </h2>
+      <h2 className="mt-3 text-2xl font-bold text-slate-900">{copy.heading}</h2>
 
       <div className="mt-6 grid gap-5 sm:grid-cols-2">
         <FormField label="Listing address">
@@ -208,8 +213,12 @@ export default function ListingCreateForm({ listingType, user }) {
       <section className="mt-8 rounded-3xl border border-slate-200 bg-white/80 p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h3 className="text-xl font-bold text-slate-900">{copy.availabilityTitle}</h3>
-            <p className="mt-1 text-sm leading-6 text-slate-600">{copy.availabilityHint}</p>
+            <h3 className="text-xl font-bold text-slate-900">
+              {copy.availabilityTitle}
+            </h3>
+            <p className="mt-1 text-sm leading-6 text-slate-600">
+              {copy.availabilityHint}
+            </p>
           </div>
           <button
             type="button"
@@ -236,7 +245,7 @@ export default function ListingCreateForm({ listingType, user }) {
                     required
                     value={window.day}
                     onChange={(event) =>
-                      updateAvailabilityWindow(index, "day", event.target.value)
+                      updateAvailabilityWindow(index, 'day', event.target.value)
                     }
                     className="cursor-pointer rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
                   >
@@ -254,7 +263,11 @@ export default function ListingCreateForm({ listingType, user }) {
                     required
                     value={window.start_time}
                     onChange={(event) =>
-                      updateAvailabilityWindow(index, "start_time", event.target.value)
+                      updateAvailabilityWindow(
+                        index,
+                        'start_time',
+                        event.target.value
+                      )
                     }
                     className="cursor-pointer rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
                   />
@@ -266,7 +279,11 @@ export default function ListingCreateForm({ listingType, user }) {
                     required
                     value={window.end_time}
                     onChange={(event) =>
-                      updateAvailabilityWindow(index, "end_time", event.target.value)
+                      updateAvailabilityWindow(
+                        index,
+                        'end_time',
+                        event.target.value
+                      )
                     }
                     className="cursor-pointer rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
                   />
@@ -339,7 +356,9 @@ export default function ListingCreateForm({ listingType, user }) {
                     required
                     placeholder={copy.foodNamePlaceholder}
                     value={food.name}
-                    onChange={(event) => updateFood(index, "name", event.target.value)}
+                    onChange={(event) =>
+                      updateFood(index, 'name', event.target.value)
+                    }
                     className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
                   />
                 </FormField>
@@ -348,14 +367,18 @@ export default function ListingCreateForm({ listingType, user }) {
                   <select
                     required
                     value={food.category}
-                    onChange={(event) => updateFood(index, "category", event.target.value)}
+                    onChange={(event) =>
+                      updateFood(index, 'category', event.target.value)
+                    }
                     className="cursor-pointer rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
                   >
-                    {Object.entries(FOOD_CATEGORY_LABELS).map(([value, label]) => (
-                      <option key={value} value={value}>
-                        {label}
-                      </option>
-                    ))}
+                    {Object.entries(FOOD_CATEGORY_LABELS).map(
+                      ([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      )
+                    )}
                   </select>
                 </FormField>
 
@@ -366,7 +389,9 @@ export default function ListingCreateForm({ listingType, user }) {
                     min="0.01"
                     step="0.01"
                     value={food.quantity}
-                    onChange={(event) => updateFood(index, "quantity", event.target.value)}
+                    onChange={(event) =>
+                      updateFood(index, 'quantity', event.target.value)
+                    }
                     className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
                   />
                 </FormField>
@@ -377,7 +402,9 @@ export default function ListingCreateForm({ listingType, user }) {
                     required
                     placeholder="Example: Boxes, pounds, trays, servings"
                     value={food.quantity_unit}
-                    onChange={(event) => updateFood(index, "quantity_unit", event.target.value)}
+                    onChange={(event) =>
+                      updateFood(index, 'quantity_unit', event.target.value)
+                    }
                     className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
                   />
                 </FormField>
@@ -389,7 +416,9 @@ export default function ListingCreateForm({ listingType, user }) {
                   <input
                     type="date"
                     value={food.expiration_date}
-                    onChange={(event) => updateFood(index, "expiration_date", event.target.value)}
+                    onChange={(event) =>
+                      updateFood(index, 'expiration_date', event.target.value)
+                    }
                     className="cursor-pointer rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
                   />
                 </FormField>
@@ -399,7 +428,7 @@ export default function ListingCreateForm({ listingType, user }) {
                     type="checkbox"
                     checked={food.is_perishable}
                     onChange={(event) =>
-                      updateFood(index, "is_perishable", event.target.checked)
+                      updateFood(index, 'is_perishable', event.target.checked)
                     }
                     className="h-4 w-4 cursor-pointer accent-amber-700"
                   />
@@ -413,7 +442,9 @@ export default function ListingCreateForm({ listingType, user }) {
                     rows="3"
                     placeholder={copy.foodDescriptionPlaceholder}
                     value={food.description}
-                    onChange={(event) => updateFood(index, "description", event.target.value)}
+                    onChange={(event) =>
+                      updateFood(index, 'description', event.target.value)
+                    }
                     className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-900 outline-none transition focus:border-amber-300"
                   />
                 </FormField>
@@ -432,7 +463,7 @@ export default function ListingCreateForm({ listingType, user }) {
           {isSubmitting ? (
             <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
           ) : null}
-          {isSubmitting ? "Publishing..." : copy.publishLabel}
+          {isSubmitting ? 'Publishing...' : copy.publishLabel}
         </button>
       </div>
     </form>

@@ -1,6 +1,6 @@
-import { redirect } from "react-router-dom";
+import { redirect } from 'react-router-dom';
 
-import { parseSession } from "../session.js";
+import { parseSession } from '../session.js';
 
 //We will build a loader for /users/:id/{offers|requests}/create that redirects strangers to their own page
 export function createUserListingLoader(roleLabel, listingPath) {

@@ -1,11 +1,11 @@
-import { Outlet, useLocation } from "react-router-dom";
-import { motion as Motion } from "motion/react";
+import { Outlet, useLocation } from 'react-router-dom';
+import { motion as Motion } from 'motion/react';
 
-import Navbar from "./navbar.jsx";
+import Navbar from './navbar.jsx';
 
 export default function Background1() {
   const location = useLocation();
-  const hideNavbar = ["/", "/login", "/register"].includes(location.pathname);
+  const hideNavbar = ['/', '/login', '/register'].includes(location.pathname);
 
   return (
     <main className="relative min-h-screen bg-gradient-to-br from-amber-100 via-orange-50 to-lime-100">
@@ -13,17 +13,17 @@ export default function Background1() {
         <Motion.div
           className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-amber-300/30 blur-3xl"
           animate={{ x: [0, 20, 0], y: [0, 15, 0] }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+          transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
         />
         <Motion.div
           className="absolute top-1/4 right-[-60px] h-80 w-80 rounded-full bg-lime-300/30 blur-3xl"
           animate={{ x: [0, -25, 0], y: [0, 20, 0] }}
-          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+          transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
         />
         <Motion.div
           className="absolute bottom-[-80px] left-1/3 h-72 w-72 rounded-full bg-orange-300/30 blur-3xl"
           animate={{ x: [0, 10, 0], y: [0, -20, 0] }}
-          transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
+          transition={{ duration: 11, repeat: Infinity, ease: 'easeInOut' }}
         />
       </div>
 

@@ -1,0 +1,26 @@
+line-length = 150
+target-version = "py311"
+
+exclude = [
+  "__pycache__",
+  "*.pyc",
+]
+
+[lint]
+select = [
+  "E",   # pycodestyle errors
+  "F",   # pyflakes
+  "I",   # isort (import sorting)
+  "W",   # pycodestyle warnings
+  "B",   # flake8-bugbear
+  "UP",  # pyupgrade
+]
+ignore = []
+
+[lint.isort]
+known-first-party = ["database", "routes"]
+
+[format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"

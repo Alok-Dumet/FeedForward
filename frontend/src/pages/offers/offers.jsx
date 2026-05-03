@@ -1,8 +1,8 @@
-import { useLoaderData } from "react-router-dom";
+import { useLoaderData } from 'react-router-dom';
 
-import ListingPageShell from "../../components/listingPageShell.jsx";
-import RadiusSlider from "../../components/radiusSlider.jsx";
-import useListingFilters from "../../hooks/useListingFilters.js";
+import ListingPageShell from '../../components/listingPageShell.jsx';
+import RadiusSlider from '../../components/radiusSlider.jsx';
+import useListingFilters from '../../hooks/useListingFilters.js';
 
 export default function Offers() {
   const { items, filters, radiusMiles } = useLoaderData();
@@ -21,21 +21,19 @@ export default function Offers() {
       isFiltering={isFiltering}
       secondaryAction={null}
       filtersLabel="Filter offers:"
-      extraControls={
-        <RadiusSlider defaultMiles={radiusMiles} />
-      }
+      extraControls={<RadiusSlider defaultMiles={radiusMiles} />}
       cardConfig={{
-        eyebrowKey: "category",
+        eyebrowKey: 'category',
         action: {
-          label: "View details",
+          label: 'View details',
           to: (item) => `/offers/${item.id}`,
         },
-        highlightLabel: "Quantity",
-        highlightValueKey: "quantity",
+        highlightLabel: 'Quantity',
+        highlightValueKey: 'quantity',
         detailFields: [
-          { label: "Available Times", key: "availability" },
-          { label: "Location", key: "location" },
-          { label: "Best For", key: "audience" },
+          { label: 'Available Times', key: 'availability' },
+          { label: 'Location', key: 'location' },
+          { label: 'Best For', key: 'audience' },
         ],
       }}
     />

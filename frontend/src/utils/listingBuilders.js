@@ -1,10 +1,19 @@
-import { formatAvailabilityWindows } from "./formatDates.js";
-import { formatFoodQuantity, formatNumber, getFoodSummary, getFoodTags, getFoodTitle, getPrimaryFood } from "./foods.js";
+import { formatAvailabilityWindows } from './formatDates.js';
+import {
+  formatFoodQuantity,
+  formatNumber,
+  getFoodSummary,
+  getFoodTags,
+  getFoodTitle,
+  getPrimaryFood,
+} from './foods.js';
 
 //We will reshape one /api/listings record into the card shape that listingPageShell expects
 export function buildPublicListingItem(record) {
   const distance =
-    typeof record.distance_miles === "number" ? `${formatNumber(record.distance_miles)} mi away` : null;
+    typeof record.distance_miles === 'number'
+      ? `${formatNumber(record.distance_miles)} mi away`
+      : null;
   const locationLabel = distance
     ? `${record.location.address_text} (${distance})`
     : record.location.address_text;
@@ -23,8 +32,9 @@ export function buildPublicListingItem(record) {
 
 //We will reshape a /api/my-listings record into the card shape userOffers/userRequests expect
 export function buildOwnListingItem(record) {
-  const ownership = record.relationship === "own" ? "Posted by you" : "Accepted by you";
-  const listingPath = record.listing_type === "offer" ? "offers" : "requests";
+  const ownership =
+    record.relationship === 'own' ? 'Posted by you' : 'Accepted by you';
+  const listingPath = record.listing_type === 'offer' ? 'offers' : 'requests';
 
   return {
     id: record.id,

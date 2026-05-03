@@ -1,15 +1,15 @@
-import { redirect } from "react-router-dom";
+import { redirect } from 'react-router-dom';
 
 const DEFAULT_ROUTE_BY_USER_TYPE = {
-  donor: "/requests",
-  recipient: "/offers",
+  donor: '/requests',
+  recipient: '/offers',
 };
 const USER_TYPE_BY_BACKEND_ROLE = {
-  food_provider: "donor",
-  recipient_organization: "recipient",
+  food_provider: 'donor',
+  recipient_organization: 'recipient',
 };
 
-export const SESSION_QUERY_KEY = ["session"];
+export const SESSION_QUERY_KEY = ['session'];
 
 function getUserTypeFromRole(role) {
   if (!role) {
@@ -32,13 +32,13 @@ export function parseSession(raw) {
         ? null
         : String(userIdValue),
     userType,
-    organizationName: user?.organization_name ?? user?.name ?? "",
+    organizationName: user?.organization_name ?? user?.name ?? '',
     role,
   };
 }
 
 export function getDefaultRouteForUserType(userType) {
-  return DEFAULT_ROUTE_BY_USER_TYPE[userType] ?? "/login";
+  return DEFAULT_ROUTE_BY_USER_TYPE[userType] ?? '/login';
 }
 
 export function getMyListingsRouteForUserType(userType, userId) {
@@ -46,15 +46,15 @@ export function getMyListingsRouteForUserType(userType, userId) {
     return getDefaultRouteForUserType(userType);
   }
 
-  if (userType === "donor") {
+  if (userType === 'donor') {
     return `/users/${userId}/offers`;
   }
 
-  if (userType === "recipient") {
+  if (userType === 'recipient') {
     return `/users/${userId}/requests`;
   }
 
-  return "/login";
+  return '/login';
 }
 
 export function getMyCreateRouteForUserType(userType, userId) {
@@ -62,21 +62,21 @@ export function getMyCreateRouteForUserType(userType, userId) {
     return getDefaultRouteForUserType(userType);
   }
 
-  if (userType === "donor") {
+  if (userType === 'donor') {
     return `/users/${userId}/offers/create`;
   }
 
-  if (userType === "recipient") {
+  if (userType === 'recipient') {
     return `/users/${userId}/requests/create`;
   }
 
-  return "/login";
+  return '/login';
 }
 
 async function parseJsonResponse(res) {
-  const contentType = res.headers.get("content-type") ?? "";
+  const contentType = res.headers.get('content-type') ?? '';
 
-  if (!contentType.includes("application/json")) {
+  if (!contentType.includes('application/json')) {
     return null;
   }
 
@@ -89,10 +89,10 @@ async function parseJsonResponse(res) {
 
 export async function fetchSession(request) {
   try {
-    const res = await fetch("/api/session", {
+    const res = await fetch('/api/session', {
       signal: request?.signal,
       headers: {
-        Accept: "application/json",
+        Accept: 'application/json',
       },
     });
     const session = await parseJsonResponse(res);
@@ -119,7 +119,7 @@ export async function requireSession(request) {
   const session = await fetchSession(request);
 
   if (!session) {
-    return redirect("/login");
+    return redirect('/login');
   }
 
   return session;

@@ -1,39 +1,39 @@
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-import BackGround1 from "./components/background1.jsx";
-import { ToastProvider } from "./components/toast.jsx";
-import ErrorCheck from "./pages/errorCheck/errorCheck.jsx";
-import Index from "./pages/index/index.jsx";
-import Login from "./pages/login/login.jsx";
-import Register from "./pages/register/register.jsx";
-import NotAuthorized from "./pages/notAuthorized/notAuthorized.jsx";
-import Offers from "./pages/offers/offers.jsx";
-import offersLoader from "./pages/offers/offersLoader.jsx";
-import Requests from "./pages/requests/requests.jsx";
-import requestsLoader from "./pages/requests/requestsLoader.jsx";
-import Details from "./pages/details/details.jsx";
+import BackGround1 from './components/background1.jsx';
+import { ToastProvider } from './components/toast.jsx';
+import ErrorCheck from './pages/errorCheck/errorCheck.jsx';
+import Index from './pages/index/index.jsx';
+import Login from './pages/login/login.jsx';
+import Register from './pages/register/register.jsx';
+import NotAuthorized from './pages/notAuthorized/notAuthorized.jsx';
+import Offers from './pages/offers/offers.jsx';
+import offersLoader from './pages/offers/offersLoader.jsx';
+import Requests from './pages/requests/requests.jsx';
+import requestsLoader from './pages/requests/requestsLoader.jsx';
+import Details from './pages/details/details.jsx';
 import {
   historyDetailsLoader,
   offerDetailsLoader,
   requestDetailsLoader,
-} from "./pages/details/detailsLoader.jsx";
-import UserOffers from "./pages/userOffers/userOffers.jsx";
-import userOffersLoader from "./pages/userOffers/userOffersLoader.jsx";
-import UserRequests from "./pages/userRequests/userRequests.jsx";
-import userRequestsLoader from "./pages/userRequests/userRequestsLoader.jsx";
-import UserOfferCreate from "./pages/userOfferCreate/userOfferCreate.jsx";
-import userOfferCreateLoader from "./pages/userOfferCreate/userOfferCreateLoader.jsx";
-import UserRequestCreate from "./pages/userRequestCreate/userRequestCreate.jsx";
-import userRequestCreateLoader from "./pages/userRequestCreate/userRequestCreateLoader.jsx";
-import History from "./pages/history/history.jsx";
-import historyLoader from "./pages/history/historyLoader.jsx";
+} from './pages/details/detailsLoader.jsx';
+import UserOffers from './pages/userOffers/userOffers.jsx';
+import userOffersLoader from './pages/userOffers/userOffersLoader.jsx';
+import UserRequests from './pages/userRequests/userRequests.jsx';
+import userRequestsLoader from './pages/userRequests/userRequestsLoader.jsx';
+import UserOfferCreate from './pages/userOfferCreate/userOfferCreate.jsx';
+import userOfferCreateLoader from './pages/userOfferCreate/userOfferCreateLoader.jsx';
+import UserRequestCreate from './pages/userRequestCreate/userRequestCreate.jsx';
+import userRequestCreateLoader from './pages/userRequestCreate/userRequestCreateLoader.jsx';
+import History from './pages/history/history.jsx';
+import historyLoader from './pages/history/historyLoader.jsx';
 import {
   getMyCreateRouteForUserType,
   getMyListingsRouteForUserType,
   rootSessionLoader,
   withProtectedLoader,
-} from "./session.js";
+} from './session.js';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -47,83 +47,95 @@ const queryClient = new QueryClient({
 
 const router = createBrowserRouter([
   {
-    id: "root",
+    id: 'root',
     element: <BackGround1 />,
     loader: rootSessionLoader,
     errorElement: <ErrorCheck />,
     children: [
       {
-        path: "/",
+        path: '/',
         element: <Index />,
       },
       {
-        path: "/login",
+        path: '/login',
         element: <Login />,
       },
       {
-        path: "/register",
+        path: '/register',
         element: <Register />,
       },
       {
-        path: "/not_authorized",
+        path: '/not_authorized',
         element: <NotAuthorized />,
       },
       {
-        path: "/offers",
+        path: '/offers',
         element: <Offers />,
-        loader: withProtectedLoader(offersLoader, ["recipient"]),
+        loader: withProtectedLoader(offersLoader, ['recipient']),
       },
       {
-        path: "/offers/:id",
+        path: '/offers/:id',
         element: <Details />,
         loader: withProtectedLoader(offerDetailsLoader),
       },
       {
-        path: "/requests",
+        path: '/requests',
         element: <Requests />,
-        loader: withProtectedLoader(requestsLoader, ["donor"]),
+        loader: withProtectedLoader(requestsLoader, ['donor']),
       },
       {
-        path: "/requests/:id",
+        path: '/requests/:id',
         element: <Details />,
         loader: withProtectedLoader(requestDetailsLoader),
       },
       {
-        path: "/history/:id",
+        path: '/history/:id',
         element: <Details />,
         loader: withProtectedLoader(historyDetailsLoader),
       },
       {
-        path: "/history",
+        path: '/history',
         element: <History />,
         loader: withProtectedLoader(historyLoader),
       },
       {
-        path: "/users/:id/offers",
+        path: '/users/:id/offers',
         element: <UserOffers />,
-        loader: withProtectedLoader(userOffersLoader, ["donor"], ({ userId, userType }) =>
-          getMyListingsRouteForUserType(userType, userId)
+        loader: withProtectedLoader(
+          userOffersLoader,
+          ['donor'],
+          ({ userId, userType }) =>
+            getMyListingsRouteForUserType(userType, userId)
         ),
       },
       {
-        path: "/users/:id/offers/create",
+        path: '/users/:id/offers/create',
         element: <UserOfferCreate />,
-        loader: withProtectedLoader(userOfferCreateLoader, ["donor"], ({ userId, userType }) =>
-          getMyCreateRouteForUserType(userType, userId)
+        loader: withProtectedLoader(
+          userOfferCreateLoader,
+          ['donor'],
+          ({ userId, userType }) =>
+            getMyCreateRouteForUserType(userType, userId)
         ),
       },
       {
-        path: "/users/:id/requests",
+        path: '/users/:id/requests',
         element: <UserRequests />,
-        loader: withProtectedLoader(userRequestsLoader, ["recipient"], ({ userId, userType }) =>
-          getMyListingsRouteForUserType(userType, userId)
+        loader: withProtectedLoader(
+          userRequestsLoader,
+          ['recipient'],
+          ({ userId, userType }) =>
+            getMyListingsRouteForUserType(userType, userId)
         ),
       },
       {
-        path: "/users/:id/requests/create",
+        path: '/users/:id/requests/create',
         element: <UserRequestCreate />,
-        loader: withProtectedLoader(userRequestCreateLoader, ["recipient"], ({ userId, userType }) =>
-          getMyCreateRouteForUserType(userType, userId)
+        loader: withProtectedLoader(
+          userRequestCreateLoader,
+          ['recipient'],
+          ({ userId, userType }) =>
+            getMyCreateRouteForUserType(userType, userId)
         ),
       },
     ],

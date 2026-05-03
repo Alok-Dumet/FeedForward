@@ -1,3 +1,3 @@
-import { createUserListingLoader } from "../../utils/loaders.js";
+import { createUserListingLoader } from '../../utils/loaders.js';
 
-export default createUserListingLoader("Food Provider", "offers");
+export default createUserListingLoader('Food Provider', 'offers');

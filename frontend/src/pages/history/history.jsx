@@ -1,7 +1,7 @@
-import { useLoaderData } from "react-router-dom";
+import { useLoaderData } from 'react-router-dom';
 
-import ListingPageShell from "../../components/listingPageShell.jsx";
-import useListingFilters from "../../hooks/useListingFilters.js";
+import ListingPageShell from '../../components/listingPageShell.jsx';
+import useListingFilters from '../../hooks/useListingFilters.js';
 
 export default function History() {
   const { items, filters } = useLoaderData();
@@ -21,19 +21,19 @@ export default function History() {
       secondaryAction={null}
       filtersLabel="History filters:"
       cardConfig={{
-        variant: "compactHistory",
-        eyebrowKey: "status",
-        metaKey: "timeline",
+        variant: 'compactHistory',
+        eyebrowKey: 'status',
+        metaKey: 'timeline',
         action: {
-          label: "View details",
+          label: 'View details',
           to: (item) => `/history/${item.id}`,
         },
-        highlightLabel: "Quantity",
-        highlightValueKey: "quantity",
+        highlightLabel: 'Quantity',
+        highlightValueKey: 'quantity',
         detailFields: [
-          { label: "Timeline", key: "timeline" },
-          { label: "Location", key: "location" },
-          { label: "Type", key: "recordType" },
+          { label: 'Timeline', key: 'timeline' },
+          { label: 'Location', key: 'location' },
+          { label: 'Type', key: 'recordType' },
         ],
       }}
     />

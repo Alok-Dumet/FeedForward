@@ -1,8 +1,8 @@
-import { useLoaderData } from "react-router-dom";
+import { useLoaderData } from 'react-router-dom';
 
-import ListingPageShell from "../../components/listingPageShell.jsx";
-import useListingFilters from "../../hooks/useListingFilters.js";
-import { MY_LISTINGS_FILTERS } from "../../utils/constants.js";
+import ListingPageShell from '../../components/listingPageShell.jsx';
+import useListingFilters from '../../hooks/useListingFilters.js';
+import { MY_LISTINGS_FILTERS } from '../../utils/constants.js';
 
 export default function UserOffers() {
   const { items } = useLoaderData();
@@ -20,9 +20,9 @@ export default function UserOffers() {
       isFiltering={isFiltering}
       filtersLabel="Show:"
       cardConfig={{
-        eyebrowKey: "status",
+        eyebrowKey: 'status',
         action: {
-          label: "View details",
+          label: 'View details',
           to: (item) => item.detailsPath,
         },
       }}

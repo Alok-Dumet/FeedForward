@@ -1,7 +1,7 @@
-import { useLoaderData } from "react-router-dom";
-import { motion as Motion } from "motion/react";
+import { useLoaderData } from 'react-router-dom';
+import { motion as Motion } from 'motion/react';
 
-import ListingCreateForm from "../../components/listingCreateForm.jsx";
+import ListingCreateForm from '../../components/listingCreateForm.jsx';
 
 export default function UserRequestCreate() {
   const { user } = useLoaderData();
@@ -12,7 +12,7 @@ export default function UserRequestCreate() {
         <Motion.section
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, ease: "easeOut" }}
+          transition={{ duration: 0.45, ease: 'easeOut' }}
           className="rounded-[2rem] border border-white/70 bg-slate-950 px-8 py-10 text-white shadow-2xl"
         >
           <div className="flex flex-wrap items-start justify-between gap-6">
@@ -30,7 +30,7 @@ export default function UserRequestCreate() {
         <Motion.section
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.08, duration: 0.4, ease: "easeOut" }}
+          transition={{ delay: 0.08, duration: 0.4, ease: 'easeOut' }}
           className="grid gap-5"
         >
           <ListingCreateForm listingType="request" user={user} />

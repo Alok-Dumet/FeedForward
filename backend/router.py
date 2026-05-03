@@ -1,17 +1,18 @@
 from utils import normalize_path
 
+
 class Router:
     def __init__(self):
         self.routes = []
 
     def get(self, path, handler):
-        self.routes.append(('GET', path, handler))
+        self.routes.append(("GET", path, handler))
 
     def post(self, path, handler):
-        self.routes.append(('POST', path, handler))
+        self.routes.append(("POST", path, handler))
 
     def patch(self, path, handler):
-        self.routes.append(('PATCH', path, handler))
+        self.routes.append(("PATCH", path, handler))
 
     def handle(self, handler):
         request_path = normalize_path(handler.path)

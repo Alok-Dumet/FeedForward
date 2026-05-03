@@ -5,18 +5,18 @@ from database.database import db
 from router import Router
 from sessions import get_user
 from utils import (
-    send_json,
     get_query_param,
-    parse_validate_body,
+    parse_availability_windows,
     parse_decimal,
     parse_food_items,
-    parse_availability_windows,
+    parse_validate_body,
+    send_json,
 )
-
 
 router = Router()
 
-#We will format one food item from a joined listing_food_items row
+
+# We will format one food item from a joined listing_food_items row
 def build_food_item(row, start_index):
     return {
         "id": row[start_index],
@@ -30,7 +30,7 @@ def build_food_item(row, start_index):
     }
 
 
-#We will format one listing row and leave room for multiple food items
+# We will format one listing row and leave room for multiple food items
 def build_listing_record(row):
     return {
         "id": row[0],
@@ -54,7 +54,7 @@ def build_listing_record(row):
     }
 
 
-#We will group joined listing rows so each listing appears once with a foods array
+# We will group joined listing rows so each listing appears once with a foods array
 def build_listing_records(rows, relationship=None):
     records_by_id = {}
 
@@ -71,7 +71,7 @@ def build_listing_records(rows, relationship=None):
     return list(records_by_id.values())
 
 
-#GET endpoint handler that returns requests for providers or offers for recipients
+# GET endpoint handler that returns requests for providers or offers for recipients
 def get_offers_requests(handler):
 
     user = get_user(handler)
@@ -125,7 +125,7 @@ def get_offers_requests(handler):
                 (
                     target_listing_type,
                     user["id"],
-                )
+                ),
             )
 
             rows = cur.fetchall()
@@ -136,20 +136,24 @@ def get_offers_requests(handler):
 
     records = build_listing_records(rows)
 
-    return send_json(handler, 200, {
-        "view_mode": view_mode,
-        "records": records,
-        "current_user": {
-            "id": user["id"],
-            "role": user_role,
-            "organization_name": user["organization_name"],
-            "latitude": user["latitude"],
-            "longitude": user["longitude"],
+    return send_json(
+        handler,
+        200,
+        {
+            "view_mode": view_mode,
+            "records": records,
+            "current_user": {
+                "id": user["id"],
+                "role": user_role,
+                "organization_name": user["organization_name"],
+                "latitude": user["latitude"],
+                "longitude": user["longitude"],
+            },
         },
-    })
+    )
 
 
-#GET endpoint handler that returns the current user's active and claimed listings
+# GET endpoint handler that returns the current user's active and claimed listings
 def get_my_listings(handler):
     user = get_user(handler)
 
@@ -190,7 +194,7 @@ def get_my_listings(handler):
                     AND listings.status IN ('available', 'claimed')
                 ORDER BY listings.created_at DESC, listings.id DESC
                 """,
-                (user["id"],)
+                (user["id"],),
             )
             own_rows = cur.fetchall()
 
@@ -232,7 +236,7 @@ def get_my_listings(handler):
                     AND listings.status NOT IN ('completed', 'cancelled')
                 ORDER BY claims.claimed_at DESC, listings.id DESC
                 """,
-                (user["id"],)
+                (user["id"],),
             )
             claimed_rows = cur.fetchall()
     except Exception:
@@ -242,17 +246,21 @@ def get_my_listings(handler):
     own_records = build_listing_records(own_rows, "own")
     claimed_records = build_listing_records(claimed_rows, "claimed")
 
-    return send_json(handler, 200, {
-        "records": own_records + claimed_records,
-        "current_user": {
-            "id": user["id"],
-            "role": user["role"],
-            "organization_name": user["organization_name"],
+    return send_json(
+        handler,
+        200,
+        {
+            "records": own_records + claimed_records,
+            "current_user": {
+                "id": user["id"],
+                "role": user["role"],
+                "organization_name": user["organization_name"],
+            },
         },
-    })
+    )
 
 
-#GET endpoint handler that returns the full details for one listing
+# GET endpoint handler that returns the full details for one listing
 def get_listing_details(handler):
     listing_id = get_query_param(handler, "id")
     if not listing_id:
@@ -327,7 +335,7 @@ def get_listing_details(handler):
                         )
                     )
                 """,
-                (listing_id, user["id"], user["role"], user["role"], user["id"])
+                (listing_id, user["id"], user["role"], user["role"], user["id"]),
             )
             rows = cur.fetchall()
     except Exception:
@@ -337,43 +345,49 @@ def get_listing_details(handler):
     if not rows:
         return send_json(handler, 404, {"error": "Listing not found."})
 
-    return send_json(handler, 200, {
-        "record": {
-            "id": rows[0][0],
-            "creator_user_id": rows[0][1],
-            "type": rows[0][2],
-            "availability_windows": rows[0][3],
-            "travel_distance_miles": rows[0][4],
-            "additional_instructions": rows[0][5],
-            "status": rows[0][6],
-            "created_at": rows[0][7].isoformat(),
-            "updated_at": rows[0][8].isoformat(),
-            "location": {
-                "address_text": rows[0][9],
-                "latitude": str(rows[0][10]),
-                "longitude": str(rows[0][11]),
-            },
-            "foods": [build_food_item(row, 12) for row in rows],
-            "creator": {
-                "organization_name": rows[0][20],
-                "email": rows[0][21],
-            },
-            "claim": {
-                "id": rows[0][22],
-                "claimant_user_id": rows[0][23],
-                "status": rows[0][24],
-                "claimed_at": rows[0][25].isoformat() if rows[0][25] else None,
-                "resolved_at": rows[0][26].isoformat() if rows[0][26] else None,
-            } if rows[0][22] else None,
-            "current_user": {
-                "id": user["id"],
-                "role": user["role"],
-            },
-        }
-    })
+    return send_json(
+        handler,
+        200,
+        {
+            "record": {
+                "id": rows[0][0],
+                "creator_user_id": rows[0][1],
+                "type": rows[0][2],
+                "availability_windows": rows[0][3],
+                "travel_distance_miles": rows[0][4],
+                "additional_instructions": rows[0][5],
+                "status": rows[0][6],
+                "created_at": rows[0][7].isoformat(),
+                "updated_at": rows[0][8].isoformat(),
+                "location": {
+                    "address_text": rows[0][9],
+                    "latitude": str(rows[0][10]),
+                    "longitude": str(rows[0][11]),
+                },
+                "foods": [build_food_item(row, 12) for row in rows],
+                "creator": {
+                    "organization_name": rows[0][20],
+                    "email": rows[0][21],
+                },
+                "claim": {
+                    "id": rows[0][22],
+                    "claimant_user_id": rows[0][23],
+                    "status": rows[0][24],
+                    "claimed_at": rows[0][25].isoformat() if rows[0][25] else None,
+                    "resolved_at": rows[0][26].isoformat() if rows[0][26] else None,
+                }
+                if rows[0][22]
+                else None,
+                "current_user": {
+                    "id": user["id"],
+                    "role": user["role"],
+                },
+            }
+        },
+    )
 
 
-#POST endpoint handler that creates an offer or request listing
+# POST endpoint handler that creates an offer or request listing
 def create_listing(handler, listing_type):
     body = parse_validate_body(handler, ["foods", "address_text", "latitude", "longitude"])
     if body is None:
@@ -409,7 +423,7 @@ def create_listing(handler, listing_type):
                 VALUES(%s, %s, %s)
                 RETURNING id
                 """,
-                (body["address_text"], latitude, longitude)
+                (body["address_text"], latitude, longitude),
             )
             location_id = cur.fetchone()[0]
 
@@ -433,7 +447,7 @@ def create_listing(handler, listing_type):
                     Json(availability_windows),
                     travel_distance_miles,
                     additional_instructions,
-                )
+                ),
             )
             listing = cur.fetchone()
 
@@ -463,7 +477,7 @@ def create_listing(handler, listing_type):
                         food["quantity"],
                         food["quantity_unit"],
                         food["expiration_date"],
-                    )
+                    ),
                 )
                 food_item_ids.append(cur.fetchone()[0])
 
@@ -475,49 +489,56 @@ def create_listing(handler, listing_type):
         db.rollback()
         return send_json(handler, 500, {"error": f"Unable to create {listing_type} due to server error."})
 
-    return send_json(handler, 201, {
-        listing_type: {
-            "id": listing[0],
-            "creator_user_id": user["id"],
-            "type": listing_type,
-            "status": listing[1],
-            "created_at": listing[2].isoformat(),
-            "updated_at": listing[3].isoformat(),
-            "availability_windows": availability_windows,
-            "travel_distance_miles": travel_distance_miles,
-            "additional_instructions": additional_instructions,
-            "location": {
-                "id": location_id,
-                "address_text": body["address_text"],
-                "latitude": str(latitude),
-                "longitude": str(longitude),
-            },
-            "foods": [
-                {
-                    "id": food_item_ids[index],
-                    "name": food["name"],
-                    "description": food["description"],
-                    "category": food["category"],
-                    "is_perishable": food["is_perishable"],
-                    "quantity": str(food["quantity"]),
-                    "quantity_unit": food["quantity_unit"],
-                    "expiration_date": food["expiration_date"].isoformat() if food["expiration_date"] else None,
-                }
-                for index, food in enumerate(foods)
-            ],
-        }
-    })
+    return send_json(
+        handler,
+        201,
+        {
+            listing_type: {
+                "id": listing[0],
+                "creator_user_id": user["id"],
+                "type": listing_type,
+                "status": listing[1],
+                "created_at": listing[2].isoformat(),
+                "updated_at": listing[3].isoformat(),
+                "availability_windows": availability_windows,
+                "travel_distance_miles": travel_distance_miles,
+                "additional_instructions": additional_instructions,
+                "location": {
+                    "id": location_id,
+                    "address_text": body["address_text"],
+                    "latitude": str(latitude),
+                    "longitude": str(longitude),
+                },
+                "foods": [
+                    {
+                        "id": food_item_ids[index],
+                        "name": food["name"],
+                        "description": food["description"],
+                        "category": food["category"],
+                        "is_perishable": food["is_perishable"],
+                        "quantity": str(food["quantity"]),
+                        "quantity_unit": food["quantity_unit"],
+                        "expiration_date": food["expiration_date"].isoformat() if food["expiration_date"] else None,
+                    }
+                    for index, food in enumerate(foods)
+                ],
+            }
+        },
+    )
 
 
-#PATCH endpoint handler that updates an available listing owned by the current user
+# PATCH endpoint handler that updates an available listing owned by the current user
 def edit_listing(handler):
-    body = parse_validate_body(handler, [
-        "listing_id",
-        "foods",
-        "availability_windows",
-        "address_text",
-        "travel_distance_miles",
-    ])
+    body = parse_validate_body(
+        handler,
+        [
+            "listing_id",
+            "foods",
+            "availability_windows",
+            "address_text",
+            "travel_distance_miles",
+        ],
+    )
     if body is None:
         return
 
@@ -549,7 +570,7 @@ def edit_listing(handler):
                 WHERE listings.id = %s
                     AND listings.creator_user_id = %s
                 """,
-                (listing_id, user["id"])
+                (listing_id, user["id"]),
             )
             listing = cur.fetchone()
 
@@ -569,7 +590,7 @@ def edit_listing(handler):
                         updated_at = NOW()
                     WHERE id = %s
                     """,
-                    (body["address_text"], listing[1])
+                    (body["address_text"], listing[1]),
                 )
             else:
                 cur.execute(
@@ -581,7 +602,7 @@ def edit_listing(handler):
                         updated_at = NOW()
                     WHERE id = %s
                     """,
-                    (body["address_text"], latitude, longitude, listing[1])
+                    (body["address_text"], latitude, longitude, listing[1]),
                 )
 
             cur.execute(
@@ -599,7 +620,7 @@ def edit_listing(handler):
                     travel_distance_miles,
                     additional_instructions,
                     listing_id,
-                )
+                ),
             )
             updated_listing = cur.fetchone()
 
@@ -629,7 +650,7 @@ def edit_listing(handler):
                         food["quantity"],
                         food["quantity_unit"],
                         food["expiration_date"],
-                    )
+                    ),
                 )
 
         db.commit()
@@ -640,13 +661,17 @@ def edit_listing(handler):
         db.rollback()
         return send_json(handler, 500, {"error": "Unable to edit listing."})
 
-    return send_json(handler, 200, {
-        "listing": {
-            "id": updated_listing[0],
-            "status": updated_listing[1],
-            "updated_at": updated_listing[2].isoformat(),
-        }
-    })
+    return send_json(
+        handler,
+        200,
+        {
+            "listing": {
+                "id": updated_listing[0],
+                "status": updated_listing[1],
+                "updated_at": updated_listing[2].isoformat(),
+            }
+        },
+    )
 
 
 router.get("/api/listings", get_offers_requests)
