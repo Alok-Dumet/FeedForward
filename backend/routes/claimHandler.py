@@ -3,7 +3,7 @@ from psycopg2 import errors
 from database.database import db
 from router import Router
 from sessions import get_user
-from utils import parse_validate_body, send_json
+from utils import parse_positive_int, parse_validate_body, send_json
 
 router = Router()
 
@@ -15,11 +15,9 @@ def accept_listing(handler):
         return
 
     try:
-        listing_id = int(body["listing_id"])
-    except (TypeError, ValueError):
-        return send_json(handler, 400, {"error": "listing_id must be a valid number."})
-    if listing_id <= 0:
-        return send_json(handler, 400, {"error": "listing_id must be greater than zero."})
+        listing_id = parse_positive_int(body["listing_id"], "listing_id")
+    except ValueError as exc:
+        return send_json(handler, 400, {"error": str(exc)})
 
     try:
         user = get_user(handler)
@@ -88,12 +86,9 @@ def cancel_listing(handler):
         return
 
     try:
-        listing_id = int(body["listing_id"])
-    except (TypeError, ValueError):
-        return send_json(handler, 400, {"error": "listing_id must be a valid number."})
-
-    if listing_id <= 0:
-        return send_json(handler, 400, {"error": "listing_id must be greater than zero."})
+        listing_id = parse_positive_int(body["listing_id"], "listing_id")
+    except ValueError as exc:
+        return send_json(handler, 400, {"error": str(exc)})
 
     user = get_user(handler)
 
@@ -173,12 +168,9 @@ def complete_listing(handler):
         return
 
     try:
-        listing_id = int(body["listing_id"])
-    except (TypeError, ValueError):
-        return send_json(handler, 400, {"error": "listing_id must be a valid number."})
-
-    if listing_id <= 0:
-        return send_json(handler, 400, {"error": "listing_id must be greater than zero."})
+        listing_id = parse_positive_int(body["listing_id"], "listing_id")
+    except ValueError as exc:
+        return send_json(handler, 400, {"error": str(exc)})
 
     user = get_user(handler)
 

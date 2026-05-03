@@ -9,6 +9,7 @@ from utils import (
     parse_availability_windows,
     parse_decimal,
     parse_food_items,
+    parse_positive_int,
     parse_validate_body,
     send_json,
 )
@@ -349,11 +350,9 @@ def get_listing_details(handler):
         return send_json(handler, 400, {"error": "Missing listing id."})
 
     try:
-        listing_id = int(listing_id)
-    except ValueError:
-        return send_json(handler, 400, {"error": "Listing id must be a valid number."})
-    if listing_id <= 0:
-        return send_json(handler, 400, {"error": "Listing id must be greater than zero."})
+        listing_id = parse_positive_int(listing_id, "Listing id")
+    except ValueError as exc:
+        return send_json(handler, 400, {"error": str(exc)})
 
     try:
         user = get_user(handler)
@@ -544,9 +543,7 @@ def edit_listing(handler):
         return
 
     try:
-        listing_id = int(body["listing_id"])
-        if listing_id <= 0:
-            raise ValueError("listing_id must be greater than zero")
+        listing_id = parse_positive_int(body["listing_id"], "listing_id")
 
         listing_payload = parse_listing_payload(body, require_coordinates=False)
     except (TypeError, ValueError) as exc:

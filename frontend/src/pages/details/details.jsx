@@ -5,6 +5,7 @@ import {
   ListingAvailabilityEditor,
   ListingFoodEditor,
 } from '../../components/listingFormFields.jsx';
+import useEditableList from '../../hooks/useEditableList.js';
 import { useToast } from '../../hooks/useToast.js';
 import { formatAvailabilityWindows } from '../../utils/formatDates.js';
 import {
@@ -74,11 +75,20 @@ export default function Details() {
   const [status, setStatus] = useState(record.status);
   const [isSubmittingAction, setIsSubmittingAction] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [editFoods, setEditFoods] = useState(
-    (record.foods ?? []).map(getEditableFood)
-  );
-  const [editAvailability, setEditAvailability] = useState(
-    record.availability_windows ?? []
+  const [
+    editFoods,
+    { updateItem: updateFood, addItem: addFood, removeItem: removeFood },
+  ] = useEditableList((record.foods ?? []).map(getEditableFood), EMPTY_FOOD);
+  const [
+    editAvailability,
+    {
+      updateItem: updateAvailability,
+      addItem: addAvailability,
+      removeItem: removeAvailability,
+    },
+  ] = useEditableList(
+    record.availability_windows ?? [],
+    EMPTY_AVAILABILITY_WINDOW
   );
   const [editAddress, setEditAddress] = useState(
     record.location?.address_text ?? ''
@@ -113,41 +123,7 @@ export default function Details() {
     ? "Distance we're willing to deliver"
     : "Distance we're willing to pick up";
 
-  async function handleAcceptListing() {
-    setIsSubmittingAction(true);
-
-    try {
-      const res = await fetch('/api/listings/accept', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          listing_id: listing.id,
-        }),
-      });
-      const data = await res.json().catch(() => null);
-
-      if (!res.ok) {
-        showToast(data?.error ?? 'Unable to update this listing.', 'error');
-        return;
-      }
-
-      setStatus('claimed');
-      setListing((currentListing) => ({
-        ...currentListing,
-        status: 'claimed',
-        claim: data?.claim ?? currentListing.claim,
-      }));
-      showToast('Claimed.', 'success');
-    } catch {
-      showToast('Network error.', 'error');
-    } finally {
-      setIsSubmittingAction(false);
-    }
-  }
-
-  async function handleListingAction(endpoint, nextStatus, message) {
+  async function handleListingAction(endpoint, message, onSuccess) {
     setIsSubmittingAction(true);
 
     try {
@@ -165,7 +141,7 @@ export default function Details() {
         return;
       }
 
-      setStatus(nextStatus);
+      onSuccess?.(data);
       showToast(message, 'success');
     } catch {
       showToast('Network error.', 'error');
@@ -174,47 +150,15 @@ export default function Details() {
     }
   }
 
-  function updateFood(index, field, value) {
-    setEditFoods((currentFoods) =>
-      currentFoods.map((food, foodIndex) =>
-        foodIndex === index ? { ...food, [field]: value } : food
-      )
-    );
-  }
-
-  function updateAvailability(index, field, value) {
-    setEditAvailability((currentAvailability) =>
-      currentAvailability.map((availability, availabilityIndex) =>
-        availabilityIndex === index
-          ? { ...availability, [field]: value }
-          : availability
-      )
-    );
-  }
-
-  function addAvailability() {
-    setEditAvailability((currentAvailability) => [
-      ...currentAvailability,
-      { ...EMPTY_AVAILABILITY_WINDOW },
-    ]);
-  }
-
-  function removeAvailability(index) {
-    setEditAvailability((currentAvailability) =>
-      currentAvailability.filter(
-        (_, availabilityIndex) => availabilityIndex !== index
-      )
-    );
-  }
-
-  function addFood() {
-    setEditFoods((currentFoods) => [...currentFoods, { ...EMPTY_FOOD }]);
-  }
-
-  function removeFood(index) {
-    setEditFoods((currentFoods) =>
-      currentFoods.filter((_, foodIndex) => foodIndex !== index)
-    );
+  function handleAcceptListing() {
+    return handleListingAction('/api/listings/accept', 'Claimed.', (data) => {
+      setStatus('claimed');
+      setListing((currentListing) => ({
+        ...currentListing,
+        status: 'claimed',
+        claim: data?.claim ?? currentListing.claim,
+      }));
+    });
   }
 
   async function handleSaveEdits(event) {
@@ -317,8 +261,8 @@ export default function Details() {
                   onClick={() =>
                     handleListingAction(
                       '/api/listings/cancel',
-                      'cancelled',
-                      'Listing cancelled.'
+                      'Listing cancelled.',
+                      () => setStatus('cancelled')
                     )
                   }
                   disabled={actionPending}
@@ -333,8 +277,8 @@ export default function Details() {
                   onClick={() =>
                     handleListingAction(
                       '/api/listings/complete',
-                      'completed',
-                      'Listing completed.'
+                      'Listing completed.',
+                      () => setStatus('completed')
                     )
                   }
                   disabled={actionPending}

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import useEditableList from '../hooks/useEditableList.js';
 import { useToast } from '../hooks/useToast.js';
 import {
   EMPTY_AVAILABILITY_WINDOW,
@@ -49,8 +50,18 @@ const LISTING_COPY = {
 
 export default function ListingCreateForm({ listingType, user }) {
   const copy = LISTING_COPY[listingType];
-  const [foods, setFoods] = useState([{ ...EMPTY_FOOD }]);
-  const [availabilityWindows, setAvailabilityWindows] = useState([]);
+  const [
+    foods,
+    { updateItem: updateFood, addItem: addFood, removeItem: removeFood },
+  ] = useEditableList([{ ...EMPTY_FOOD }], EMPTY_FOOD);
+  const [
+    availabilityWindows,
+    {
+      updateItem: updateAvailabilityWindow,
+      addItem: addAvailabilityWindow,
+      removeItem: removeAvailabilityWindow,
+    },
+  ] = useEditableList([], EMPTY_AVAILABILITY_WINDOW);
   const [locationAddress, setLocationAddress] = useState(
     user.address_text ?? ''
   );
@@ -60,45 +71,6 @@ export default function ListingCreateForm({ listingType, user }) {
   const { showToast } = useToast();
 
   const hasLocationCoordinates = user.latitude && user.longitude;
-
-  function updateFood(index, field, value) {
-    setFoods((currentFoods) =>
-      currentFoods.map((food, foodIndex) =>
-        foodIndex === index ? { ...food, [field]: value } : food
-      )
-    );
-  }
-
-  function addFood() {
-    setFoods((currentFoods) => [...currentFoods, { ...EMPTY_FOOD }]);
-  }
-
-  function removeFood(index) {
-    setFoods((currentFoods) =>
-      currentFoods.filter((_, foodIndex) => foodIndex !== index)
-    );
-  }
-
-  function updateAvailabilityWindow(index, field, value) {
-    setAvailabilityWindows((currentWindows) =>
-      currentWindows.map((window, windowIndex) =>
-        windowIndex === index ? { ...window, [field]: value } : window
-      )
-    );
-  }
-
-  function addAvailabilityWindow() {
-    setAvailabilityWindows((currentWindows) => [
-      ...currentWindows,
-      { ...EMPTY_AVAILABILITY_WINDOW },
-    ]);
-  }
-
-  function removeAvailabilityWindow(index) {
-    setAvailabilityWindows((currentWindows) =>
-      currentWindows.filter((_, windowIndex) => windowIndex !== index)
-    );
-  }
 
   async function handleSubmit(event) {
     event.preventDefault();

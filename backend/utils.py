@@ -151,6 +151,18 @@ def parse_decimal(value, field_name):
         raise ValueError(f"{field_name} must be a valid number") from exc
 
 
+def parse_positive_int(value, field_name):
+    try:
+        parsed_value = int(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{field_name} must be a valid number.") from exc
+
+    if parsed_value <= 0:
+        raise ValueError(f"{field_name} must be greater than zero.")
+
+    return parsed_value
+
+
 # We will validate that a food category matches one database value exactly
 def validate_food_category(value):
     if not isinstance(value, str):

@@ -4,6 +4,10 @@ const DEFAULT_ROUTE_BY_USER_TYPE = {
   donor: '/requests',
   recipient: '/offers',
 };
+const USER_LISTING_SEGMENT_BY_USER_TYPE = {
+  donor: 'offers',
+  recipient: 'requests',
+};
 const USER_TYPE_BY_BACKEND_ROLE = {
   food_provider: 'donor',
   recipient_organization: 'recipient',
@@ -41,36 +45,25 @@ export function getDefaultRouteForUserType(userType) {
   return DEFAULT_ROUTE_BY_USER_TYPE[userType] ?? '/login';
 }
 
-export function getMyListingsRouteForUserType(userType, userId) {
+function getMyListingRouteForUserType(userType, userId, suffix = '') {
   if (!userId) {
     return getDefaultRouteForUserType(userType);
   }
 
-  if (userType === 'donor') {
-    return `/users/${userId}/offers`;
+  const listingSegment = USER_LISTING_SEGMENT_BY_USER_TYPE[userType];
+  if (!listingSegment) {
+    return '/login';
   }
 
-  if (userType === 'recipient') {
-    return `/users/${userId}/requests`;
-  }
+  return `/users/${userId}/${listingSegment}${suffix}`;
+}
 
-  return '/login';
+export function getMyListingsRouteForUserType(userType, userId) {
+  return getMyListingRouteForUserType(userType, userId);
 }
 
 export function getMyCreateRouteForUserType(userType, userId) {
-  if (!userId) {
-    return getDefaultRouteForUserType(userType);
-  }
-
-  if (userType === 'donor') {
-    return `/users/${userId}/offers/create`;
-  }
-
-  if (userType === 'recipient') {
-    return `/users/${userId}/requests/create`;
-  }
-
-  return '/login';
+  return getMyListingRouteForUserType(userType, userId, '/create');
 }
 
 async function parseJsonResponse(res) {

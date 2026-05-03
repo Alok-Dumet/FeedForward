@@ -43,11 +43,8 @@ function buildItem(record) {
 
 //We will pick the most informative timestamp to show on the card based on the record's final status
 function buildTimeline(record) {
-  if (record.status === 'completed' && record.claim?.resolved_at) {
-    return `Completed on ${formatDate(record.claim.resolved_at)}`;
-  }
-  if (record.status === 'cancelled' && record.claim?.resolved_at) {
-    return `Cancelled on ${formatDate(record.claim.resolved_at)}`;
+  if (record.claim?.resolved_at) {
+    return `${formatStatus(record.status)} on ${formatDate(record.claim.resolved_at)}`;
   }
   return `Posted on ${formatDate(record.created_at)}`;
 }

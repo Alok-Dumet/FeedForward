@@ -1,37 +1,18 @@
-import { useLoaderData } from 'react-router-dom';
+import UserListingsPage from '../../components/userListingsPage.jsx';
 
-import ListingPageShell from '../../components/listingPageShell.jsx';
-import useListingFilters from '../../hooks/useListingFilters.js';
-import { MY_LISTINGS_FILTERS } from '../../utils/constants.js';
+const USER_REQUESTS_CONFIG = {
+  eyebrow: 'My Requests',
+  description: 'Manage your active requests',
+  cardConfig: {
+    highlightLabel: 'Need',
+    detailFields: [
+      { label: 'Available Times', key: 'availability' },
+      { label: 'Area', key: 'location' },
+      { label: 'Serving', key: 'audience' },
+    ],
+  },
+};
 
 export default function UserRequests() {
-  const { items } = useLoaderData();
-  const { activeFilters, filteredItems, isFiltering, setActiveFilters } =
-    useListingFilters(items, MY_LISTINGS_FILTERS);
-
-  return (
-    <ListingPageShell
-      eyebrow="My Requests"
-      description="Manage your active requests"
-      items={filteredItems}
-      filters={MY_LISTINGS_FILTERS}
-      activeFilters={activeFilters}
-      onFilterChange={setActiveFilters}
-      isFiltering={isFiltering}
-      filtersLabel="Show:"
-      cardConfig={{
-        eyebrowKey: 'status',
-        highlightLabel: 'Need',
-        action: {
-          label: 'View details',
-          to: (item) => item.detailsPath,
-        },
-        detailFields: [
-          { label: 'Available Times', key: 'availability' },
-          { label: 'Area', key: 'location' },
-          { label: 'Serving', key: 'audience' },
-        ],
-      }}
-    />
-  );
+  return <UserListingsPage config={USER_REQUESTS_CONFIG} />;
 }
