@@ -1,36 +1,10 @@
 import { loaderFetch } from "../../utils/loaderFetch.js";
-import { formatAvailabilityWindows } from "../../utils/formatDates.js";
-import {
-  formatFoodQuantity,
-  getFoodSummary,
-  getFoodTags,
-  getFoodTitle,
-  getPrimaryFood,
-} from "../../utils/foods.js";
-
-//We will turn a backend listing record into the card shape userRequests.jsx expects
-function buildItem(record) {
-  const ownership = record.relationship === "own" ? "Posted by you" : "Accepted by you";
-  const primaryFood = getPrimaryFood(record);
-
-  return {
-    id: record.id,
-    status: record.status,
-    title: getFoodTitle(record),
-    summary: getFoodSummary(record),
-    quantity: formatFoodQuantity(primaryFood),
-    availability: formatAvailabilityWindows(record.availability_windows),
-    location: record.location.address_text,
-    audience: record.creator.organization_name,
-    detailsPath: `/${record.listing_type === "offer" ? "offers" : "requests"}/${record.id}?from=my-listings`,
-    tags: [ownership, ...getFoodTags(record)],
-  };
-}
+import { buildOwnListingItem } from "../../utils/listingBuilders.js";
 
 export default async function userRequestsLoader({ request }) {
   const payload = await loaderFetch("/api/my-listings", request, "Unable to load your requests.");
 
   return {
-    items: (payload.records ?? []).map(buildItem),
+    items: (payload.records ?? []).map(buildOwnListingItem),
   };
 }

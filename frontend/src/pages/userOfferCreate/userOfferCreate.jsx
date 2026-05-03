@@ -33,20 +33,7 @@ export default function UserOfferCreate() {
           transition={{ delay: 0.08, duration: 0.4, ease: "easeOut" }}
           className="grid gap-5"
         >
-          <ListingCreateForm
-            additionalInstructionsPlaceholder="Example: Please enter through the second door on the left side of the building"
-            endpoint="/api/listings/offers/create"
-            foodDescriptionPlaceholder="Example: Thin crust, pineapple, onions, olives, stuffed crust"
-            foodNamePlaceholder="Example: Hawaiian Pizza"
-            formLabel="Offer Form"
-            locationUnavailableMessage="Your account needs a valid location before you can publish an offer."
-            publishLabel="Publish offer"
-            successLabel="Offer published."
-            travelDistanceLabel="Distance we're willing to deliver"
-            user={user}
-            availabilityTitle="Times people can pick up food"
-            availabilityHint="Add the days and times when staff are available to pass food on. This is optional."
-          />
+          <ListingCreateForm listingType="offer" user={user} />
         </Motion.section>
       </div>
     </main>

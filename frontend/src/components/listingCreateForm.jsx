@@ -1,23 +1,8 @@
 import { useState } from "react";
 
 import { useToast } from "../hooks/useToast.js";
+import { FOOD_CATEGORY_LABELS } from "../utils/foods.js";
 import FormField from "./formField.jsx";
-
-const FOOD_CATEGORIES = [
-  ["produce", "Produce"],
-  ["dairy", "Dairy"],
-  ["baked_goods", "Baked Goods"],
-  ["canned_goods", "Canned Goods"],
-  ["frozen", "Frozen"],
-  ["prepared_meals", "Prepared Meals"],
-  ["beverages", "Beverages"],
-  ["dry_goods", "Dry Goods"],
-  ["meat_seafood", "Meat & Seafood"],
-  ["snacks", "Snacks"],
-  ["baby_food", "Baby Food"],
-  ["mixed", "Mixed"],
-  ["other", "Other"],
-];
 
 const EMPTY_FOOD = {
   name: "",
@@ -45,6 +30,37 @@ const EMPTY_AVAILABILITY_WINDOW = {
   end_time: "17:00",
 };
 
+const LISTING_COPY = {
+  offer: {
+    heading: "Offer details",
+    formLabel: "Offer Form",
+    endpoint: "/api/listings/offers/create",
+    publishLabel: "Publish offer",
+    successLabel: "Offer published.",
+    locationUnavailableMessage: "Your account needs a valid location before you can publish an offer.",
+    travelDistanceLabel: "Distance we're willing to deliver",
+    foodNamePlaceholder: "Example: Hawaiian Pizza",
+    foodDescriptionPlaceholder: "Example: Thin crust, pineapple, onions, olives, stuffed crust",
+    additionalInstructionsPlaceholder: "Example: Please enter through the second door on the left side of the building",
+    availabilityTitle: "Times people can pick up food",
+    availabilityHint: "Add times you can hand off food. Optional.",
+  },
+  request: {
+    heading: "Request details",
+    formLabel: "Request Form",
+    endpoint: "/api/listings/requests/create",
+    publishLabel: "Publish request",
+    successLabel: "Request published.",
+    locationUnavailableMessage: "Your account needs a valid location before you can publish a request.",
+    travelDistanceLabel: "Distance we're willing to pick up",
+    foodNamePlaceholder: "Example: Canned vegetables",
+    foodDescriptionPlaceholder: "Example: Shelf-stable items, low-sodium options preferred, family-size packages welcome",
+    additionalInstructionsPlaceholder: "Example: Please bring donations to the front desk during pantry intake hours",
+    availabilityTitle: "Times people can drop off food",
+    availabilityHint: "Add times you can pick up food. Optional.",
+  },
+};
+
 function getTrimmedFood(food) {
   return {
     name: food.name.trim(),
@@ -57,20 +73,8 @@ function getTrimmedFood(food) {
   };
 }
 
-export default function ListingCreateForm({
-  additionalInstructionsPlaceholder,
-  endpoint,
-  foodDescriptionPlaceholder,
-  foodNamePlaceholder,
-  formLabel,
-  locationUnavailableMessage,
-  publishLabel,
-  successLabel,
-  travelDistanceLabel,
-  user,
-  availabilityTitle,
-  availabilityHint,
-}) {
+export default function ListingCreateForm({ listingType, user }) {
+  const copy = LISTING_COPY[listingType];
   const [foods, setFoods] = useState([{ ...EMPTY_FOOD }]);
   const [availabilityWindows, setAvailabilityWindows] = useState([]);
   const [locationAddress, setLocationAddress] = useState(user.address_text ?? "");
@@ -122,14 +126,14 @@ export default function ListingCreateForm({
     event.preventDefault();
 
     if (!hasLocationCoordinates) {
-      showToast(locationUnavailableMessage, "error");
+      showToast(copy.locationUnavailableMessage, "error");
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      const res = await fetch(endpoint, {
+      const res = await fetch(copy.endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -152,7 +156,7 @@ export default function ListingCreateForm({
         return;
       }
 
-      showToast(successLabel, "success");
+      showToast(copy.successLabel, "success");
     } catch {
       showToast("Network error. Please try again.", "error");
     } finally {
@@ -166,10 +170,10 @@ export default function ListingCreateForm({
       onSubmit={handleSubmit}
     >
       <p className="text-xs font-semibold tracking-[0.18em] text-amber-700 uppercase">
-        {formLabel}
+        {copy.formLabel}
       </p>
       <h2 className="mt-3 text-2xl font-bold text-slate-900">
-        Listing details
+        {copy.heading}
       </h2>
 
       <div className="mt-6 grid gap-5 sm:grid-cols-2">
@@ -183,7 +187,7 @@ export default function ListingCreateForm({
           />
         </FormField>
 
-        <FormField label={travelDistanceLabel}>
+        <FormField label={copy.travelDistanceLabel}>
           <div className="flex overflow-hidden rounded-2xl border border-slate-200 bg-white focus-within:border-amber-300">
             <input
               type="number"
@@ -204,8 +208,8 @@ export default function ListingCreateForm({
       <section className="mt-8 rounded-3xl border border-slate-200 bg-white/80 p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h3 className="text-xl font-bold text-slate-900">{availabilityTitle}</h3>
-            <p className="mt-1 text-sm leading-6 text-slate-600">{availabilityHint}</p>
+            <h3 className="text-xl font-bold text-slate-900">{copy.availabilityTitle}</h3>
+            <p className="mt-1 text-sm leading-6 text-slate-600">{copy.availabilityHint}</p>
           </div>
           <button
             type="button"
@@ -218,7 +222,7 @@ export default function ListingCreateForm({
 
         {availabilityWindows.length === 0 ? (
           <p className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-medium text-slate-600">
-            No availability added. You can coordinate times after someone accepts.
+            Skipped — you can sort timing once someone accepts.
           </p>
         ) : (
           <div className="mt-4 grid gap-4">
@@ -287,7 +291,7 @@ export default function ListingCreateForm({
         <FormField label="Additional instructions (optional)">
           <textarea
             rows="4"
-            placeholder={additionalInstructionsPlaceholder}
+            placeholder={copy.additionalInstructionsPlaceholder}
             value={additionalInstructions}
             onChange={(event) => setAdditionalInstructions(event.target.value)}
             className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-900 outline-none transition focus:border-amber-300"
@@ -333,7 +337,7 @@ export default function ListingCreateForm({
                   <input
                     type="text"
                     required
-                    placeholder={foodNamePlaceholder}
+                    placeholder={copy.foodNamePlaceholder}
                     value={food.name}
                     onChange={(event) => updateFood(index, "name", event.target.value)}
                     className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
@@ -347,7 +351,7 @@ export default function ListingCreateForm({
                     onChange={(event) => updateFood(index, "category", event.target.value)}
                     className="cursor-pointer rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
                   >
-                    {FOOD_CATEGORIES.map(([value, label]) => (
+                    {Object.entries(FOOD_CATEGORY_LABELS).map(([value, label]) => (
                       <option key={value} value={value}>
                         {label}
                       </option>
@@ -407,7 +411,7 @@ export default function ListingCreateForm({
                 <FormField label="Description (optional)">
                   <textarea
                     rows="3"
-                    placeholder={foodDescriptionPlaceholder}
+                    placeholder={copy.foodDescriptionPlaceholder}
                     value={food.description}
                     onChange={(event) => updateFood(index, "description", event.target.value)}
                     className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-900 outline-none transition focus:border-amber-300"
@@ -428,7 +432,7 @@ export default function ListingCreateForm({
           {isSubmitting ? (
             <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
           ) : null}
-          {isSubmitting ? "Publishing..." : publishLabel}
+          {isSubmitting ? "Publishing..." : copy.publishLabel}
         </button>
       </div>
     </form>

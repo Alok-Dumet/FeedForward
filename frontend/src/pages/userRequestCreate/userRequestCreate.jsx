@@ -33,20 +33,7 @@ export default function UserRequestCreate() {
           transition={{ delay: 0.08, duration: 0.4, ease: "easeOut" }}
           className="grid gap-5"
         >
-          <ListingCreateForm
-            additionalInstructionsPlaceholder="Example: Please bring donations to the front desk during pantry intake hours"
-            endpoint="/api/listings/requests/create"
-            foodDescriptionPlaceholder="Example: Shelf-stable items, low-sodium options preferred, family-size packages welcome"
-            foodNamePlaceholder="Example: Canned vegetables"
-            formLabel="Request Form"
-            locationUnavailableMessage="Your account needs a valid location before you can publish a request."
-            publishLabel="Publish request"
-            successLabel="Request published."
-            travelDistanceLabel="Distance we're willing to pick up"
-            user={user}
-            availabilityTitle="Times people can drop off food"
-            availabilityHint="Add the days and times when staff are available to receive food. This is optional."
-          />
+          <ListingCreateForm listingType="request" user={user} />
         </Motion.section>
       </div>
     </main>

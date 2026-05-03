@@ -58,11 +58,11 @@ def build_history_records(rows, relationship):
     return list(records_by_id.values())
 
 
-#We will fetch finished listings the user created. The latest claim is joined laterally so cards can show who claimed it.
+#We will fetch finished listings the user created, joining the latest claim so cards can show who claimed it
 def get_created_history_rows(user_id):
     with db.cursor() as cur:
         cur.execute(
-            f"""
+            """
             SELECT
                 listings.id,
                 listings.listing_type,
@@ -113,11 +113,11 @@ def get_created_history_rows(user_id):
         return cur.fetchall()
 
 
-#We will fetch finished listings the user claimed. The matching claim is joined directly since we filter by claimant_user_id.
+#We will fetch finished listings the user claimed, joining the matching claim directly since we filter by claimant_user_id
 def get_claimed_history_rows(user_id):
     with db.cursor() as cur:
         cur.execute(
-            f"""
+            """
             SELECT
                 listings.id,
                 listings.listing_type,
