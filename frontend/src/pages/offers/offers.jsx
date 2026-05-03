@@ -36,7 +36,7 @@ export default function Offers() {
     <ListingPageShell
       eyebrow="Available Offers"
       title="Surplus food offers ready for pickup"
-      description="Browse available surplus food offers from local providers and narrow the list by food category or handling type."
+      description="Browse available surplus food offers"
       items={filteredItems}
       filters={filters}
       activeFilter={activeFilter}
@@ -56,7 +56,7 @@ export default function Offers() {
         highlightLabel: "Quantity",
         highlightValueKey: "quantity",
         detailFields: [
-          { label: "Pickup Window", key: "pickupWindow" },
+          { label: "Available Times", key: "availability" },
           { label: "Location", key: "location" },
           { label: "Best For", key: "audience" },
         ],

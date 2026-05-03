@@ -1,11 +1,12 @@
 import { loaderFetch } from "../../utils/loaderFetch.js";
-import { formatPickupWindow } from "../../utils/formatDates.js";
+import { formatAvailabilityWindows } from "../../utils/formatDates.js";
 import {
   getRadiusMiles,
   withDistanceFilteredRecords,
 } from "../../utils/distance.js";
 import {
   formatFoodQuantity,
+  formatNumber,
   getFoodSummary,
   getFoodTags,
   getFoodTitle,
@@ -18,7 +19,7 @@ const ALL_FILTER = "All requests";
 function buildRequestItem(record) {
   const primaryFood = getPrimaryFood(record);
   const distance =
-    typeof record.distance_miles === "number" ? `${record.distance_miles} mi away` : null;
+    typeof record.distance_miles === "number" ? `${formatNumber(record.distance_miles)} mi away` : null;
 
   const locationLabel = distance
     ? `${record.location.address_text} (${distance})`
@@ -28,7 +29,7 @@ function buildRequestItem(record) {
     id: record.id,
     title: getFoodTitle(record),
     quantity: formatFoodQuantity(primaryFood),
-    neededBy: formatPickupWindow(record.pickup_window_start, record.pickup_window_end),
+    availability: formatAvailabilityWindows(record.availability_windows),
     location: locationLabel,
     audience: record.creator.organization_name,
     summary: getFoodSummary(record),

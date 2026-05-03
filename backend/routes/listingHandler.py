@@ -26,21 +26,20 @@ def build_listing_record(row):
         "id": row[0],
         "creator_user_id": row[1],
         "listing_type": row[2],
-        "pickup_window_start": row[3].isoformat(),
-        "pickup_window_end": row[4].isoformat(),
-        "travel_distance_miles": row[5],
-        "additional_instructions": row[6],
-        "status": row[7],
-        "created_at": row[8].isoformat(),
-        "updated_at": row[9].isoformat(),
+        "availability_windows": row[3],
+        "travel_distance_miles": row[4],
+        "additional_instructions": row[5],
+        "status": row[6],
+        "created_at": row[7].isoformat(),
+        "updated_at": row[8].isoformat(),
         "location": {
-            "address_text": row[10],
-            "latitude": str(row[11]),
-            "longitude": str(row[12]),
+            "address_text": row[9],
+            "latitude": str(row[10]),
+            "longitude": str(row[11]),
         },
         "foods": [],
         "creator": {
-            "organization_name": row[21],
+            "organization_name": row[20],
         },
     }
 
@@ -57,7 +56,7 @@ def build_listing_records(rows, relationship=None):
                 record["relationship"] = relationship
             records_by_id[listing_id] = record
 
-        records_by_id[listing_id]["foods"].append(build_food_item(row, 13))
+        records_by_id[listing_id]["foods"].append(build_food_item(row, 12))
 
     return list(records_by_id.values())
 
@@ -83,8 +82,7 @@ def get_offers_requests(handler):
                     listings.id,
                     listings.creator_user_id,
                     listings.listing_type,
-                    listings.pickup_window_start,
-                    listings.pickup_window_end,
+                    listings.availability_windows,
                     listings.travel_distance_miles,
                     listings.additional_instructions,
                     listings.status,
@@ -153,8 +151,7 @@ def get_my_listings(handler):
                     listings.id,
                     listings.creator_user_id,
                     listings.listing_type,
-                    listings.pickup_window_start,
-                    listings.pickup_window_end,
+                    listings.availability_windows,
                     listings.travel_distance_miles,
                     listings.additional_instructions,
                     listings.status,
@@ -193,8 +190,7 @@ def get_my_listings(handler):
                     listings.id,
                     listings.creator_user_id,
                     listings.listing_type,
-                    listings.pickup_window_start,
-                    listings.pickup_window_end,
+                    listings.availability_windows,
                     listings.travel_distance_miles,
                     listings.additional_instructions,
                     listings.status,
@@ -223,7 +219,7 @@ def get_my_listings(handler):
                     ON creator.id = listings.creator_user_id
                 WHERE claims.claimant_user_id = %s
                     AND claims.status IN ('pending', 'accepted')
-                    AND listings.status NOT IN ('completed', 'canceled')
+                    AND listings.status NOT IN ('completed', 'cancelled')
                 ORDER BY claims.claimed_at DESC, listings.id DESC
                 """,
                 (user["id"],)

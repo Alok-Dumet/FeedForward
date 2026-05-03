@@ -13,6 +13,20 @@ export default function UserRequests() {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: "easeOut" }}
+          className="rounded-[2rem] border border-white/70 bg-slate-950 px-8 py-10 text-white shadow-2xl"
+        >
+          <p className="text-sm font-medium tracking-[0.2em] text-emerald-400 uppercase">
+            My Requests
+          </p>
+          <h1 className="mt-4 max-w-3xl text-3xl font-extrabold text-white sm:text-4xl">
+            Manage your active requests
+          </h1>
+        </Motion.section>
+
+        <Motion.section
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: "easeOut" }}
           className="rounded-[2rem] border border-white/70 bg-white/70 px-6 py-5 shadow-xl backdrop-blur-md"
         >
           <div className="flex flex-wrap items-center gap-3">
@@ -45,14 +59,14 @@ export default function UserRequests() {
                 highlightLabel="Need"
                 highlightValue={item.quantity}
                 detailItems={[
-                  { label: "Needed By", value: item.neededBy },
+                  { label: "Available Times", value: item.availability },
                   { label: "Area", value: item.location },
                   { label: "Serving", value: item.audience },
                 ]}
                 tags={item.tags}
                 action={{
                   label: "Details",
-                  to: `/requests/${item.id}`,
+                  to: item.detailsPath,
                   placement: "inline",
                 }}
               />

@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from psycopg2 import errors
+from psycopg2.extras import Json
 
 
 from database.database import db
@@ -10,9 +11,9 @@ from utils import (
     parse_body,
     strip_strings,
     send_json,
-    parse_datetime,
     parse_decimal,
     parse_food_items,
+    parse_availability_windows,
 )
 
 
@@ -48,11 +49,6 @@ def create_request(handler):
     required_fields = [
 
         "foods",
-
-        "pickup_window_start",
-
-        "pickup_window_end",
-
         "address_text",
 
         "latitude",
@@ -67,6 +63,7 @@ def create_request(handler):
 
     try:
         foods = parse_food_items(body["foods"])
+        availability_windows = parse_availability_windows(body.get("availability_windows"))
 
         latitude = parse_decimal(body["latitude"], "latitude")
         if latitude < Decimal("-90") or latitude > Decimal("90"):
@@ -79,11 +76,6 @@ def create_request(handler):
         travel_distance_miles = int(body.get("travel_distance_miles", 0))
         if travel_distance_miles < 0:
             raise ValueError("travel_distance_miles must be 0 or greater")
-
-        pickup_window_start = parse_datetime(body["pickup_window_start"], "pickup_window_start")
-        pickup_window_end = parse_datetime(body["pickup_window_end"], "pickup_window_end")
-        if pickup_window_end < pickup_window_start:
-            raise ValueError("pickup window end must be on or after pickup window start")
 
     except(TypeError, ValueError) as exc:
         return send_json(handler, 400, {"error": str(exc)})
@@ -118,20 +110,18 @@ def create_request(handler):
                     creator_user_id,
                     listing_type,
                     location_id,
-                    pickup_window_start,
-                    pickup_window_end,
+                    availability_windows,
                     travel_distance_miles,
                     additional_instructions
                 )
-                VALUES(%s, 'request', %s, %s, %s, %s, %s)
+                VALUES(%s, 'request', %s, %s, %s, %s)
                 RETURNING id, status, created_at, updated_at
                 """,
                 (
 
                     user["id"],
                     location_id,
-                    pickup_window_start,
-                    pickup_window_end,
+                    Json(availability_windows),
                     travel_distance_miles,
                     additional_instructions,
                 )
@@ -190,8 +180,7 @@ def create_request(handler):
             "status": listing[1],
             "created_at": listing[2].isoformat(),
             "updated_at": listing[3].isoformat(),
-            "pickup_window_start": pickup_window_start.isoformat(),
-            "pickup_window_end": pickup_window_end.isoformat(),
+            "availability_windows": availability_windows,
             "travel_distance_miles": travel_distance_miles,
             "additional_instructions": additional_instructions,
             "location": {

@@ -13,7 +13,7 @@ import {
 import { useSession, useSessionActions } from "../hooks/useSession.js";
 
 const baseLinkClassName =
-  "rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-amber-50 hover:text-amber-800";
+  "cursor-pointer rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-amber-50 hover:text-amber-800";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -25,6 +25,11 @@ export default function Navbar() {
     return null;
   }
 
+  const createAction = {
+    label: userType === "donor" ? "Create Offer" : "Create Request",
+    to: getMyCreateRouteForUserType(userType, userId),
+  };
+
   const navItems =
     userType === "donor"
       ? [
@@ -32,22 +37,21 @@ export default function Navbar() {
           {
             label: "My Offers",
             to: getMyListingsRouteForUserType(userType, userId),
+            end: true,
           },
           { label: "History", to: "/history" },
+          createAction,
         ]
       : [
           { label: "Offers", to: "/offers" },
           {
             label: "My Requests",
             to: getMyListingsRouteForUserType(userType, userId),
+            end: true,
           },
           { label: "History", to: "/history" },
+          createAction,
         ];
-
-  const createAction = {
-    label: userType === "donor" ? "Create Offer" : "Create Request",
-    to: getMyCreateRouteForUserType(userType, userId),
-  };
 
   async function handleLogout() {
     clearSession();
@@ -70,7 +74,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between gap-4">
           <Link
             to={getDefaultRouteForUserType(userType)}
-            className="text-lg font-extrabold tracking-[0.08em] text-slate-950 uppercase"
+            className="cursor-pointer text-lg font-extrabold tracking-[0.08em] text-slate-950 uppercase"
           >
             FeedForward
           </Link>
@@ -83,6 +87,7 @@ export default function Navbar() {
               <NavLink
                 key={item.to}
                 to={item.to}
+                end={item.end}
                 className={({ isActive }) =>
                   `${baseLinkClassName} ${
                     isActive
@@ -104,12 +109,6 @@ export default function Navbar() {
             >
               Logout
             </button>
-            <Link
-              to={createAction.to}
-              className="inline-flex rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
-            >
-              {createAction.label}
-            </Link>
           </div>
 
           <button
@@ -134,6 +133,7 @@ export default function Navbar() {
               <NavLink
                 key={item.to}
                 to={item.to}
+                end={item.end}
                 onClick={() => setIsMenuOpen(false)}
                 className={({ isActive }) =>
                   `${baseLinkClassName} text-left ${
@@ -146,14 +146,6 @@ export default function Navbar() {
                 {item.label}
               </NavLink>
             ))}
-
-            <Link
-              to={createAction.to}
-              onClick={() => setIsMenuOpen(false)}
-              className="mt-2 inline-flex justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
-            >
-              {createAction.label}
-            </Link>
 
             <button
               type="button"
