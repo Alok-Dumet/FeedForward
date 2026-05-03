@@ -32,25 +32,21 @@ export default function ListingCard({
         transition={{ duration: 0.4, ease: "easeOut" }}
         className="rounded-[1.5rem] border border-white/70 bg-white/80 px-5 py-4 shadow-lg backdrop-blur-md"
       >
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0 flex-1">
-            <h3 className="text-lg font-bold text-slate-900">{title}</h3>
-            <p className="mt-1 text-sm text-slate-500">{metaText}</p>
-            <p className="mt-2 text-sm leading-6 text-slate-600">{summary}</p>
-            <p className="mt-3 text-xs font-semibold tracking-[0.15em] text-amber-700 uppercase">
-              {eyebrow}
-            </p>
-          </div>
+        <div className="min-w-0">
+          <h3 className="text-lg font-bold text-slate-900">{title}</h3>
+          <p className="mt-1 text-sm text-slate-500">{metaText}</p>
+        </div>
 
-          {action ? (
+        {action ? (
+          <div className="mt-5">
             <Link
               to={action.to}
-              className="shrink-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-amber-300 hover:text-amber-800"
+              className="inline-flex rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-amber-300 hover:text-amber-800"
             >
               {action.label}
             </Link>
-          ) : null}
-        </div>
+          </div>
+        ) : null}
       </Motion.article>
     );
   }

@@ -129,13 +129,6 @@ const router = createBrowserRouter([
       },
     ],
   },
-  // {
-  //   element: <Background2 />
-  //   errorElement:
-  //   children:{
-
-  //   }
-  // },
 ]);
 
 export default function App() {

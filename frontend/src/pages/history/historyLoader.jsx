@@ -18,16 +18,6 @@ function formatStatus(status) {
   return status;
 }
 
-function formatOutcome(status) {
-  if (status === "completed") {
-    return "Donation completed";
-  }
-  if (status === "cancelled") {
-    return "Listing was cancelled";
-  }
-  return formatStatus(status);
-}
-
 //We will turn one /api/history record into the card shape the history page expects
 function buildItem(record) {
   const ownership = record.relationship === "own" ? "Posted by you" : "Claimed by you";
@@ -39,7 +29,7 @@ function buildItem(record) {
     id: record.listing_id,
     status,
     title: getFoodTitle(record),
-    summary: formatOutcome(record.status),
+    summary: "",
     quantity: formatFoodQuantity(primaryFood),
     timeline: buildTimeline(record),
     location: record.location ?? "Location unavailable",

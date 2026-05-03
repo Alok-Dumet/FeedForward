@@ -2,10 +2,10 @@ import secrets
 
 from database.database import db
 
-#We will use this dictionary for storing sessions in memory (For now. We may move it to a database)
+#We will store active sessions in memory for this local app
 sessions = {}
 
-#This is our session cookie name
+#We will use one cookie name for session lookup
 SESSION_COOKIE_NAME = "feedforward_session"
 
 #We will use this helper function for parsing cookies in from the user's request
@@ -23,7 +23,7 @@ def parse_cookies(self):
 
     return cookies
 
-#We will creating a unique session token and store it (It loops in case a collision occurs)
+#We will create a unique session token for the given user
 def create_session(user_id):
     while True:
         session_token = secrets.token_urlsafe(32)
@@ -31,7 +31,7 @@ def create_session(user_id):
             sessions[session_token] = user_id
             return session_token
 
-#We will build the session cookie
+#We will build the session cookie header value
 def build_session_cookie(session_token, max_age):
     return f"{SESSION_COOKIE_NAME}={session_token}; Path=/; HttpOnly; SameSite=Lax; Max-Age={max_age}"
 
@@ -45,8 +45,7 @@ def get_session_user_id(self):
 
     return sessions.get(session_token)
 
-#We will load the current user after checking the session.
-#The result is cached on the handler when enforce_access calls this first so other route handlers won't need to make another query
+#We will load the current user once per request
 def get_user(self):
     cached = getattr(self, "_cached_user", None)
     if cached is not None:
@@ -99,6 +98,6 @@ def get_user(self):
     self._cached_user = resolved
     return resolved
 
-#This is for deleting a session token when a user wants to log out
+#We will delete a session token when a user logs out
 def delete_session(session_token):
     sessions.pop(session_token, None)

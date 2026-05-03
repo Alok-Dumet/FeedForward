@@ -2,6 +2,8 @@ import { Link } from "react-router-dom";
 import { motion as Motion } from "motion/react";
 
 import ListingCard from "./listingCard.jsx";
+import PaginationControls from "./paginationControls.jsx";
+import usePagination from "../hooks/usePagination.js";
 
 export default function ListingPageShell({
   eyebrow,
@@ -32,6 +34,7 @@ export default function ListingPageShell({
       { label: "Best For", key: "audience" },
     ],
   } = cardConfig;
+  const pagination = usePagination(items);
 
   return (
     <main className="px-6 py-10 sm:px-8 lg:px-12">
@@ -128,7 +131,7 @@ export default function ListingPageShell({
         </Motion.section>
 
         <section className="grid gap-5">
-          {items.map((item) => (
+          {pagination.pageItems.map((item) => (
             <ListingCard
               key={item.id}
               variant={variant}
@@ -154,6 +157,8 @@ export default function ListingPageShell({
             />
           ))}
         </section>
+
+        <PaginationControls {...pagination} />
       </div>
     </main>
   );

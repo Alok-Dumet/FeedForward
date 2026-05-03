@@ -10,7 +10,7 @@ import {
 
 //We will turn a backend listing record into the card shape userOffers.jsx expects
 function buildItem(record) {
-  const ownership = record.relationship === "own" ? "Posted by you" : "Claimed by you";
+  const ownership = record.relationship === "own" ? "Posted by you" : "Accepted by you";
   const primaryFood = getPrimaryFood(record);
 
   return {
@@ -31,7 +31,6 @@ export default async function userOffersLoader({ request }) {
   const payload = await loaderFetch("/api/my-listings", request, "Unable to load your offers.");
 
   return {
-    filters: [],
     items: (payload.records ?? []).map(buildItem),
   };
 }
