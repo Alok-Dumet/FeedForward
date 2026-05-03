@@ -87,11 +87,7 @@ def get_page_required_role(path):
 
 
 def is_protected_page(path):
-    return (
-        path in AUTHENTICATED_PAGE_PATHS
-        or path in ROLE_PROTECTED_PAGE_PATHS
-        or path.startswith(AUTHENTICATED_PAGE_PREFIXES)
-    )
+    return path in AUTHENTICATED_PAGE_PATHS or path in ROLE_PROTECTED_PAGE_PATHS or path.startswith(AUTHENTICATED_PAGE_PREFIXES)
 
 
 def enforce_access(handler):
