@@ -15,6 +15,55 @@ from utils import (
 
 router = Router()
 
+LISTING_SELECT_COLUMNS = """
+    listings.id,
+    listings.creator_user_id,
+    listings.listing_type,
+    listings.availability_windows,
+    listings.travel_distance_miles,
+    listings.additional_instructions,
+    listings.status,
+    listings.created_at,
+    listings.updated_at,
+    locations.address_text,
+    locations.latitude,
+    locations.longitude,
+    listing_food_items.id,
+    listing_food_items.food_name,
+    listing_food_items.food_description,
+    listing_food_items.food_category,
+    listing_food_items.is_perishable,
+    listing_food_items.quantity,
+    listing_food_items.quantity_unit,
+    listing_food_items.expiration_date,
+    creator.organization_name
+"""
+LISTING_SELECT_JOINS = """
+    JOIN locations
+        ON locations.id = listings.location_id
+    JOIN listing_food_items
+        ON listing_food_items.listing_id = listings.id
+    JOIN users AS creator
+        ON creator.id = listings.creator_user_id
+"""
+
+LISTING_ID_INDEX = 0
+LISTING_CREATOR_USER_ID_INDEX = 1
+LISTING_TYPE_INDEX = 2
+LISTING_AVAILABILITY_INDEX = 3
+LISTING_TRAVEL_DISTANCE_INDEX = 4
+LISTING_ADDITIONAL_INSTRUCTIONS_INDEX = 5
+LISTING_STATUS_INDEX = 6
+LISTING_CREATED_AT_INDEX = 7
+LISTING_UPDATED_AT_INDEX = 8
+LISTING_LOCATION_ADDRESS_INDEX = 9
+LISTING_LOCATION_LATITUDE_INDEX = 10
+LISTING_LOCATION_LONGITUDE_INDEX = 11
+LISTING_FOOD_START_INDEX = 12
+LISTING_CREATOR_ORGANIZATION_INDEX = 20
+DETAIL_CREATOR_EMAIL_INDEX = 21
+DETAIL_CLAIM_START_INDEX = 22
+
 
 # We will format one food item from a joined listing_food_items row
 def build_food_item(row, start_index):
@@ -26,30 +75,32 @@ def build_food_item(row, start_index):
         "is_perishable": row[start_index + 4],
         "quantity": str(row[start_index + 5]),
         "quantity_unit": row[start_index + 6],
-        "expiration_date": row[start_index + 7].isoformat() if row[start_index + 7] else None,
+        "expiration_date": (
+            row[start_index + 7].isoformat() if row[start_index + 7] else None
+        ),
     }
 
 
 # We will format one listing row and leave room for multiple food items
 def build_listing_record(row):
     return {
-        "id": row[0],
-        "creator_user_id": row[1],
-        "listing_type": row[2],
-        "availability_windows": row[3],
-        "travel_distance_miles": row[4],
-        "additional_instructions": row[5],
-        "status": row[6],
-        "created_at": row[7].isoformat(),
-        "updated_at": row[8].isoformat(),
+        "id": row[LISTING_ID_INDEX],
+        "creator_user_id": row[LISTING_CREATOR_USER_ID_INDEX],
+        "listing_type": row[LISTING_TYPE_INDEX],
+        "availability_windows": row[LISTING_AVAILABILITY_INDEX],
+        "travel_distance_miles": row[LISTING_TRAVEL_DISTANCE_INDEX],
+        "additional_instructions": row[LISTING_ADDITIONAL_INSTRUCTIONS_INDEX],
+        "status": row[LISTING_STATUS_INDEX],
+        "created_at": row[LISTING_CREATED_AT_INDEX].isoformat(),
+        "updated_at": row[LISTING_UPDATED_AT_INDEX].isoformat(),
         "location": {
-            "address_text": row[9],
-            "latitude": str(row[10]),
-            "longitude": str(row[11]),
+            "address_text": row[LISTING_LOCATION_ADDRESS_INDEX],
+            "latitude": str(row[LISTING_LOCATION_LATITUDE_INDEX]),
+            "longitude": str(row[LISTING_LOCATION_LONGITUDE_INDEX]),
         },
         "foods": [],
         "creator": {
-            "organization_name": row[20],
+            "organization_name": row[LISTING_CREATOR_ORGANIZATION_INDEX],
         },
     }
 
@@ -59,16 +110,131 @@ def build_listing_records(rows, relationship=None):
     records_by_id = {}
 
     for row in rows:
-        listing_id = row[0]
+        listing_id = row[LISTING_ID_INDEX]
         if listing_id not in records_by_id:
             record = build_listing_record(row)
             if relationship:
                 record["relationship"] = relationship
             records_by_id[listing_id] = record
 
-        records_by_id[listing_id]["foods"].append(build_food_item(row, 12))
+        records_by_id[listing_id]["foods"].append(
+            build_food_item(row, LISTING_FOOD_START_INDEX)
+        )
 
     return list(records_by_id.values())
+
+
+def build_listing_detail_record(rows, user):
+    row = rows[0]
+
+    return {
+        "id": row[LISTING_ID_INDEX],
+        "creator_user_id": row[LISTING_CREATOR_USER_ID_INDEX],
+        "type": row[LISTING_TYPE_INDEX],
+        "availability_windows": row[LISTING_AVAILABILITY_INDEX],
+        "travel_distance_miles": row[LISTING_TRAVEL_DISTANCE_INDEX],
+        "additional_instructions": row[LISTING_ADDITIONAL_INSTRUCTIONS_INDEX],
+        "status": row[LISTING_STATUS_INDEX],
+        "created_at": row[LISTING_CREATED_AT_INDEX].isoformat(),
+        "updated_at": row[LISTING_UPDATED_AT_INDEX].isoformat(),
+        "location": {
+            "address_text": row[LISTING_LOCATION_ADDRESS_INDEX],
+            "latitude": str(row[LISTING_LOCATION_LATITUDE_INDEX]),
+            "longitude": str(row[LISTING_LOCATION_LONGITUDE_INDEX]),
+        },
+        "foods": [
+            build_food_item(food_row, LISTING_FOOD_START_INDEX) for food_row in rows
+        ],
+        "creator": {
+            "organization_name": row[LISTING_CREATOR_ORGANIZATION_INDEX],
+            "email": row[DETAIL_CREATOR_EMAIL_INDEX],
+        },
+        "claim": build_listing_claim(row),
+        "current_user": {
+            "id": user["id"],
+            "role": user["role"],
+        },
+    }
+
+
+def build_listing_claim(row):
+    if not row[DETAIL_CLAIM_START_INDEX]:
+        return None
+
+    return {
+        "id": row[DETAIL_CLAIM_START_INDEX],
+        "claimant_user_id": row[DETAIL_CLAIM_START_INDEX + 1],
+        "status": row[DETAIL_CLAIM_START_INDEX + 2],
+        "claimed_at": row[DETAIL_CLAIM_START_INDEX + 3].isoformat()
+        if row[DETAIL_CLAIM_START_INDEX + 3]
+        else None,
+        "resolved_at": row[DETAIL_CLAIM_START_INDEX + 4].isoformat()
+        if row[DETAIL_CLAIM_START_INDEX + 4]
+        else None,
+    }
+
+
+def parse_listing_payload(body, *, require_coordinates):
+    foods = parse_food_items(body["foods"])
+    availability_windows = parse_availability_windows(
+        body.get("availability_windows")
+    )
+    travel_distance_miles = int(body.get("travel_distance_miles", 0))
+    if travel_distance_miles < 0:
+        raise ValueError("travel_distance_miles must be 0 or greater")
+
+    latitude = None
+    longitude = None
+    if require_coordinates or "latitude" in body:
+        latitude = parse_decimal(body["latitude"], "latitude")
+    if require_coordinates or "longitude" in body:
+        longitude = parse_decimal(body["longitude"], "longitude")
+
+    return {
+        "foods": foods,
+        "availability_windows": availability_windows,
+        "address_text": body["address_text"],
+        "latitude": latitude,
+        "longitude": longitude,
+        "travel_distance_miles": travel_distance_miles,
+        "additional_instructions": body.get("additional_instructions") or None,
+    }
+
+
+def insert_listing_food_items(cur, listing_id, foods, *, return_ids=False):
+    food_item_ids = []
+
+    for food in foods:
+        cur.execute(
+            """
+            INSERT INTO listing_food_items(
+                listing_id,
+                food_name,
+                food_description,
+                food_category,
+                is_perishable,
+                quantity,
+                quantity_unit,
+                expiration_date
+            )
+            VALUES(%s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            + (" RETURNING id" if return_ids else ""),
+            (
+                listing_id,
+                food["name"],
+                food["description"],
+                food["category"],
+                food["is_perishable"],
+                food["quantity"],
+                food["quantity_unit"],
+                food["expiration_date"],
+            ),
+        )
+        if return_ids:
+            food_item_ids.append(cur.fetchone()[0])
+
+    return food_item_ids
 
 
 # GET endpoint handler that returns requests for providers or offers for recipients
@@ -79,44 +245,16 @@ def get_offers_requests(handler):
 
     if user_role == "food_provider":
         target_listing_type = "request"
-        view_mode = "requests"
     else:
         target_listing_type = "offer"
-        view_mode = "offers"
 
     try:
         with db.cursor() as cur:
             cur.execute(
-                """
-                SELECT
-                    listings.id,
-                    listings.creator_user_id,
-                    listings.listing_type,
-                    listings.availability_windows,
-                    listings.travel_distance_miles,
-                    listings.additional_instructions,
-                    listings.status,
-                    listings.created_at,
-                    listings.updated_at,
-                    locations.address_text,
-                    locations.latitude,
-                    locations.longitude,
-                    listing_food_items.id,
-                    listing_food_items.food_name,
-                    listing_food_items.food_description,
-                    listing_food_items.food_category,
-                    listing_food_items.is_perishable,
-                    listing_food_items.quantity,
-                    listing_food_items.quantity_unit,
-                    listing_food_items.expiration_date,
-                    creator.organization_name
+                f"""
+                SELECT {LISTING_SELECT_COLUMNS}
                 FROM listings
-                JOIN locations
-                    ON locations.id = listings.location_id
-                JOIN listing_food_items
-                    ON listing_food_items.listing_id = listings.id
-                JOIN users AS creator
-                    ON creator.id = listings.creator_user_id
+                {LISTING_SELECT_JOINS}
                 WHERE listings.listing_type = %s
                     AND listings.creator_user_id <> %s
                     AND listings.status = 'available'
@@ -132,7 +270,9 @@ def get_offers_requests(handler):
     except Exception as exc:
         db.rollback()
         print(f"[get_offers_requests] DB error: {exc!r}")
-        return send_json(handler, 500, {"error": "Unable to load offers or requests."})
+        return send_json(
+            handler, 500, {"error": "Unable to load offers or requests."}
+        )
 
     records = build_listing_records(rows)
 
@@ -140,7 +280,6 @@ def get_offers_requests(handler):
         handler,
         200,
         {
-            "view_mode": view_mode,
             "records": records,
             "current_user": {
                 "id": user["id"],
@@ -160,36 +299,10 @@ def get_my_listings(handler):
     try:
         with db.cursor() as cur:
             cur.execute(
-                """
-                SELECT
-                    listings.id,
-                    listings.creator_user_id,
-                    listings.listing_type,
-                    listings.availability_windows,
-                    listings.travel_distance_miles,
-                    listings.additional_instructions,
-                    listings.status,
-                    listings.created_at,
-                    listings.updated_at,
-                    locations.address_text,
-                    locations.latitude,
-                    locations.longitude,
-                    listing_food_items.id,
-                    listing_food_items.food_name,
-                    listing_food_items.food_description,
-                    listing_food_items.food_category,
-                    listing_food_items.is_perishable,
-                    listing_food_items.quantity,
-                    listing_food_items.quantity_unit,
-                    listing_food_items.expiration_date,
-                    creator.organization_name
+                f"""
+                SELECT {LISTING_SELECT_COLUMNS}
                 FROM listings
-                JOIN locations
-                    ON locations.id = listings.location_id
-                JOIN listing_food_items
-                    ON listing_food_items.listing_id = listings.id
-                JOIN users AS creator
-                    ON creator.id = listings.creator_user_id
+                {LISTING_SELECT_JOINS}
                 WHERE listings.creator_user_id = %s
                     AND listings.status IN ('available', 'claimed')
                 ORDER BY listings.created_at DESC, listings.id DESC
@@ -199,38 +312,12 @@ def get_my_listings(handler):
             own_rows = cur.fetchall()
 
             cur.execute(
-                """
-                SELECT
-                    listings.id,
-                    listings.creator_user_id,
-                    listings.listing_type,
-                    listings.availability_windows,
-                    listings.travel_distance_miles,
-                    listings.additional_instructions,
-                    listings.status,
-                    listings.created_at,
-                    listings.updated_at,
-                    locations.address_text,
-                    locations.latitude,
-                    locations.longitude,
-                    listing_food_items.id,
-                    listing_food_items.food_name,
-                    listing_food_items.food_description,
-                    listing_food_items.food_category,
-                    listing_food_items.is_perishable,
-                    listing_food_items.quantity,
-                    listing_food_items.quantity_unit,
-                    listing_food_items.expiration_date,
-                    creator.organization_name
+                f"""
+                SELECT {LISTING_SELECT_COLUMNS}
                 FROM claims
                 JOIN listings
                     ON listings.id = claims.listing_id
-                JOIN locations
-                    ON locations.id = listings.location_id
-                JOIN listing_food_items
-                    ON listing_food_items.listing_id = listings.id
-                JOIN users AS creator
-                    ON creator.id = listings.creator_user_id
+                {LISTING_SELECT_JOINS}
                 WHERE claims.claimant_user_id = %s
                     AND claims.status IN ('pending', 'accepted')
                     AND listings.status NOT IN ('completed', 'cancelled')
@@ -251,11 +338,6 @@ def get_my_listings(handler):
         200,
         {
             "records": own_records + claimed_records,
-            "current_user": {
-                "id": user["id"],
-                "role": user["role"],
-                "organization_name": user["organization_name"],
-            },
         },
     )
 
@@ -278,29 +360,9 @@ def get_listing_details(handler):
 
         with db.cursor() as cur:
             cur.execute(
-                """
+                f"""
                 SELECT
-                    listings.id,
-                    listings.creator_user_id,
-                    listings.listing_type,
-                    listings.availability_windows,
-                    listings.travel_distance_miles,
-                    listings.additional_instructions,
-                    listings.status,
-                    listings.created_at,
-                    listings.updated_at,
-                    locations.address_text,
-                    locations.latitude,
-                    locations.longitude,
-                    listing_food_items.id,
-                    listing_food_items.food_name,
-                    listing_food_items.food_description,
-                    listing_food_items.food_category,
-                    listing_food_items.is_perishable,
-                    listing_food_items.quantity,
-                    listing_food_items.quantity_unit,
-                    listing_food_items.expiration_date,
-                    creator.organization_name,
+                    {LISTING_SELECT_COLUMNS},
                     creator.email,
                     claims.id,
                     claims.claimant_user_id,
@@ -308,12 +370,7 @@ def get_listing_details(handler):
                     claims.claimed_at,
                     claims.resolved_at
                 FROM listings
-                JOIN locations
-                    ON locations.id = listings.location_id
-                JOIN listing_food_items
-                    ON listing_food_items.listing_id = listings.id
-                JOIN users AS creator
-                    ON creator.id = listings.creator_user_id
+                {LISTING_SELECT_JOINS}
                 LEFT JOIN claims
                     ON claims.listing_id = listings.id
                     AND claims.status IN ('pending', 'accepted')
@@ -348,42 +405,7 @@ def get_listing_details(handler):
     return send_json(
         handler,
         200,
-        {
-            "record": {
-                "id": rows[0][0],
-                "creator_user_id": rows[0][1],
-                "type": rows[0][2],
-                "availability_windows": rows[0][3],
-                "travel_distance_miles": rows[0][4],
-                "additional_instructions": rows[0][5],
-                "status": rows[0][6],
-                "created_at": rows[0][7].isoformat(),
-                "updated_at": rows[0][8].isoformat(),
-                "location": {
-                    "address_text": rows[0][9],
-                    "latitude": str(rows[0][10]),
-                    "longitude": str(rows[0][11]),
-                },
-                "foods": [build_food_item(row, 12) for row in rows],
-                "creator": {
-                    "organization_name": rows[0][20],
-                    "email": rows[0][21],
-                },
-                "claim": {
-                    "id": rows[0][22],
-                    "claimant_user_id": rows[0][23],
-                    "status": rows[0][24],
-                    "claimed_at": rows[0][25].isoformat() if rows[0][25] else None,
-                    "resolved_at": rows[0][26].isoformat() if rows[0][26] else None,
-                }
-                if rows[0][22]
-                else None,
-                "current_user": {
-                    "id": user["id"],
-                    "role": user["role"],
-                },
-            }
-        },
+        {"record": build_listing_detail_record(rows, user)},
     )
 
 
@@ -396,20 +418,9 @@ def create_listing(handler, listing_type):
     user = get_user(handler)
 
     try:
-        foods = parse_food_items(body["foods"])
-        availability_windows = parse_availability_windows(body.get("availability_windows"))
-
-        latitude = parse_decimal(body["latitude"], "latitude")
-        longitude = parse_decimal(body["longitude"], "longitude")
-
-        travel_distance_miles = int(body.get("travel_distance_miles", 0))
-        if travel_distance_miles < 0:
-            raise ValueError("travel_distance_miles must be 0 or greater")
-
+        listing_payload = parse_listing_payload(body, require_coordinates=True)
     except (TypeError, ValueError) as exc:
         return send_json(handler, 400, {"error": str(exc)})
-
-    additional_instructions = body.get("additional_instructions") or None
 
     try:
         with db.cursor() as cur:
@@ -423,7 +434,11 @@ def create_listing(handler, listing_type):
                 VALUES(%s, %s, %s)
                 RETURNING id
                 """,
-                (body["address_text"], latitude, longitude),
+                (
+                    listing_payload["address_text"],
+                    listing_payload["latitude"],
+                    listing_payload["longitude"],
+                ),
             )
             location_id = cur.fetchone()[0]
 
@@ -444,50 +459,32 @@ def create_listing(handler, listing_type):
                     user["id"],
                     listing_type,
                     location_id,
-                    Json(availability_windows),
-                    travel_distance_miles,
-                    additional_instructions,
+                    Json(listing_payload["availability_windows"]),
+                    listing_payload["travel_distance_miles"],
+                    listing_payload["additional_instructions"],
                 ),
             )
             listing = cur.fetchone()
 
-            food_item_ids = []
-            for food in foods:
-                cur.execute(
-                    """
-                    INSERT INTO listing_food_items(
-                        listing_id,
-                        food_name,
-                        food_description,
-                        food_category,
-                        is_perishable,
-                        quantity,
-                        quantity_unit,
-                        expiration_date
-                    )
-                    VALUES(%s, %s, %s, %s, %s, %s, %s, %s)
-                    RETURNING id
-                    """,
-                    (
-                        listing[0],
-                        food["name"],
-                        food["description"],
-                        food["category"],
-                        food["is_perishable"],
-                        food["quantity"],
-                        food["quantity_unit"],
-                        food["expiration_date"],
-                    ),
-                )
-                food_item_ids.append(cur.fetchone()[0])
+            food_item_ids = insert_listing_food_items(
+                cur, listing[0], listing_payload["foods"], return_ids=True
+            )
 
         db.commit()
     except errors.CheckViolation:
         db.rollback()
-        return send_json(handler, 400, {"error": f"{listing_type.capitalize()} data failed validation."})
+        return send_json(
+            handler,
+            400,
+            {"error": f"{listing_type.capitalize()} data failed validation."},
+        )
     except Exception:
         db.rollback()
-        return send_json(handler, 500, {"error": f"Unable to create {listing_type} due to server error."})
+        return send_json(
+            handler,
+            500,
+            {"error": f"Unable to create {listing_type} due to server error."},
+        )
 
     return send_json(
         handler,
@@ -500,14 +497,14 @@ def create_listing(handler, listing_type):
                 "status": listing[1],
                 "created_at": listing[2].isoformat(),
                 "updated_at": listing[3].isoformat(),
-                "availability_windows": availability_windows,
-                "travel_distance_miles": travel_distance_miles,
-                "additional_instructions": additional_instructions,
+                "availability_windows": listing_payload["availability_windows"],
+                "travel_distance_miles": listing_payload["travel_distance_miles"],
+                "additional_instructions": listing_payload["additional_instructions"],
                 "location": {
                     "id": location_id,
-                    "address_text": body["address_text"],
-                    "latitude": str(latitude),
-                    "longitude": str(longitude),
+                    "address_text": listing_payload["address_text"],
+                    "latitude": str(listing_payload["latitude"]),
+                    "longitude": str(listing_payload["longitude"]),
                 },
                 "foods": [
                     {
@@ -518,9 +515,13 @@ def create_listing(handler, listing_type):
                         "is_perishable": food["is_perishable"],
                         "quantity": str(food["quantity"]),
                         "quantity_unit": food["quantity_unit"],
-                        "expiration_date": food["expiration_date"].isoformat() if food["expiration_date"] else None,
+                        "expiration_date": (
+                            food["expiration_date"].isoformat()
+                            if food["expiration_date"]
+                            else None
+                        ),
                     }
-                    for index, food in enumerate(foods)
+                    for index, food in enumerate(listing_payload["foods"])
                 ],
             }
         },
@@ -547,19 +548,11 @@ def edit_listing(handler):
         if listing_id <= 0:
             raise ValueError("listing_id must be greater than zero")
 
-        foods = parse_food_items(body["foods"])
-        availability_windows = parse_availability_windows(body["availability_windows"])
-        travel_distance_miles = int(body["travel_distance_miles"])
-        if travel_distance_miles < 0:
-            raise ValueError("travel_distance_miles must be 0 or greater")
-
-        latitude = parse_decimal(body["latitude"], "latitude") if "latitude" in body else None
-        longitude = parse_decimal(body["longitude"], "longitude") if "longitude" in body else None
+        listing_payload = parse_listing_payload(body, require_coordinates=False)
     except (TypeError, ValueError) as exc:
         return send_json(handler, 400, {"error": str(exc)})
 
     user = get_user(handler)
-    additional_instructions = body.get("additional_instructions") or None
 
     try:
         with db.cursor() as cur:
@@ -582,7 +575,7 @@ def edit_listing(handler):
                 db.rollback()
                 return send_json(handler, 409, {"error": "Only available listings can be edited."})
 
-            if latitude is None or longitude is None:
+            if listing_payload["latitude"] is None or listing_payload["longitude"] is None:
                 cur.execute(
                     """
                     UPDATE locations
@@ -590,7 +583,7 @@ def edit_listing(handler):
                         updated_at = NOW()
                     WHERE id = %s
                     """,
-                    (body["address_text"], listing[1]),
+                    (listing_payload["address_text"], listing[1]),
                 )
             else:
                 cur.execute(
@@ -602,7 +595,12 @@ def edit_listing(handler):
                         updated_at = NOW()
                     WHERE id = %s
                     """,
-                    (body["address_text"], latitude, longitude, listing[1]),
+                    (
+                        listing_payload["address_text"],
+                        listing_payload["latitude"],
+                        listing_payload["longitude"],
+                        listing[1],
+                    ),
                 )
 
             cur.execute(
@@ -616,42 +614,16 @@ def edit_listing(handler):
                 RETURNING id, status, updated_at
                 """,
                 (
-                    Json(availability_windows),
-                    travel_distance_miles,
-                    additional_instructions,
+                    Json(listing_payload["availability_windows"]),
+                    listing_payload["travel_distance_miles"],
+                    listing_payload["additional_instructions"],
                     listing_id,
                 ),
             )
             updated_listing = cur.fetchone()
 
             cur.execute("DELETE FROM listing_food_items WHERE listing_id = %s", (listing_id,))
-
-            for food in foods:
-                cur.execute(
-                    """
-                    INSERT INTO listing_food_items(
-                        listing_id,
-                        food_name,
-                        food_description,
-                        food_category,
-                        is_perishable,
-                        quantity,
-                        quantity_unit,
-                        expiration_date
-                    )
-                    VALUES(%s, %s, %s, %s, %s, %s, %s, %s)
-                    """,
-                    (
-                        listing_id,
-                        food["name"],
-                        food["description"],
-                        food["category"],
-                        food["is_perishable"],
-                        food["quantity"],
-                        food["quantity_unit"],
-                        food["expiration_date"],
-                    ),
-                )
+            insert_listing_food_items(cur, listing_id, listing_payload["foods"])
 
         db.commit()
     except errors.CheckViolation:

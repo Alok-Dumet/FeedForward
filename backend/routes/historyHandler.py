@@ -178,11 +178,6 @@ def get_history(handler):
         {
             "filters": ["all", "completed", "cancelled"],
             "records": records,
-            "current_user": {
-                "id": user["id"],
-                "role": user["role"],
-                "organization_name": user["organization_name"],
-            },
         },
     )
 
