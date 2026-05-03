@@ -6,7 +6,7 @@ import useListingFilters from '../../hooks/useListingFilters.js';
 
 export default function Requests() {
   const { items, filters, radiusMiles } = useLoaderData();
-  const { activeFilter, filteredItems, isFiltering, setActiveFilter } =
+  const { activeFilters, filteredItems, isFiltering, setActiveFilters } =
     useListingFilters(items, filters);
 
   return (
@@ -16,8 +16,8 @@ export default function Requests() {
       description="Browse active community food requests"
       items={filteredItems}
       filters={filters}
-      activeFilter={activeFilter}
-      onFilterChange={setActiveFilter}
+      activeFilters={activeFilters}
+      onFilterChange={setActiveFilters}
       isFiltering={isFiltering}
       secondaryAction={null}
       filtersLabel="Filter requests:"

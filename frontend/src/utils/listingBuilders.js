@@ -33,7 +33,7 @@ export function buildPublicListingItem(record) {
 //We will reshape a /api/my-listings record into the card shape userOffers/userRequests expect
 export function buildOwnListingItem(record) {
   const ownership =
-    record.relationship === 'own' ? 'Posted by you' : 'Accepted by you';
+    record.relationship === 'own' ? 'Posted by you' : 'Claimed by you';
   const listingPath = record.listing_type === 'offer' ? 'offers' : 'requests';
 
   return {

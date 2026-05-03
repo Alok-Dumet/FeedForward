@@ -126,10 +126,6 @@ export default function Register() {
               placeholder="123 Main St, Suite 4"
               className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 transition outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
             />
-            <p className="mt-1 text-xs text-slate-500">
-              We store your full address for coordination, but match distance by
-              city and state.
-            </p>
           </div>
 
           <div className="grid gap-5 sm:grid-cols-[1fr_8rem]">

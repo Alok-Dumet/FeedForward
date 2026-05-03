@@ -6,7 +6,7 @@ import { MY_LISTINGS_FILTERS } from '../../utils/constants.js';
 
 export default function UserRequests() {
   const { items } = useLoaderData();
-  const { activeFilter, filteredItems, isFiltering, setActiveFilter } =
+  const { activeFilters, filteredItems, isFiltering, setActiveFilters } =
     useListingFilters(items, MY_LISTINGS_FILTERS);
 
   return (
@@ -15,8 +15,8 @@ export default function UserRequests() {
       description="Manage your active requests"
       items={filteredItems}
       filters={MY_LISTINGS_FILTERS}
-      activeFilter={activeFilter}
-      onFilterChange={setActiveFilter}
+      activeFilters={activeFilters}
+      onFilterChange={setActiveFilters}
       isFiltering={isFiltering}
       filtersLabel="Show:"
       cardConfig={{

@@ -45,8 +45,7 @@ const LISTING_COPY = {
       'Example: Thin crust, pineapple, onions, olives, stuffed crust',
     additionalInstructionsPlaceholder:
       'Example: Please enter through the second door on the left side of the building',
-    availabilityTitle: 'Times people can pick up food',
-    availabilityHint: 'Add times you can hand off food. Optional.',
+    availabilityTitle: 'Times people can pick up food (Optional)',
   },
   request: {
     heading: 'Request details',
@@ -62,8 +61,7 @@ const LISTING_COPY = {
       'Example: Shelf-stable items, low-sodium options preferred, family-size packages welcome',
     additionalInstructionsPlaceholder:
       'Example: Please bring donations to the front desk during pantry intake hours',
-    availabilityTitle: 'Times people can drop off food',
-    availabilityHint: 'Add times you can pick up food. Optional.',
+    availabilityTitle: 'Times people can drop off food (Optional)',
   },
 };
 
@@ -216,9 +214,6 @@ export default function ListingCreateForm({ listingType, user }) {
             <h3 className="text-xl font-bold text-slate-900">
               {copy.availabilityTitle}
             </h3>
-            <p className="mt-1 text-sm leading-6 text-slate-600">
-              {copy.availabilityHint}
-            </p>
           </div>
           <button
             type="button"
@@ -231,7 +226,7 @@ export default function ListingCreateForm({ listingType, user }) {
 
         {availabilityWindows.length === 0 ? (
           <p className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-medium text-slate-600">
-            Skipped — you can sort timing once someone accepts.
+            Don't worry! You can sort timing once someone accepts.
           </p>
         ) : (
           <div className="mt-4 grid gap-4">

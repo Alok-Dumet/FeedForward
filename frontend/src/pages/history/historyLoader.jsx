@@ -7,6 +7,7 @@ import {
 } from '../../utils/foods.js';
 
 const dateFmt = new Intl.DateTimeFormat('en-US', { dateStyle: 'long' });
+const HISTORY_OWNERSHIP_FILTERS = ['Posted by you', 'Claimed by you'];
 
 function formatStatus(status) {
   if (status === 'completed') {
@@ -70,9 +71,12 @@ export default async function historyLoader({ request }) {
   );
 
   return {
-    filters: (payload.filters ?? []).map((filter) =>
-      filter === 'all' ? 'All records' : formatStatus(filter)
-    ),
+    filters: [
+      ...(payload.filters ?? []).map((filter) =>
+        filter === 'all' ? 'All records' : formatStatus(filter)
+      ),
+      ...HISTORY_OWNERSHIP_FILTERS,
+    ],
     items: (payload.records ?? []).map(buildItem),
   };
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 
 import {
   getDefaultRouteForUserType,
@@ -13,6 +13,7 @@ const baseLinkClassName =
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const location = useLocation();
   const navigate = useNavigate();
   const { userType, userId } = useSession();
   const { clearSession } = useSessionActions();
@@ -25,29 +26,53 @@ export default function Navbar() {
     label: userType === 'donor' ? 'Create Offer' : 'Create Request',
     to: getMyCreateRouteForUserType(userType, userId),
   };
+  const isMyListingsDetail =
+    new URLSearchParams(location.search).get('from') === 'my-listings' &&
+    (location.pathname.startsWith('/offers/') ||
+      location.pathname.startsWith('/requests/'));
 
   const navItems =
     userType === 'donor'
       ? [
-          { label: 'Requests', to: '/requests' },
+          {
+            label: 'Requests',
+            to: '/requests',
+            isActive: (routerIsActive) => routerIsActive && !isMyListingsDetail,
+          },
           {
             label: 'My Offers',
             to: getMyListingsRouteForUserType(userType, userId),
             end: true,
+            isActive: (routerIsActive) => routerIsActive || isMyListingsDetail,
           },
           { label: 'History', to: '/history' },
           createAction,
         ]
       : [
-          { label: 'Offers', to: '/offers' },
+          {
+            label: 'Offers',
+            to: '/offers',
+            isActive: (routerIsActive) => routerIsActive && !isMyListingsDetail,
+          },
           {
             label: 'My Requests',
             to: getMyListingsRouteForUserType(userType, userId),
             end: true,
+            isActive: (routerIsActive) => routerIsActive || isMyListingsDetail,
           },
           { label: 'History', to: '/history' },
           createAction,
         ];
+
+  function getNavLinkClassName(item, routerIsActive, extraClassName = '') {
+    const isActive = item.isActive?.(routerIsActive) ?? routerIsActive;
+
+    return `${baseLinkClassName} ${extraClassName} ${
+      isActive
+        ? 'bg-slate-900 text-white hover:bg-slate-900 hover:text-white'
+        : ''
+    }`;
+  }
 
   async function handleLogout() {
     clearSession();
@@ -85,11 +110,7 @@ export default function Navbar() {
                 to={item.to}
                 end={item.end}
                 className={({ isActive }) =>
-                  `${baseLinkClassName} ${
-                    isActive
-                      ? 'bg-slate-900 text-white hover:bg-slate-900 hover:text-white'
-                      : ''
-                  }`
+                  getNavLinkClassName(item, isActive)
                 }
               >
                 {item.label}
@@ -128,11 +149,7 @@ export default function Navbar() {
                 end={item.end}
                 onClick={() => setIsMenuOpen(false)}
                 className={({ isActive }) =>
-                  `${baseLinkClassName} text-left ${
-                    isActive
-                      ? 'bg-slate-900 text-white hover:bg-slate-900 hover:text-white'
-                      : ''
-                  }`
+                  getNavLinkClassName(item, isActive, 'text-left')
                 }
               >
                 {item.label}

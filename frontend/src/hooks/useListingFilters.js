@@ -3,15 +3,18 @@ import { useNavigation } from 'react-router-dom';
 
 export default function useListingFilters(items, filters) {
   const navigation = useNavigation();
-  const [activeFilter, setActiveFilter] = useState(filters[0] ?? null);
+  const [activeFilters, setActiveFilters] = useState([]);
   const [isLocalFiltering, setIsLocalFiltering] = useState(false);
+  const allFilter = filters[0] ?? null;
   const filteredItems = useMemo(() => {
-    if (!activeFilter || activeFilter === filters[0]) {
+    if (activeFilters.length === 0) {
       return items;
     }
 
-    return items.filter((item) => item.tags.includes(activeFilter));
-  }, [activeFilter, filters, items]);
+    return items.filter((item) =>
+      activeFilters.every((filter) => item.tags.includes(filter))
+    );
+  }, [activeFilters, items]);
 
   useEffect(() => {
     if (!isLocalFiltering) {
@@ -23,12 +26,22 @@ export default function useListingFilters(items, filters) {
   }, [filteredItems, isLocalFiltering]);
 
   return {
-    activeFilter,
+    activeFilters,
     filteredItems,
     isFiltering: isLocalFiltering || navigation.state !== 'idle',
-    setActiveFilter(filter) {
+    setActiveFilters(filter) {
       setIsLocalFiltering(true);
-      setActiveFilter(filter);
+      setActiveFilters((currentFilters) => {
+        if (!filter || filter === allFilter) {
+          return [];
+        }
+        if (currentFilters.includes(filter)) {
+          return currentFilters.filter(
+            (currentFilter) => currentFilter !== filter
+          );
+        }
+        return [...currentFilters, filter];
+      });
     },
   };
 }

@@ -14,7 +14,7 @@ export default function ListingPageShell({
   cardConfig = {},
   secondaryAction = null,
   filtersLabel = 'Filters:',
-  activeFilter = null,
+  activeFilters = [],
   onFilterChange,
   isFiltering = false,
   hidePageHeader = false,
@@ -110,7 +110,8 @@ export default function ListingPageShell({
                     onFilterChange ? () => onFilterChange(filter) : undefined
                   }
                   className={`btn-pill ${
-                    activeFilter === filter
+                    activeFilters.includes(filter) ||
+                    (filter === filters[0] && activeFilters.length === 0)
                       ? 'btn-pill-active'
                       : 'btn-pill-muted'
                   }`}

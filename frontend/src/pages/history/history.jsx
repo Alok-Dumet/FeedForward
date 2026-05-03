@@ -5,7 +5,7 @@ import useListingFilters from '../../hooks/useListingFilters.js';
 
 export default function History() {
   const { items, filters } = useLoaderData();
-  const { activeFilter, filteredItems, isFiltering, setActiveFilter } =
+  const { activeFilters, filteredItems, isFiltering, setActiveFilters } =
     useListingFilters(items, filters);
 
   return (
@@ -15,8 +15,8 @@ export default function History() {
       description="Review completed and cancelled listings"
       items={filteredItems}
       filters={filters}
-      activeFilter={activeFilter}
-      onFilterChange={setActiveFilter}
+      activeFilters={activeFilters}
+      onFilterChange={setActiveFilters}
       isFiltering={isFiltering}
       secondaryAction={null}
       filtersLabel="History filters:"

@@ -124,12 +124,23 @@ export default function Details() {
   const isOffer = listing.type === 'offer';
   const isHistory = page.backTo === '/history';
   const isOwnListing = listing.current_user?.id === listing.creator_user_id;
+  const isClaimedByCurrentUser =
+    acceptedThisSession ||
+    listing.claim?.claimant_user_id === listing.current_user?.id;
   const canAccept = !isHistory && status === 'available' && !isOwnListing;
   const canEdit = !isHistory && isOwnListing && status === 'available';
   const canCancel =
     !isHistory && isOwnListing && ['available', 'claimed'].includes(status);
   const canComplete = !isHistory && isOwnListing && status === 'claimed';
   const actionPending = isSubmittingAction;
+  const historyStatusLabel =
+    isHistory && ['completed', 'cancelled'].includes(status)
+      ? humanize(status)
+      : null;
+  const historyStatusClass =
+    status === 'completed'
+      ? 'bg-emerald-50 text-emerald-800'
+      : 'bg-red-50 text-red-700';
   const distanceLabel = isOffer
     ? "Distance we're willing to deliver"
     : "Distance we're willing to pick up";
@@ -156,7 +167,7 @@ export default function Details() {
 
       setStatus('claimed');
       setAcceptedThisSession(true);
-      showToast('Accepted.', 'success');
+      showToast('Claimed.', 'success');
     } catch {
       showToast('Network error.', 'error');
     } finally {
@@ -279,15 +290,20 @@ export default function Details() {
 
           {!isHistory ? (
             <div className="mt-5">
-              {!isOwnListing ? (
+              {canAccept ? (
                 <button
                   type="button"
                   onClick={handleAcceptListing}
-                  disabled={!canAccept || actionPending}
+                  disabled={actionPending}
                   className="inline-flex cursor-pointer rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
                 >
-                  {actionPending && canAccept ? 'Working...' : 'Accept'}
+                  {actionPending ? 'Working...' : 'Accept'}
                 </button>
+              ) : null}
+              {!isOwnListing && isClaimedByCurrentUser ? (
+                <p className="inline-flex rounded-2xl bg-emerald-50 px-5 py-3 text-sm font-semibold text-emerald-800">
+                  Claimed by you
+                </p>
               ) : null}
               {canEdit ? (
                 <button
@@ -330,13 +346,15 @@ export default function Details() {
                   Complete
                 </button>
               ) : null}
-              {!isOwnListing &&
-              status !== 'available' &&
-              !acceptedThisSession ? (
-                <p className="mt-2 text-sm text-slate-600">
-                  This listing is no longer available.
-                </p>
-              ) : null}
+            </div>
+          ) : null}
+          {historyStatusLabel ? (
+            <div className="mt-5">
+              <p
+                className={`inline-flex rounded-2xl px-5 py-3 text-sm font-semibold ${historyStatusClass}`}
+              >
+                {historyStatusLabel}
+              </p>
             </div>
           ) : null}
         </section>

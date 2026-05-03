@@ -6,7 +6,7 @@ import useListingFilters from '../../hooks/useListingFilters.js';
 
 export default function Offers() {
   const { items, filters, radiusMiles } = useLoaderData();
-  const { activeFilter, filteredItems, isFiltering, setActiveFilter } =
+  const { activeFilters, filteredItems, isFiltering, setActiveFilters } =
     useListingFilters(items, filters);
 
   return (
@@ -16,8 +16,8 @@ export default function Offers() {
       description="Browse available surplus food offers"
       items={filteredItems}
       filters={filters}
-      activeFilter={activeFilter}
-      onFilterChange={setActiveFilter}
+      activeFilters={activeFilters}
+      onFilterChange={setActiveFilters}
       isFiltering={isFiltering}
       secondaryAction={null}
       filtersLabel="Filter offers:"
