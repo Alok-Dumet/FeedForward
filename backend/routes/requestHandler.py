@@ -3,7 +3,6 @@ from decimal import Decimal
 from psycopg2 import errors
 from psycopg2.extras import Json
 
-
 from database.database import db
 from router import Router
 from sessions import get_user
@@ -22,42 +21,20 @@ router = Router()
 
 #POST endpoint handler that creates a request listing
 def create_request(handler):
-
-    """
-    main endpoint function that handles POST /api/listings/requests/create
-    """
-
     body = parse_body(handler)
     if body is None:
-        return send_json(handler, 400, {"error": "Invalid JSON body"})
+        return send_json(handler, 400, {"error": "Invalid JSON body."})
 
     body = strip_strings(body)
+    user = get_user(handler)
 
-    try:
-        user = get_user(handler)
-    except Exception:
-        return send_json(handler, 500, {"error": "Unable to load session due to server error"})
-
-
-    if user["role"] != "recipient_organization":
-        return send_json(handler, 403, {"error": "Only recipient organizations can create requests"})
-    # reaching here means User has been authenticated and authorized
-
-
-
-    # now we can start validating + normalizing required fields or the request creation
     required_fields = [
-
         "foods",
         "address_text",
-
         "latitude",
-
         "longitude",
     ]
-
     missing = [name for name in required_fields if body.get(name) in (None, "")]
-
     if missing:
         return send_json(handler, 400, {"error": f"Missing fields: {','.join(missing)}"})
 
@@ -77,21 +54,16 @@ def create_request(handler):
         if travel_distance_miles < 0:
             raise ValueError("travel_distance_miles must be 0 or greater")
 
-    except(TypeError, ValueError) as exc:
+    except (TypeError, ValueError) as exc:
         return send_json(handler, 400, {"error": str(exc)})
 
     additional_instructions = body.get("additional_instructions") or None
-    # reaching here means all the fields have been validated + normalized
 
-
-    # now we can do db transactions
     try:
-
         with db.cursor() as cur:
-
-            cur.execute( # insert into locations
+            cur.execute(
                 """
-                INSERT into locations(
+                INSERT INTO locations(
                     address_text,
                     latitude,
                     longitude
@@ -103,8 +75,7 @@ def create_request(handler):
             )
             location_id = cur.fetchone()[0]
 
-            cur.execute( # insert into listings
-
+            cur.execute(
                 """
                 INSERT INTO listings(
                     creator_user_id,
@@ -118,7 +89,6 @@ def create_request(handler):
                 RETURNING id, status, created_at, updated_at
                 """,
                 (
-
                     user["id"],
                     location_id,
                     Json(availability_windows),
@@ -130,48 +100,42 @@ def create_request(handler):
 
             food_item_ids = []
             for food in foods:
-                cur.execute( # insert each food item associated with the listing
-                """
-                INSERT INTO listing_food_items(
-                    listing_id,
-                    food_name,
-                    food_description,
-                    food_category,
-                    is_perishable,
-                    quantity,
-                    quantity_unit,
-                    expiration_date
-                )
-                VALUES(%s, %s, %s, %s, %s, %s, %s, %s)
-                RETURNING id
-                """,
-                (
-                    listing[0],
-                    food["name"],
-                    food["description"],
-                    food["category"],
-                    food["is_perishable"],
-                    food["quantity"],
-                    food["quantity_unit"],
-                    food["expiration_date"]
-                )
+                cur.execute(
+                    """
+                    INSERT INTO listing_food_items(
+                        listing_id,
+                        food_name,
+                        food_description,
+                        food_category,
+                        is_perishable,
+                        quantity,
+                        quantity_unit,
+                        expiration_date
+                    )
+                    VALUES(%s, %s, %s, %s, %s, %s, %s, %s)
+                    RETURNING id
+                    """,
+                    (
+                        listing[0],
+                        food["name"],
+                        food["description"],
+                        food["category"],
+                        food["is_perishable"],
+                        food["quantity"],
+                        food["quantity_unit"],
+                        food["expiration_date"],
+                    )
                 )
                 food_item_ids.append(cur.fetchone()[0])
 
-        db.commit() # lock in the db transactions
-
+        db.commit()
     except errors.CheckViolation:
         db.rollback()
-        return send_json(handler, 400, {"error": "Request data failed validation"})
+        return send_json(handler, 400, {"error": "Request data failed validation."})
     except Exception:
         db.rollback()
-        return send_json(handler, 500, {"error": "Unable to create request due to server error"})
-    # reaching here means db transactions successful
+        return send_json(handler, 500, {"error": "Unable to create request due to server error."})
 
-
-
-
-    # now we can send data back to user
     return send_json(handler, 201, {
         "request": {
             "id": listing[0],
@@ -204,11 +168,6 @@ def create_request(handler):
             ],
         }
     })
-# end of create_request() function definition
 
 
-
-
-
-
-router.post("/api/listings/requests/create", create_request) # register the POST endpoint path and bind it to create_request()
+router.post("/api/listings/requests/create", create_request)

@@ -24,14 +24,14 @@ router = Router()
 def get_listing_details(handler):
     listing_id = get_query_param(handler, "id")
     if not listing_id:
-        return send_json(handler, 400, {"error": "missing listing id"})
+        return send_json(handler, 400, {"error": "Missing listing id."})
 
     try:
         listing_id = int(listing_id)
     except ValueError:
-        return send_json(handler, 400, {"error": "Listing id must be a valid number"})
+        return send_json(handler, 400, {"error": "Listing id must be a valid number."})
     if listing_id <= 0:
-        return send_json(handler, 400, {"error": "Listing id must be greater than zero"})
+        return send_json(handler, 400, {"error": "Listing id must be greater than zero."})
 
     try:
         user = get_user(handler)
@@ -100,10 +100,10 @@ def get_listing_details(handler):
             rows = cur.fetchall()
     except Exception:
         db.rollback()
-        return send_json(handler, 500, {"error": "Unable to load listing details"})
+        return send_json(handler, 500, {"error": "Unable to load listing details."})
 
     if not rows:
-        return send_json(handler, 404, {"error": "listing not found"})
+        return send_json(handler, 404, {"error": "Listing not found."})
 
     return send_json(handler, 200, {
         "record": {
@@ -148,7 +148,7 @@ router.get("/api/listings/details", get_listing_details)
 def edit_listing(handler):
     body = parse_body(handler)
     if body is None:
-        return send_json(handler, 400, {"error": "Invalid JSON body"})
+        return send_json(handler, 400, {"error": "Invalid JSON body."})
 
     body = strip_strings(body)
     required_fields = [
@@ -200,7 +200,7 @@ def edit_listing(handler):
 
             if not listing:
                 db.rollback()
-                return send_json(handler, 404, {"error": "Listing not found"})
+                return send_json(handler, 404, {"error": "Listing not found."})
 
             if listing[2] != "available":
                 db.rollback()

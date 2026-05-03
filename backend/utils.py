@@ -32,7 +32,7 @@ ALLOWED_AVAILABILITY_DAYS = {
 }
 
 
-#We will use this helper function to normalize request paths by stripping query strings and trailing slashes
+#We will strip query strings and trailing slashes so routing and access checks agree
 def normalize_path(raw_path):
     path = urlparse(raw_path).path
     if len(path) > 1 and path.endswith("/"):
@@ -102,7 +102,7 @@ def parse_validate_body(self, required_fields):
     body = parse_body(self)
 
     if body is None:
-        send_json(self, 400, {"error": "Invalid JSON body"})
+        send_json(self, 400, {"error": "Invalid JSON body."})
         return None
 
     body = strip_strings(body)
@@ -147,16 +147,16 @@ def parse_decimal(value, field_name):
         raise ValueError(f"{field_name} must be a valid number") from exc
 
 
-#We will validate a food category against the allowed set. Returns the canonical value or None if invalid (no aliasing — frontend must send exact backend strings)
+#We will validate that a food category matches one database value exactly
 def validate_food_category(value):
     if not isinstance(value, str):
         return None
 
-    normalized = value.strip().lower()
-    return normalized if normalized in ALLOWED_FOOD_CATEGORIES else None
+    value = value.strip()
+    return value if value in ALLOWED_FOOD_CATEGORIES else None
 
 
-#We will validate and normalize the foods array sent by create listing endpoints
+#We will validate the foods array sent by listing endpoints
 def parse_food_items(value):
     if not isinstance(value, list) or not value:
         raise ValueError("foods must be a non-empty array")
@@ -201,7 +201,7 @@ def parse_food_items(value):
     return foods
 
 
-#We will validate and normalize the optional list of days/times when a listing can be exchanged
+#We will validate the optional list of days/times when a listing can be exchanged
 def parse_availability_windows(value):
     if value in (None, ""):
         return []
@@ -220,7 +220,7 @@ def parse_availability_windows(value):
         if missing:
             raise ValueError(f"availability_windows[{index}] missing fields: {', '.join(missing)}")
 
-        day = item["day"].strip().lower()
+        day = item["day"].strip()
         if day not in ALLOWED_AVAILABILITY_DAYS:
             raise ValueError(f"availability_windows[{index}].day is invalid")
 

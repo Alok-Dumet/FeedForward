@@ -21,41 +21,19 @@ router = Router()
 
 #POST endpoint handler that creates an offer listing
 def create_offer(handler):
-
-    """
-    main endpoint function that handles POST /api/listings/offers/create
-    """
-
-    # authenticate + authorize User
     body = parse_body(handler)
     if body is None:
-        return send_json(handler, 400, {"error": "Invalid JSON body"})
+        return send_json(handler, 400, {"error": "Invalid JSON body."})
 
     body = strip_strings(body)
+    user = get_user(handler)
 
-    try:
-        user = get_user(handler)
-    except Exception:
-        return send_json(handler, 500, {"error": "Unable to load session due to server error"})
-
-    if user["role"] != "food_provider":
-        return send_json(handler, 403, {"error": "Only food providers can create offers"})
-
-
-
-
-
-
-
-    # reaching here means authentication and authorization passed so now we can validate+normalize required fields
-
-    required_fields = [  # mandatory fields of an Offer creation
+    required_fields = [
         "foods",
         "address_text",
         "latitude",
-        "longitude"
+        "longitude",
     ]
-
     missing = [name for name in required_fields if body.get(name) in (None, "")]
     if missing:
         return send_json(handler, 400, {"error": f"Missing fields: {','.join(missing)}"})
@@ -72,29 +50,20 @@ def create_offer(handler):
         if longitude < Decimal("-180") or longitude > Decimal("180"):
             raise ValueError("longitude must be between -180 and 180")
 
-        travel_distance_miles = int(body.get("travel_distance_miles",0))
+        travel_distance_miles = int(body.get("travel_distance_miles", 0))
         if travel_distance_miles < 0:
             raise ValueError("travel_distance_miles must be 0 or greater")
 
-    except(TypeError, ValueError) as exc:
+    except (TypeError, ValueError) as exc:
         return send_json(handler, 400, {"error": str(exc)})
 
     additional_instructions = body.get("additional_instructions") or None
 
-
-
-
-
-
-    # reaching here means all the data is valid and normalized, we can perform DB transactions
-
     try:
-
         with db.cursor() as cur:
-
-            cur.execute( # insert a new `location` role because `listing` needs a FK to `location`
+            cur.execute(
                 """
-                INSERT into locations(
+                INSERT INTO locations(
                     address_text,
                     latitude,
                     longitude
@@ -106,11 +75,9 @@ def create_offer(handler):
             )
             location_id = cur.fetchone()[0]
 
-            cur.execute( # insert the main listing row, linking it to location and authenticated user
+            cur.execute(
                 """
-
-                INSERT into listings(
-
+                INSERT INTO listings(
                     creator_user_id,
                     listing_type,
                     location_id,
@@ -129,57 +96,48 @@ def create_offer(handler):
                     travel_distance_miles,
                     additional_instructions,
                 )
-
             )
             listing = cur.fetchone()
 
-
             food_item_ids = []
             for food in foods:
-                cur.execute( # insert each food item associated with the listing
-                """
-                INSERT INTO listing_food_items(
-
-                    listing_id,
-                    food_name,
-                    food_description,
-                    food_category,
-                    is_perishable,
-                    quantity,
-                    quantity_unit,
-                    expiration_date
-                )
-                VALUES (%s, %s, %s, %s, %s,%s, %s, %s)
-                RETURNING id
-                """,
-                (
-                  listing[0],
-                  food["name"],
-                  food["description"],
-                  food["category"],
-                  food["is_perishable"],
-                  food["quantity"],
-                  food["quantity_unit"],
-                  food["expiration_date"],
-                )
+                cur.execute(
+                    """
+                    INSERT INTO listing_food_items(
+                        listing_id,
+                        food_name,
+                        food_description,
+                        food_category,
+                        is_perishable,
+                        quantity,
+                        quantity_unit,
+                        expiration_date
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    RETURNING id
+                    """,
+                    (
+                        listing[0],
+                        food["name"],
+                        food["description"],
+                        food["category"],
+                        food["is_perishable"],
+                        food["quantity"],
+                        food["quantity_unit"],
+                        food["expiration_date"],
+                    )
                 )
                 food_item_ids.append(cur.fetchone()[0])
 
-        db.commit() # lock in the database transactions
-
-
+        db.commit()
     except errors.CheckViolation:
         db.rollback()
-        return send_json(handler, 400, {"error": "Offer data failed validation"})
+        return send_json(handler, 400, {"error": "Offer data failed validation."})
     except Exception:
         db.rollback()
-        return send_json(handler, 500, {"error": "Unable to create offer due to server error"})
+        return send_json(handler, 500, {"error": "Unable to create offer due to server error."})
 
-
-    # reaching here means all validations passed, the db inserts successful and all transactions locked in
-
-    return send_json(handler, 201, { # return to the User
-
+    return send_json(handler, 201, {
         "offer": {
             "id": listing[0],
             "creator_user_id": user["id"],
@@ -212,7 +170,5 @@ def create_offer(handler):
         }
     })
 
-# end of create_offer function definition
 
-
-router.post("/api/listings/offers/create", create_offer) # register the POST endpoint path and bind it to create_offer()
+router.post("/api/listings/offers/create", create_offer)

@@ -9,13 +9,12 @@ DIST_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "..", 
 #GET request handler that serves assets or the frontend app shell
 def handle(handler):
     if handler.path.startswith("/assets/"):
-        handleAssets(handler)
+        handle_assets(handler)
     else:
-        serveFrontend(handler)
+        serve_frontend(handler)
 
 #GET request handler that serves built frontend assets
-def handleAssets(handler):
-    #We will resolve the requested path and confirm it stays inside DIST_DIR so an attacker cannot escape with "../" segments
+def handle_assets(handler):
     requested = os.path.realpath(os.path.join(DIST_DIR, handler.path.lstrip("/")))
     if not (requested == DIST_DIR or requested.startswith(DIST_DIR + os.sep)):
         handler.send_response(403)
@@ -27,8 +26,8 @@ def handleAssets(handler):
         with open(requested, "rb") as f:
             content = f.read()
         handler.send_response(200)
-        handler.send_header("Content-Type", mime_type)
-        handler.send_header("Content-Length", len(content))
+        handler.send_header("Content-Type", mime_type or "application/octet-stream")
+        handler.send_header("Content-Length", str(len(content)))
         handler.end_headers()
         handler.wfile.write(content)
     except FileNotFoundError:
@@ -36,8 +35,7 @@ def handleAssets(handler):
         handler.end_headers()
 
 #GET request handler that serves the built frontend app shell
-def serveFrontend(handler):
-    #We will return 404 instead of crashing if the frontend hasn't been built yet
+def serve_frontend(handler):
     index_path = os.path.join(DIST_DIR, "index.html")
     try:
         with open(index_path, "rb") as f:
@@ -49,6 +47,6 @@ def serveFrontend(handler):
 
     handler.send_response(200)
     handler.send_header("Content-Type", "text/html")
-    handler.send_header("Content-Length", len(content))
+    handler.send_header("Content-Length", str(len(content)))
     handler.end_headers()
     handler.wfile.write(content)

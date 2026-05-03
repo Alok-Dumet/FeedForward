@@ -58,12 +58,6 @@ def build_history_records(rows, relationship):
     return list(records_by_id.values())
 
 
-#We will only return rows whose lifecycle is finished
-FINISHED_LISTINGS_FILTER = """
-    listings.status IN ('completed', 'cancelled')
-"""
-
-
 #We will fetch finished listings the user created. The latest claim is joined laterally so cards can show who claimed it.
 def get_created_history_rows(user_id):
     with db.cursor() as cur:
@@ -109,7 +103,7 @@ def get_created_history_rows(user_id):
             ) AS latest_claim
                 ON TRUE
             WHERE listings.creator_user_id = %s
-                AND ({FINISHED_LISTINGS_FILTER})
+                AND listings.status IN ('completed', 'cancelled')
             ORDER BY COALESCE(latest_claim.resolved_at, latest_claim.claimed_at, listings.updated_at, listings.created_at) DESC,
                 listings.id DESC
             """,
@@ -153,7 +147,7 @@ def get_claimed_history_rows(user_id):
             JOIN listing_food_items
                 ON listing_food_items.listing_id = listings.id
             WHERE claims.claimant_user_id = %s
-                AND ({FINISHED_LISTINGS_FILTER})
+                AND listings.status IN ('completed', 'cancelled')
             ORDER BY COALESCE(claims.resolved_at, claims.claimed_at, listings.updated_at, listings.created_at) DESC,
                 listings.id DESC
             """,
@@ -166,9 +160,6 @@ def get_claimed_history_rows(user_id):
 #GET endpoint handler that returns the current user's listing history
 def get_history(handler):
     user = get_user(handler)
-
-    if user["role"] not in ("food_provider", "recipient_organization"):
-        return send_json(handler, 403, {"error": "This role is not allowed to view history."})
 
     try:
         created_rows = get_created_history_rows(user["id"])

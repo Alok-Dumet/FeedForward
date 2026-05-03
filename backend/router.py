@@ -10,14 +10,10 @@ class Router:
     def post(self, path, handler):
         self.routes.append(('POST', path, handler))
 
-    def delete(self, path, handler):
-        self.routes.append(('DELETE', path, handler))
-
     def patch(self, path, handler):
         self.routes.append(('PATCH', path, handler))
 
     def handle(self, handler):
-
         request_path = normalize_path(handler.path)
 
         for method, path, fn in self.routes:

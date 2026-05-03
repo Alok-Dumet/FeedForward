@@ -17,9 +17,9 @@ def accept_listing(handler):
     try:
         listing_id = int(body["listing_id"])
     except (TypeError, ValueError):
-        return send_json(handler, 400, {"error": "listing_id must be a valid number"})
+        return send_json(handler, 400, {"error": "listing_id must be a valid number."})
     if listing_id <= 0:
-        return send_json(handler, 400, {"error": "listing_id must be greater than zero"})
+        return send_json(handler, 400, {"error": "listing_id must be greater than zero."})
 
     try:
         user = get_user(handler)
@@ -45,17 +45,17 @@ def accept_listing(handler):
         db.commit()
     except errors.UniqueViolation:
         db.rollback()
-        return send_json(handler, 409, {"error": "This listing has already been claimed"})
+        return send_json(handler, 409, {"error": "This listing has already been claimed."})
     except errors.ForeignKeyViolation:
         db.rollback()
-        return send_json(handler, 404, {"error": "Listing not found"})
+        return send_json(handler, 404, {"error": "Listing not found."})
     except errors.RaiseException as exc:
         db.rollback()
 
         message = str(exc)
 
         if "Listing" in message and "does not exist" in message:
-            return send_json(handler, 404, {"error": "Listing not found"})
+            return send_json(handler, 404, {"error": "Listing not found."})
 
         if "Users cannot claim their own listings" in message:
             return send_json(handler, 403, {
@@ -74,7 +74,7 @@ def accept_listing(handler):
         return send_json(handler, 500, {"error": "Unable to accept listing due to a server error."})
     except Exception:
         db.rollback()
-        return send_json(handler, 500, {"error": "Unable to accept listing due to a server error"})
+        return send_json(handler, 500, {"error": "Unable to accept listing due to a server error."})
 
     return send_json(handler, 201, {
         "claim": {
@@ -99,10 +99,10 @@ def cancel_listing(handler):
     try:
         listing_id = int(body["listing_id"])
     except (TypeError, ValueError):
-        return send_json(handler, 400, {"error": "listing_id must be a valid number"})
+        return send_json(handler, 400, {"error": "listing_id must be a valid number."})
 
     if listing_id <= 0:
-        return send_json(handler, 400, {"error": "listing_id must be greater than zero"})
+        return send_json(handler, 400, {"error": "listing_id must be greater than zero."})
 
     user = get_user(handler)
 
@@ -124,7 +124,7 @@ def cancel_listing(handler):
 
             if not listing:
                 db.rollback()
-                return send_json(handler, 404, {"error": "Listing not found"})
+                return send_json(handler, 404, {"error": "Listing not found."})
 
             if listing[1] in ("completed", "cancelled"):
                 db.rollback()
@@ -180,10 +180,10 @@ def complete_listing(handler):
     try:
         listing_id = int(body["listing_id"])
     except (TypeError, ValueError):
-        return send_json(handler, 400, {"error": "listing_id must be a valid number"})
+        return send_json(handler, 400, {"error": "listing_id must be a valid number."})
 
     if listing_id <= 0:
-        return send_json(handler, 400, {"error": "listing_id must be greater than zero"})
+        return send_json(handler, 400, {"error": "listing_id must be greater than zero."})
 
     user = get_user(handler)
 
