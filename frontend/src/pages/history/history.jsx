@@ -1,17 +1,23 @@
 import { useLoaderData } from "react-router-dom";
 
 import ListingPageShell from "../../components/listingPageShell.jsx";
+import useListingFilters from "../../hooks/useListingFilters.js";
 
 export default function History() {
   const { items, filters } = useLoaderData();
+  const { activeFilter, filteredItems, isFiltering, setActiveFilter } =
+    useListingFilters(items, filters);
 
   return (
     <ListingPageShell
       eyebrow="History"
       title="History"
       description="Review completed and cancelled listings"
-      items={items}
+      items={filteredItems}
       filters={filters}
+      activeFilter={activeFilter}
+      onFilterChange={setActiveFilter}
+      isFiltering={isFiltering}
       secondaryAction={null}
       filtersLabel="History filters:"
       cardConfig={{
