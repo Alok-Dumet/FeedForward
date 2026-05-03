@@ -3,23 +3,21 @@ from psycopg2 import errors
 from database.database import db
 from router import Router
 from sessions import get_user
-from utils import parse_validate_body, send_json
-
+from utils import parse_positive_int, parse_validate_body, send_json
 
 router = Router()
 
-#POST endpoint handler that accepts and claims a listing
+
+# POST endpoint handler that accepts and claims a listing
 def accept_listing(handler):
     body = parse_validate_body(handler, ["listing_id"])
     if body is None:
         return
 
     try:
-        listing_id = int(body["listing_id"])
-    except (TypeError, ValueError):
-        return send_json(handler, 400, {"error": "listing_id must be a valid number."})
-    if listing_id <= 0:
-        return send_json(handler, 400, {"error": "listing_id must be greater than zero."})
+        listing_id = parse_positive_int(body["listing_id"], "listing_id")
+    except ValueError as exc:
+        return send_json(handler, 400, {"error": str(exc)})
 
     try:
         user = get_user(handler)
@@ -35,10 +33,7 @@ def accept_listing(handler):
                 VALUES(%s, %s, 'accepted')
                 RETURNING id, listing_id, claimant_user_id, status, claimed_at
                 """,
-                (
-                    listing_id,
-                    user["id"]
-                )
+                (listing_id, user["id"]),
             )
             claim = cur.fetchone()
 
@@ -58,9 +53,7 @@ def accept_listing(handler):
             return send_json(handler, 404, {"error": "Listing not found."})
 
         if "Users cannot claim their own listings" in message:
-            return send_json(handler, 403, {
-                "error": "You cannot claim your own listing."
-            })
+            return send_json(handler, 403, {"error": "You cannot claim your own listing."})
 
         if "Only recipient organizations can claim offer listings" in message:
             return send_json(handler, 403, {"error": "Only recipient organizations can claim offer listings."})
@@ -76,33 +69,26 @@ def accept_listing(handler):
         db.rollback()
         return send_json(handler, 500, {"error": "Unable to accept listing due to a server error."})
 
-    return send_json(handler, 201, {
-        "claim": {
-            "id": claim[0],
-            "listing_id": claim[1],
-            "claimant_user_id": claim[2],
-            "status": claim[3],
-            "claimed_at": claim[4].isoformat()
-        }
-    })
+    return send_json(
+        handler,
+        201,
+        {"claim": {"id": claim[0], "listing_id": claim[1], "claimant_user_id": claim[2], "status": claim[3], "claimed_at": claim[4].isoformat()}},
+    )
 
 
 router.post("/api/listings/accept", accept_listing)
 
 
-#POST endpoint handler that cancels a listing owned by the current user
+# POST endpoint handler that cancels a listing owned by the current user
 def cancel_listing(handler):
     body = parse_validate_body(handler, ["listing_id"])
     if body is None:
         return
 
     try:
-        listing_id = int(body["listing_id"])
-    except (TypeError, ValueError):
-        return send_json(handler, 400, {"error": "listing_id must be a valid number."})
-
-    if listing_id <= 0:
-        return send_json(handler, 400, {"error": "listing_id must be greater than zero."})
+        listing_id = parse_positive_int(body["listing_id"], "listing_id")
+    except ValueError as exc:
+        return send_json(handler, 400, {"error": str(exc)})
 
     user = get_user(handler)
 
@@ -118,7 +104,7 @@ def cancel_listing(handler):
                 WHERE listings.id = %s
                     AND listings.creator_user_id = %s
                 """,
-                (listing_id, user["id"])
+                (listing_id, user["id"]),
             )
             listing = cur.fetchone()
 
@@ -139,7 +125,7 @@ def cancel_listing(handler):
                     WHERE id = %s
                     RETURNING id, status, resolved_at
                     """,
-                    (listing[2],)
+                    (listing[2],),
                 )
                 result = cur.fetchone()
             else:
@@ -151,7 +137,7 @@ def cancel_listing(handler):
                     WHERE id = %s
                     RETURNING id, status, updated_at
                     """,
-                    (listing_id,)
+                    (listing_id,),
                 )
                 result = cur.fetchone()
 
@@ -160,30 +146,31 @@ def cancel_listing(handler):
         db.rollback()
         return send_json(handler, 500, {"error": "Unable to cancel listing."})
 
-    return send_json(handler, 200, {
-        "listing_id": listing_id,
-        "status": "cancelled",
-        "result": {
-            "id": result[0],
-            "status": result[1],
-            "resolved_at": result[2].isoformat() if result[2] else None,
+    return send_json(
+        handler,
+        200,
+        {
+            "listing_id": listing_id,
+            "status": "cancelled",
+            "result": {
+                "id": result[0],
+                "status": result[1],
+                "resolved_at": result[2].isoformat() if result[2] else None,
+            },
         },
-    })
+    )
 
 
-#POST endpoint handler that marks an accepted listing as completed
+# POST endpoint handler that marks an accepted listing as completed
 def complete_listing(handler):
     body = parse_validate_body(handler, ["listing_id"])
     if body is None:
         return
 
     try:
-        listing_id = int(body["listing_id"])
-    except (TypeError, ValueError):
-        return send_json(handler, 400, {"error": "listing_id must be a valid number."})
-
-    if listing_id <= 0:
-        return send_json(handler, 400, {"error": "listing_id must be greater than zero."})
+        listing_id = parse_positive_int(body["listing_id"], "listing_id")
+    except ValueError as exc:
+        return send_json(handler, 400, {"error": str(exc)})
 
     user = get_user(handler)
 
@@ -205,7 +192,7 @@ def complete_listing(handler):
                     )
                 RETURNING id, listing_id, claimant_user_id, status, resolved_at
                 """,
-                (listing_id, user["id"])
+                (listing_id, user["id"]),
             )
             claim = cur.fetchone()
 
@@ -218,16 +205,20 @@ def complete_listing(handler):
         db.rollback()
         return send_json(handler, 500, {"error": "Unable to complete listing."})
 
-    return send_json(handler, 200, {
-        "claim": {
-            "id": claim[0],
-            "listing_id": claim[1],
-            "claimant_user_id": claim[2],
-            "status": claim[3],
-            "resolved_at": claim[4].isoformat() if claim[4] else None,
+    return send_json(
+        handler,
+        200,
+        {
+            "claim": {
+                "id": claim[0],
+                "listing_id": claim[1],
+                "claimant_user_id": claim[2],
+                "status": claim[3],
+                "resolved_at": claim[4].isoformat() if claim[4] else None,
+            },
+            "listing_status": "completed",
         },
-        "listing_status": "completed",
-    })
+    )
 
 
 router.post("/api/listings/cancel", cancel_listing)

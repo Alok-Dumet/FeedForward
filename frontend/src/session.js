@@ -1,15 +1,19 @@
-import { redirect } from "react-router-dom";
+import { redirect } from 'react-router-dom';
 
 const DEFAULT_ROUTE_BY_USER_TYPE = {
-  donor: "/requests",
-  recipient: "/offers",
+  donor: '/requests',
+  recipient: '/offers',
+};
+const USER_LISTING_SEGMENT_BY_USER_TYPE = {
+  donor: 'offers',
+  recipient: 'requests',
 };
 const USER_TYPE_BY_BACKEND_ROLE = {
-  food_provider: "donor",
-  recipient_organization: "recipient",
+  food_provider: 'donor',
+  recipient_organization: 'recipient',
 };
 
-export const SESSION_QUERY_KEY = ["session"];
+export const SESSION_QUERY_KEY = ['session'];
 
 function getUserTypeFromRole(role) {
   if (!role) {
@@ -19,66 +23,53 @@ function getUserTypeFromRole(role) {
   return USER_TYPE_BY_BACKEND_ROLE[role] ?? null;
 }
 
-export function getUserType(session) {
-  return (
-    getUserTypeFromRole(session?.user?.role) ??
-    getUserTypeFromRole(session?.role) ??
-    session?.user?.user_type ??
-    session?.user_type ??
-    null
-  );
-}
+export function parseSession(raw) {
+  const user = raw?.user ?? raw ?? null;
+  const userIdValue = raw?.user?.id ?? raw?.id ?? null;
+  const role = raw?.user?.role ?? raw?.role ?? null;
+  const userType =
+    getUserTypeFromRole(role) ?? raw?.user?.user_type ?? raw?.user_type ?? null;
 
-export function getSessionUserId(session) {
-  const userId = session?.user?.id ?? session?.id ?? null;
-
-  if (userId === null || userId === undefined) {
-    return null;
-  }
-
-  return String(userId);
+  return {
+    userId:
+      userIdValue === null || userIdValue === undefined
+        ? null
+        : String(userIdValue),
+    userType,
+    organizationName: user?.organization_name ?? user?.name ?? '',
+    role,
+  };
 }
 
 export function getDefaultRouteForUserType(userType) {
-  return DEFAULT_ROUTE_BY_USER_TYPE[userType] ?? "/login";
+  return DEFAULT_ROUTE_BY_USER_TYPE[userType] ?? '/login';
+}
+
+function getMyListingRouteForUserType(userType, userId, suffix = '') {
+  if (!userId) {
+    return getDefaultRouteForUserType(userType);
+  }
+
+  const listingSegment = USER_LISTING_SEGMENT_BY_USER_TYPE[userType];
+  if (!listingSegment) {
+    return '/login';
+  }
+
+  return `/users/${userId}/${listingSegment}${suffix}`;
 }
 
 export function getMyListingsRouteForUserType(userType, userId) {
-  if (!userId) {
-    return getDefaultRouteForUserType(userType);
-  }
-
-  if (userType === "donor") {
-    return `/users/${userId}/offers`;
-  }
-
-  if (userType === "recipient") {
-    return `/users/${userId}/requests`;
-  }
-
-  return "/login";
+  return getMyListingRouteForUserType(userType, userId);
 }
 
 export function getMyCreateRouteForUserType(userType, userId) {
-  if (!userId) {
-    return getDefaultRouteForUserType(userType);
-  }
-
-  if (userType === "donor") {
-    return `/users/${userId}/offers/create`;
-  }
-
-  if (userType === "recipient") {
-    return `/users/${userId}/requests/create`;
-  }
-
-  return "/login";
+  return getMyListingRouteForUserType(userType, userId, '/create');
 }
 
 async function parseJsonResponse(res) {
-  const contentType = res.headers.get("content-type") ?? "";
+  const contentType = res.headers.get('content-type') ?? '';
 
-  if (!contentType.includes("application/json")) {
+  if (!contentType.includes('application/json')) {
     return null;
   }
 
@@ -91,10 +82,10 @@ async function parseJsonResponse(res) {
 
 export async function fetchSession(request) {
   try {
-    const res = await fetch("/api/session", {
+    const res = await fetch('/api/session', {
       signal: request?.signal,
       headers: {
-        Accept: "application/json",
+        Accept: 'application/json',
       },
     });
     const session = await parseJsonResponse(res);
@@ -121,13 +112,13 @@ export async function requireSession(request) {
   const session = await fetchSession(request);
 
   if (!session) {
-    return redirect("/login");
+    return redirect('/not_authorized');
   }
 
   return session;
 }
 
-export function withProtectedLoader(loader, allowedUserTypes, getRedirectPath) {
+export function withProtectedLoader(loader, allowedUserTypes) {
   return async (args) => {
     const session = await requireSession(args.request);
 
@@ -135,16 +126,11 @@ export function withProtectedLoader(loader, allowedUserTypes, getRedirectPath) {
       return session;
     }
 
-    const userType = getUserType(session);
+    const parsedSession = parseSession(session);
+    const { userType } = parsedSession;
 
     if (allowedUserTypes && !allowedUserTypes.includes(userType)) {
-      const redirectPath = getRedirectPath?.({
-        args,
-        session,
-        userType,
-      });
-
-      return redirect(redirectPath ?? getDefaultRouteForUserType(userType));
+      return redirect('/not_authorized');
     }
 
     if (!loader) {

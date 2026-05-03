@@ -1,69 +1,40 @@
-import { useState } from "react";
-import { Link, useLoaderData } from "react-router-dom";
+import { useState } from 'react';
+import { Link, useLoaderData } from 'react-router-dom';
 
-import { useToast } from "../../hooks/useToast.js";
-import { formatAvailabilityWindows } from "../../utils/formatDates.js";
+import {
+  ListingAvailabilityEditor,
+  ListingFoodEditor,
+} from '../../components/listingFormFields.jsx';
+import useEditableList from '../../hooks/useEditableList.js';
+import { useToast } from '../../hooks/useToast.js';
+import { formatAvailabilityWindows } from '../../utils/formatDates.js';
 import {
   formatFoodCategory,
   formatFoodQuantity,
   formatNumber,
   getFoodTitle,
-} from "../../utils/foods.js";
+} from '../../utils/foods.js';
+import {
+  EMPTY_AVAILABILITY_WINDOW,
+  EMPTY_FOOD,
+} from '../../utils/listingFormData.js';
 
-const dateFmt = new Intl.DateTimeFormat("en-US", { dateStyle: "medium" });
-const FOOD_CATEGORIES = [
-  ["produce", "Produce"],
-  ["dairy", "Dairy"],
-  ["baked_goods", "Baked Goods"],
-  ["canned_goods", "Canned Goods"],
-  ["frozen", "Frozen"],
-  ["prepared_meals", "Prepared Meals"],
-  ["beverages", "Beverages"],
-  ["dry_goods", "Dry Goods"],
-  ["meat_seafood", "Meat & Seafood"],
-  ["snacks", "Snacks"],
-  ["baby_food", "Baby Food"],
-  ["mixed", "Mixed"],
-  ["other", "Other"],
-];
-const DAY_OPTIONS = [
-  ["monday", "Monday"],
-  ["tuesday", "Tuesday"],
-  ["wednesday", "Wednesday"],
-  ["thursday", "Thursday"],
-  ["friday", "Friday"],
-  ["saturday", "Saturday"],
-  ["sunday", "Sunday"],
-];
-const EMPTY_FOOD = {
-  name: "",
-  description: "",
-  category: "produce",
-  is_perishable: false,
-  quantity: "",
-  quantity_unit: "",
-  expiration_date: "",
-};
-const EMPTY_AVAILABILITY = {
-  day: "monday",
-  start_time: "09:00",
-  end_time: "17:00",
-};
+const dateFmt = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' });
 
 function humanize(value) {
   if (!value) {
-    return "To be confirmed";
+    return 'To be confirmed';
   }
 
   return value
-    .split("_")
+    .split('_')
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
+    .join(' ');
 }
 
 function formatDate(value) {
   if (!value) {
-    return "To be confirmed";
+    return 'To be confirmed';
   }
 
   const date = new Date(value);
@@ -76,7 +47,9 @@ function DetailField({ label, value }) {
       <dt className="text-xs font-semibold tracking-[0.15em] text-slate-500 uppercase">
         {label}
       </dt>
-      <dd className="mt-1 text-sm text-slate-900">{value || "To be confirmed"}</dd>
+      <dd className="mt-1 text-sm text-slate-900">
+        {value || 'To be confirmed'}
+      </dd>
     </div>
   );
 }
@@ -84,13 +57,13 @@ function DetailField({ label, value }) {
 function getEditableFood(food) {
   return {
     id: food.id,
-    name: food.name ?? "",
-    description: food.description ?? "",
-    category: food.category ?? "produce",
+    name: food.name ?? '',
+    description: food.description ?? '',
+    category: food.category ?? 'produce',
     is_perishable: Boolean(food.is_perishable),
-    quantity: food.quantity ?? "",
-    quantity_unit: food.quantity_unit ?? "",
-    expiration_date: food.expiration_date ?? "",
+    quantity: food.quantity ?? '',
+    quantity_unit: food.quantity_unit ?? '',
+    expiration_date: food.expiration_date ?? '',
   };
 }
 
@@ -101,97 +74,91 @@ export default function Details() {
   const foods = listing.foods ?? [];
   const [status, setStatus] = useState(record.status);
   const [isSubmittingAction, setIsSubmittingAction] = useState(false);
-  const [acceptedThisSession, setAcceptedThisSession] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [editFoods, setEditFoods] = useState((record.foods ?? []).map(getEditableFood));
-  const [editAvailability, setEditAvailability] = useState(record.availability_windows ?? []);
-  const [editAddress, setEditAddress] = useState(record.location?.address_text ?? "");
-  const [editDistance, setEditDistance] = useState(String(record.travel_distance_miles ?? 0));
-  const [editInstructions, setEditInstructions] = useState(record.additional_instructions ?? "");
+  const [
+    editFoods,
+    { updateItem: updateFood, addItem: addFood, removeItem: removeFood },
+  ] = useEditableList((record.foods ?? []).map(getEditableFood), EMPTY_FOOD);
+  const [
+    editAvailability,
+    {
+      updateItem: updateAvailability,
+      addItem: addAvailability,
+      removeItem: removeAvailability,
+    },
+  ] = useEditableList(
+    record.availability_windows ?? [],
+    EMPTY_AVAILABILITY_WINDOW
+  );
+  const [editAddress, setEditAddress] = useState(
+    record.location?.address_text ?? ''
+  );
+  const [editDistance, setEditDistance] = useState(
+    String(record.travel_distance_miles ?? 0)
+  );
+  const [editInstructions, setEditInstructions] = useState(
+    record.additional_instructions ?? ''
+  );
 
-  const isOffer = listing.type === "offer";
-  const isHistory = page.backTo === "/history";
+  const isOffer = listing.type === 'offer';
+  const isHistory = page.backTo === '/history';
   const isOwnListing = listing.current_user?.id === listing.creator_user_id;
-  const canAccept = !isHistory && status === "available" && !isOwnListing;
-  const canEdit = !isHistory && isOwnListing && status === "available";
-  const canCancel = !isHistory && isOwnListing && ["available", "claimed"].includes(status);
-  const canComplete = !isHistory && isOwnListing && status === "claimed";
+  const isClaimedByCurrentUser =
+    listing.claim?.claimant_user_id === listing.current_user?.id;
+  const canAccept = !isHistory && status === 'available' && !isOwnListing;
+  const canEdit = !isHistory && isOwnListing && status === 'available';
+  const canCancel =
+    !isHistory && isOwnListing && ['available', 'claimed'].includes(status);
+  const canComplete = !isHistory && isOwnListing && status === 'claimed';
   const actionPending = isSubmittingAction;
+  const historyStatusLabel =
+    isHistory && ['completed', 'cancelled'].includes(status)
+      ? humanize(status)
+      : null;
+  const historyStatusClass =
+    status === 'completed'
+      ? 'bg-emerald-50 text-emerald-800'
+      : 'bg-red-50 text-red-700';
   const distanceLabel = isOffer
     ? "Distance we're willing to deliver"
     : "Distance we're willing to pick up";
 
-  async function handleAcceptListing() {
-    setIsSubmittingAction(true);
-
-    try {
-      const res = await fetch("/api/listings/accept", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          listing_id: listing.id,
-        }),
-      });
-      const data = await res.json().catch(() => null);
-
-      if (!res.ok) {
-        showToast(data?.error ?? "Unable to update this listing.", "error");
-        return;
-      }
-
-      setStatus("claimed");
-      setAcceptedThisSession(true);
-      showToast("Accepted.", "success");
-    } catch {
-      showToast("Network error.", "error");
-    } finally {
-      setIsSubmittingAction(false);
-    }
-  }
-
-  async function handleListingAction(endpoint, nextStatus, message) {
+  async function handleListingAction(endpoint, message, onSuccess) {
     setIsSubmittingAction(true);
 
     try {
       const res = await fetch(endpoint, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({ listing_id: listing.id }),
       });
       const data = await res.json().catch(() => null);
 
       if (!res.ok) {
-        showToast(data?.error ?? "Unable to update this listing.", "error");
+        showToast(data?.error ?? 'Unable to update this listing.', 'error');
         return;
       }
 
-      setStatus(nextStatus);
-      showToast(message, "success");
+      onSuccess?.(data);
+      showToast(message, 'success');
     } catch {
-      showToast("Network error.", "error");
+      showToast('Network error.', 'error');
     } finally {
       setIsSubmittingAction(false);
     }
   }
 
-  function updateFood(index, field, value) {
-    setEditFoods((currentFoods) =>
-      currentFoods.map((food, foodIndex) =>
-        foodIndex === index ? { ...food, [field]: value } : food
-      )
-    );
-  }
-
-  function updateAvailability(index, field, value) {
-    setEditAvailability((currentAvailability) =>
-      currentAvailability.map((availability, availabilityIndex) =>
-        availabilityIndex === index ? { ...availability, [field]: value } : availability
-      )
-    );
+  function handleAcceptListing() {
+    return handleListingAction('/api/listings/accept', 'Claimed.', (data) => {
+      setStatus('claimed');
+      setListing((currentListing) => ({
+        ...currentListing,
+        status: 'claimed',
+        claim: data?.claim ?? currentListing.claim,
+      }));
+    });
   }
 
   async function handleSaveEdits(event) {
@@ -199,10 +166,10 @@ export default function Details() {
     setIsSubmittingAction(true);
 
     try {
-      const res = await fetch("/api/listings/edit", {
-        method: "PATCH",
+      const res = await fetch('/api/listings/edit', {
+        method: 'PATCH',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           listing_id: listing.id,
@@ -218,7 +185,7 @@ export default function Details() {
       const data = await res.json().catch(() => null);
 
       if (!res.ok) {
-        showToast(data?.error ?? "Unable to save changes.", "error");
+        showToast(data?.error ?? 'Unable to save changes.', 'error');
         return;
       }
 
@@ -235,9 +202,9 @@ export default function Details() {
         },
       }));
       setIsEditing(false);
-      showToast("Changes saved.", "success");
+      showToast('Changes saved.', 'success');
     } catch {
-      showToast("Network error.", "error");
+      showToast('Network error.', 'error');
     } finally {
       setIsSubmittingAction(false);
     }
@@ -246,7 +213,7 @@ export default function Details() {
   return (
     <main className="px-6 py-10 sm:px-8 lg:px-12">
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-5">
-        <section className="rounded-[1.75rem] border border-white/70 bg-white/85 px-6 py-5 shadow-xl backdrop-blur-md">
+        <section className="surface-glass px-6 py-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <p className="text-sm font-medium tracking-[0.18em] text-amber-700 uppercase">
@@ -257,40 +224,46 @@ export default function Details() {
               </h1>
             </div>
 
-            <Link
-              to={page.backTo}
-              className="inline-flex rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-amber-300 hover:text-amber-800"
-            >
+            <Link to={page.backTo} className="btn-soft py-2.5">
               Back to {page.backLabel}
             </Link>
           </div>
 
           {!isHistory ? (
             <div className="mt-5">
-              {!isOwnListing ? (
+              {canAccept ? (
                 <button
                   type="button"
                   onClick={handleAcceptListing}
-                  disabled={!canAccept || actionPending}
+                  disabled={actionPending}
                   className="inline-flex cursor-pointer rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
                 >
-                  {actionPending && canAccept ? "Working..." : "Accept"}
+                  {actionPending ? 'Working...' : 'Accept'}
                 </button>
+              ) : null}
+              {!isOwnListing && isClaimedByCurrentUser ? (
+                <p className="inline-flex rounded-2xl bg-emerald-50 px-5 py-3 text-sm font-semibold text-emerald-800">
+                  Claimed by you
+                </p>
               ) : null}
               {canEdit ? (
                 <button
                   type="button"
                   onClick={() => setIsEditing((current) => !current)}
-                  className="ml-3 inline-flex cursor-pointer rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-amber-300 hover:text-amber-800"
+                  className="btn-soft ml-3 px-5"
                 >
-                  {isEditing ? "Close Edit" : "Edit"}
+                  {isEditing ? 'Close Edit' : 'Edit'}
                 </button>
               ) : null}
               {canCancel ? (
                 <button
                   type="button"
                   onClick={() =>
-                    handleListingAction("/api/listings/cancel", "cancelled", "Listing cancelled.")
+                    handleListingAction(
+                      '/api/listings/cancel',
+                      'Listing cancelled.',
+                      () => setStatus('cancelled')
+                    )
                   }
                   disabled={actionPending}
                   className="ml-3 inline-flex cursor-pointer rounded-2xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-700 transition hover:border-red-300 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
@@ -302,7 +275,11 @@ export default function Details() {
                 <button
                   type="button"
                   onClick={() =>
-                    handleListingAction("/api/listings/complete", "completed", "Listing completed.")
+                    handleListingAction(
+                      '/api/listings/complete',
+                      'Listing completed.',
+                      () => setStatus('completed')
+                    )
                   }
                   disabled={actionPending}
                   className="ml-3 inline-flex cursor-pointer rounded-2xl bg-emerald-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
@@ -310,21 +287,24 @@ export default function Details() {
                   Complete
                 </button>
               ) : null}
-              {!isOwnListing && status !== "available" && !acceptedThisSession ? (
-                <p className="mt-2 text-sm text-slate-600">
-                  This listing is no longer available.
-                </p>
-              ) : null}
+            </div>
+          ) : null}
+          {historyStatusLabel ? (
+            <div className="mt-5">
+              <p
+                className={`inline-flex rounded-2xl px-5 py-3 text-sm font-semibold ${historyStatusClass}`}
+              >
+                {historyStatusLabel}
+              </p>
             </div>
           ) : null}
         </section>
 
         {isEditing ? (
-          <form
-            className="rounded-[1.75rem] border border-white/70 bg-white/85 px-6 py-5 shadow-xl backdrop-blur-md"
-            onSubmit={handleSaveEdits}
-          >
-            <h2 className="text-lg font-semibold text-slate-900">Edit Listing</h2>
+          <form className="surface-glass px-6 py-5" onSubmit={handleSaveEdits}>
+            <h2 className="text-lg font-semibold text-slate-900">
+              Edit Listing
+            </h2>
 
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <label className="grid gap-2 text-sm font-semibold text-slate-700">
@@ -364,178 +344,41 @@ export default function Details() {
               </label>
             </div>
 
-            <div className="mt-6">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <h3 className="text-base font-bold text-slate-900">Available Times</h3>
-                <button
-                  type="button"
-                  onClick={() => setEditAvailability((current) => [...current, EMPTY_AVAILABILITY])}
-                  className="inline-flex cursor-pointer rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-900 transition hover:border-amber-300 hover:bg-amber-100"
-                >
-                  Add time
-                </button>
-              </div>
+            <ListingAvailabilityEditor
+              title="Available Times"
+              windows={editAvailability}
+              onAdd={addAvailability}
+              onUpdate={updateAvailability}
+              onRemove={removeAvailability}
+              sectionClassName="mt-6"
+              titleClassName="text-base font-bold text-slate-900"
+              gridClassName="mt-3 grid gap-3"
+              itemClassName="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:grid-cols-[1fr_1fr_1fr_auto]"
+            />
 
-              <div className="mt-3 grid gap-3">
-                {editAvailability.map((availability, index) => (
-                  <div
-                    key={index}
-                    className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:grid-cols-[1fr_1fr_1fr_auto]"
-                  >
-                    <select
-                      value={availability.day}
-                      onChange={(event) => updateAvailability(index, "day", event.target.value)}
-                      className="cursor-pointer rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-                    >
-                      {DAY_OPTIONS.map(([value, label]) => (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      type="time"
-                      required
-                      value={availability.start_time}
-                      onChange={(event) =>
-                        updateAvailability(index, "start_time", event.target.value)
-                      }
-                      className="cursor-pointer rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-                    />
-                    <input
-                      type="time"
-                      required
-                      value={availability.end_time}
-                      onChange={(event) =>
-                        updateAvailability(index, "end_time", event.target.value)
-                      }
-                      className="cursor-pointer rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-                    />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setEditAvailability((current) =>
-                          current.filter((_, availabilityIndex) => availabilityIndex !== index)
-                        )
-                      }
-                      className="inline-flex cursor-pointer items-center justify-center rounded-2xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:border-red-300 hover:bg-red-100"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-6">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <h3 className="text-base font-bold text-slate-900">Food Items</h3>
-                <button
-                  type="button"
-                  onClick={() => setEditFoods((current) => [...current, EMPTY_FOOD])}
-                  className="inline-flex cursor-pointer rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-900 transition hover:border-amber-300 hover:bg-amber-100"
-                >
-                  Add food item
-                </button>
-              </div>
-
-              <div className="mt-3 grid gap-4">
-                {editFoods.map((food, index) => (
-                  <section
-                    key={`${food.id ?? "new"}-${index}`}
-                    className="rounded-2xl border border-slate-200 bg-white p-4"
-                  >
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <input
-                        type="text"
-                        required
-                        placeholder="Example: Hawaiian Pizza"
-                        value={food.name}
-                        onChange={(event) => updateFood(index, "name", event.target.value)}
-                        className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-                      />
-                      <select
-                        value={food.category}
-                        onChange={(event) => updateFood(index, "category", event.target.value)}
-                        className="cursor-pointer rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-                      >
-                        {FOOD_CATEGORIES.map(([value, label]) => (
-                          <option key={value} value={value}>
-                            {label}
-                          </option>
-                        ))}
-                      </select>
-                      <input
-                        type="number"
-                        required
-                        min="0.01"
-                        step="0.01"
-                        value={food.quantity}
-                        onChange={(event) => updateFood(index, "quantity", event.target.value)}
-                        className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-                      />
-                      <input
-                        type="text"
-                        required
-                        placeholder="Example: Boxes, pounds, trays, servings"
-                        value={food.quantity_unit}
-                        onChange={(event) => updateFood(index, "quantity_unit", event.target.value)}
-                        className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-                      />
-                      <input
-                        type="date"
-                        value={food.expiration_date}
-                        onChange={(event) => updateFood(index, "expiration_date", event.target.value)}
-                        className="cursor-pointer rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-                      />
-                      <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800">
-                        <input
-                          type="checkbox"
-                          checked={food.is_perishable}
-                          onChange={(event) =>
-                            updateFood(index, "is_perishable", event.target.checked)
-                          }
-                          className="h-4 w-4 cursor-pointer accent-amber-700"
-                        />
-                        Perishable
-                      </label>
-                    </div>
-                    <textarea
-                      rows="3"
-                      placeholder="Example: Thin crust, pineapple, onions, olives, stuffed crust"
-                      value={food.description}
-                      onChange={(event) => updateFood(index, "description", event.target.value)}
-                      className="mt-3 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-900 outline-none transition focus:border-amber-300"
-                    />
-                    {editFoods.length > 1 ? (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setEditFoods((current) =>
-                            current.filter((_, foodIndex) => foodIndex !== index)
-                          )
-                        }
-                        className="mt-3 inline-flex cursor-pointer rounded-2xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:border-red-300 hover:bg-red-100"
-                      >
-                        Remove food item
-                      </button>
-                    ) : null}
-                  </section>
-                ))}
-              </div>
-            </div>
+            <ListingFoodEditor
+              foods={editFoods}
+              onAdd={addFood}
+              onUpdate={updateFood}
+              onRemove={removeFood}
+              title="Food Items"
+              sectionClassName="mt-6"
+              gridClassName="mt-3 grid gap-4"
+              itemClassName="rounded-2xl border border-slate-200 bg-white p-4"
+              removeLabel="Remove food item"
+            />
 
             <button
               type="submit"
               disabled={actionPending}
               className="mt-6 inline-flex cursor-pointer rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
             >
-              {actionPending ? "Saving..." : "Save Changes"}
+              {actionPending ? 'Saving...' : 'Save Changes'}
             </button>
           </form>
         ) : null}
 
-        <section className="rounded-[1.75rem] border border-white/70 bg-white/85 px-6 py-5 shadow-xl backdrop-blur-md">
+        <section className="surface-glass px-6 py-5">
           <h2 className="text-lg font-semibold text-slate-900">Food Details</h2>
           <div className="mt-4 grid gap-4">
             {foods.map((food) => (
@@ -543,18 +386,30 @@ export default function Details() {
                 key={food.id}
                 className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4"
               >
-                <h3 className="text-base font-semibold text-slate-900">{food.name}</h3>
+                <h3 className="text-base font-semibold text-slate-900">
+                  {food.name}
+                </h3>
 
                 <dl className="mt-4 grid gap-4 sm:grid-cols-2">
-                  <DetailField label="Quantity" value={formatFoodQuantity(food)} />
-                  <DetailField label="Category" value={formatFoodCategory(food.category)} />
+                  <DetailField
+                    label="Quantity"
+                    value={formatFoodQuantity(food)}
+                  />
+                  <DetailField
+                    label="Category"
+                    value={formatFoodCategory(food.category)}
+                  />
                   <DetailField
                     label="Handling"
-                    value={food.is_perishable ? "Perishable" : "Shelf-stable"}
+                    value={food.is_perishable ? 'Perishable' : 'Shelf-stable'}
                   />
                   <DetailField
                     label="Expiration Date"
-                    value={food.expiration_date ? formatDate(food.expiration_date) : "Does Not Expire"}
+                    value={
+                      food.expiration_date
+                        ? formatDate(food.expiration_date)
+                        : 'Does Not Expire'
+                    }
                   />
                 </dl>
 
@@ -573,7 +428,7 @@ export default function Details() {
           </div>
         </section>
 
-        <section className="rounded-[1.75rem] border border-white/70 bg-white/85 px-6 py-5 shadow-xl backdrop-blur-md">
+        <section className="surface-glass px-6 py-5">
           <h2 className="text-lg font-semibold text-slate-900">
             Pickup and Coordination
           </h2>
@@ -582,7 +437,10 @@ export default function Details() {
               label="Available Times"
               value={formatAvailabilityWindows(listing.availability_windows)}
             />
-            <DetailField label="Address" value={listing.location?.address_text} />
+            <DetailField
+              label="Address"
+              value={listing.location?.address_text}
+            />
             <DetailField
               label={distanceLabel}
               value={`${formatNumber(listing.travel_distance_miles ?? 0)} miles`}
@@ -601,17 +459,27 @@ export default function Details() {
           ) : null}
         </section>
 
-        <section className="rounded-[1.75rem] border border-white/70 bg-white/85 px-6 py-5 shadow-xl backdrop-blur-md">
-          <h2 className="text-lg font-semibold text-slate-900">Listing Information</h2>
+        <section className="surface-glass px-6 py-5">
+          <h2 className="text-lg font-semibold text-slate-900">
+            Listing Information
+          </h2>
           <dl className="mt-4 grid gap-4 sm:grid-cols-2">
             <DetailField
-              label={isOffer ? "Provider Organization" : "Requesting Organization"}
+              label={
+                isOffer ? 'Provider Organization' : 'Requesting Organization'
+              }
               value={listing.creator?.organization_name}
             />
             <DetailField label="Contact Email" value={listing.creator?.email} />
             <DetailField label="Status" value={humanize(status)} />
-            <DetailField label="Created" value={formatDate(listing.created_at)} />
-            <DetailField label="Last Updated" value={formatDate(listing.updated_at)} />
+            <DetailField
+              label="Created"
+              value={formatDate(listing.created_at)}
+            />
+            <DetailField
+              label="Last Updated"
+              value={formatDate(listing.updated_at)}
+            />
           </dl>
         </section>
       </div>

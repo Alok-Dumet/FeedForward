@@ -4,47 +4,41 @@ import secrets
 
 from database.database import db
 from geocoding import GeocodingError, geocode_city_state
-from sessions import SESSION_COOKIE_NAME, parse_cookies, build_session_cookie, create_session, delete_session, get_user
 from router import Router
+from sessions import (
+    SESSION_COOKIE_NAME,
+    build_session_cookie,
+    create_session,
+    delete_session,
+    get_user,
+    parse_cookies,
+)
 from utils import parse_validate_body, send_json
 
 router = Router()
 
 
-#We will hash a password with a fresh per-user salt and 200_000 PBKDF2 iterations
+# We will hash a password with a fresh per-user salt and 200_000 PBKDF2 iterations
 def hash_password(password):
     salt = secrets.token_hex(16)
-    password_hash = hashlib.pbkdf2_hmac(
-        "sha256",
-        password.encode("utf-8"),
-        salt.encode("utf-8"),
-        200_000
-    ).hex()
+    password_hash = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("utf-8"), 200_000).hex()
     return f"{salt}${password_hash}"
 
 
-#We will recompute the hash with the stored salt and constant-time compare it to the stored hash
+# We will recompute the hash with the stored salt and constant-time compare it to the stored hash
 def verify_password(password, stored_password_hash):
     try:
         salt, expected_hash = stored_password_hash.split("$", 1)
     except ValueError:
         return False
 
-    actual_hash = hashlib.pbkdf2_hmac(
-        "sha256",
-        password.encode("utf-8"),
-        salt.encode("utf-8"),
-        200_000
-    ).hex()
+    actual_hash = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("utf-8"), 200_000).hex()
     return hmac.compare_digest(actual_hash, expected_hash)
 
 
-#POST endpoint handler that registers a new user account
+# POST endpoint handler that registers a new user account
 def register(handler):
-    body = parse_validate_body(
-        handler,
-        ["email", "password", "role", "organization_name", "street_address", "address_text", "city", "state"]
-    )
+    body = parse_validate_body(handler, ["email", "password", "role", "organization_name", "street_address", "address_text", "city", "state"])
     if body is None:
         return
 
@@ -71,7 +65,7 @@ def register(handler):
                 VALUES (%s, %s, %s)
                 RETURNING id
                 """,
-                (body["address_text"], latitude, longitude)
+                (body["address_text"], latitude, longitude),
             )
             location_id = cur.fetchone()[0]
 
@@ -93,7 +87,7 @@ def register(handler):
                     body["role"],
                     body["organization_name"],
                     location_id,
-                )
+                ),
             )
             user = cur.fetchone()
         db.commit()
@@ -107,18 +101,12 @@ def register(handler):
         print(f"[register] DB error: {exc!r}")
         return send_json(handler, 500, {"error": "Unable to register user due to a server error."})
 
-    return send_json(handler, 201, {
-        "success": "User registered",
-        "user": {
-            "id": user[0],
-            "email": user[1],
-            "role": user[2],
-            "organization_name": user[3]
-        }
-    })
+    return send_json(
+        handler, 201, {"success": "User registered", "user": {"id": user[0], "email": user[1], "role": user[2], "organization_name": user[3]}}
+    )
 
 
-#POST endpoint handler that logs in a user and starts a session
+# POST endpoint handler that logs in a user and starts a session
 def login(handler):
     body = parse_validate_body(handler, ["email", "password"])
     if body is None:
@@ -144,19 +132,24 @@ def login(handler):
 
     session_token = create_session(user[0])
 
-    #We set the cookie max-age to 604800 seconds (7 days)
-    return send_json(handler, 200, {
-        "success": "Login successful",
-        "user": {
-            "id": user[0],
-            "email": user[1],
-            "role": user[3],
-            "organization_name": user[4],
-        }
-    }, headers=[("Set-Cookie", build_session_cookie(session_token, 604800))])
+    # We set the cookie max-age to 604800 seconds (7 days)
+    return send_json(
+        handler,
+        200,
+        {
+            "success": "Login successful",
+            "user": {
+                "id": user[0],
+                "email": user[1],
+                "role": user[3],
+                "organization_name": user[4],
+            },
+        },
+        headers=[("Set-Cookie", build_session_cookie(session_token, 604800))],
+    )
 
 
-#POST endpoint handler that logs out the current user
+# POST endpoint handler that logs out the current user
 def logout(handler):
     cookies = parse_cookies(handler)
     session_token = cookies.get(SESSION_COOKIE_NAME)
@@ -167,7 +160,7 @@ def logout(handler):
     return send_json(handler, 200, {"success": "Logout successful"}, headers=[("Set-Cookie", build_session_cookie("", 0))])
 
 
-#GET endpoint handler that returns the current authenticated user
+# GET endpoint handler that returns the current authenticated user
 def get_session(handler):
     return send_json(handler, 200, {"user": get_user(handler)})
 

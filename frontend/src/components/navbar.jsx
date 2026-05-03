@@ -1,22 +1,19 @@
-import { useState } from "react";
-import {
-  Link,
-  NavLink,
-  useNavigate,
-} from "react-router-dom";
+import { useState } from 'react';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 
 import {
   getDefaultRouteForUserType,
   getMyCreateRouteForUserType,
   getMyListingsRouteForUserType,
-} from "../session.js";
-import { useSession, useSessionActions } from "../hooks/useSession.js";
+} from '../session.js';
+import { useSession, useSessionActions } from '../hooks/useSession.js';
 
 const baseLinkClassName =
-  "cursor-pointer rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-amber-50 hover:text-amber-800";
+  'cursor-pointer rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-amber-50 hover:text-amber-800';
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const location = useLocation();
   const navigate = useNavigate();
   const { userType, userId } = useSession();
   const { clearSession } = useSessionActions();
@@ -26,46 +23,70 @@ export default function Navbar() {
   }
 
   const createAction = {
-    label: userType === "donor" ? "Create Offer" : "Create Request",
+    label: userType === 'donor' ? 'Create Offer' : 'Create Request',
     to: getMyCreateRouteForUserType(userType, userId),
   };
+  const isMyListingsDetail =
+    new URLSearchParams(location.search).get('from') === 'my-listings' &&
+    (location.pathname.startsWith('/offers/') ||
+      location.pathname.startsWith('/requests/'));
 
   const navItems =
-    userType === "donor"
+    userType === 'donor'
       ? [
-          { label: "Requests", to: "/requests" },
           {
-            label: "My Offers",
+            label: 'Requests',
+            to: '/requests',
+            isActive: (routerIsActive) => routerIsActive && !isMyListingsDetail,
+          },
+          {
+            label: 'My Offers',
             to: getMyListingsRouteForUserType(userType, userId),
             end: true,
+            isActive: (routerIsActive) => routerIsActive || isMyListingsDetail,
           },
-          { label: "History", to: "/history" },
+          { label: 'History', to: '/history' },
           createAction,
         ]
       : [
-          { label: "Offers", to: "/offers" },
           {
-            label: "My Requests",
+            label: 'Offers',
+            to: '/offers',
+            isActive: (routerIsActive) => routerIsActive && !isMyListingsDetail,
+          },
+          {
+            label: 'My Requests',
             to: getMyListingsRouteForUserType(userType, userId),
             end: true,
+            isActive: (routerIsActive) => routerIsActive || isMyListingsDetail,
           },
-          { label: "History", to: "/history" },
+          { label: 'History', to: '/history' },
           createAction,
         ];
+
+  function getNavLinkClassName(item, routerIsActive, extraClassName = '') {
+    const isActive = item.isActive?.(routerIsActive) ?? routerIsActive;
+
+    return `${baseLinkClassName} ${extraClassName} ${
+      isActive
+        ? 'bg-slate-900 text-white hover:bg-slate-900 hover:text-white'
+        : ''
+    }`;
+  }
 
   async function handleLogout() {
     clearSession();
     setIsMenuOpen(false);
 
     try {
-      await fetch("/api/logout", {
-        method: "POST",
+      await fetch('/api/logout', {
+        method: 'POST',
       });
     } catch {
       // Local dev may not expose a logout endpoint.
     }
 
-    navigate("/login", { replace: true });
+    navigate('/login', { replace: true });
   }
 
   return (
@@ -89,11 +110,7 @@ export default function Navbar() {
                 to={item.to}
                 end={item.end}
                 className={({ isActive }) =>
-                  `${baseLinkClassName} ${
-                    isActive
-                      ? "bg-slate-900 text-white hover:bg-slate-900 hover:text-white"
-                      : ""
-                  }`
+                  getNavLinkClassName(item, isActive)
                 }
               >
                 {item.label}
@@ -102,11 +119,7 @@ export default function Navbar() {
           </nav>
 
           <div className="hidden items-center gap-3 md:flex">
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="inline-flex rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-amber-300 hover:text-amber-800 cursor-pointer"
-            >
+            <button type="button" onClick={handleLogout} className="btn-soft">
               Logout
             </button>
           </div>
@@ -114,7 +127,7 @@ export default function Navbar() {
           <button
             type="button"
             onClick={() => setIsMenuOpen((current) => !current)}
-            className="inline-flex cursor-pointer rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-amber-300 hover:text-amber-800 md:hidden"
+            className="btn-soft py-2 md:hidden"
             aria-expanded={isMenuOpen}
             aria-controls="mobile-navigation"
             aria-label="Toggle navigation menu"
@@ -136,11 +149,7 @@ export default function Navbar() {
                 end={item.end}
                 onClick={() => setIsMenuOpen(false)}
                 className={({ isActive }) =>
-                  `${baseLinkClassName} text-left ${
-                    isActive
-                      ? "bg-slate-900 text-white hover:bg-slate-900 hover:text-white"
-                      : ""
-                  }`
+                  getNavLinkClassName(item, isActive, 'text-left')
                 }
               >
                 {item.label}
@@ -150,7 +159,7 @@ export default function Navbar() {
             <button
               type="button"
               onClick={handleLogout}
-              className="inline-flex cursor-pointer justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-amber-300 hover:text-amber-800"
+              className="btn-soft justify-center"
             >
               Logout
             </button>

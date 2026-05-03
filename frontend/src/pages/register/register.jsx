@@ -1,7 +1,7 @@
-import { useNavigate, Link } from "react-router-dom";
-import { motion as Motion } from "motion/react";
+import { useNavigate, Link } from 'react-router-dom';
+import { motion as Motion } from 'motion/react';
 
-import { useToast } from "../../hooks/useToast.js";
+import { useToast } from '../../hooks/useToast.js';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -14,15 +14,19 @@ export default function Register() {
     const city = e.currentTarget.elements.city.value.trim();
     const state = e.currentTarget.elements.state.value.trim();
     const postalCode = e.currentTarget.elements.postal_code.value.trim();
-    const addressText = [streetAddress, city, [state, postalCode].filter(Boolean).join(" ")]
+    const addressText = [
+      streetAddress,
+      city,
+      [state, postalCode].filter(Boolean).join(' '),
+    ]
       .filter(Boolean)
-      .join(", ");
+      .join(', ');
 
     try {
-      const res = await fetch("/api/register", {
-        method: "POST",
+      const res = await fetch('/api/register', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           email: e.currentTarget.elements.email.value,
@@ -38,16 +42,16 @@ export default function Register() {
 
       const data = await res.json();
       if (!res.ok) {
-        showToast(data.error, "error");
+        showToast(data.error, 'error');
       } else {
-        navigate("/login", {
+        navigate('/login', {
           state: {
-            message: "Registration successful. You can log in now."
-          }
+            message: 'Registration successful. You can log in now.',
+          },
         });
       }
     } catch {
-      showToast("Network Error", "error");
+      showToast('Network Error', 'error');
     }
   }
 
@@ -56,7 +60,7 @@ export default function Register() {
       <Motion.section
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45, ease: "easeOut" }}
+        transition={{ duration: 0.45, ease: 'easeOut' }}
         className="w-full max-w-xl rounded-3xl border border-white/60 bg-white/80 p-8 shadow-2xl backdrop-blur-md"
       >
         <div className="text-center">
@@ -122,9 +126,6 @@ export default function Register() {
               placeholder="123 Main St, Suite 4"
               className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 transition outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
             />
-            <p className="mt-1 text-xs text-slate-500">
-              We store your full address for coordination, but match distance by city and state.
-            </p>
           </div>
 
           <div className="grid gap-5 sm:grid-cols-[1fr_8rem]">
@@ -223,7 +224,7 @@ export default function Register() {
         </form>
 
         <div className="mt-6 text-center text-sm text-slate-600">
-          Already have an account?{" "}
+          Already have an account?{' '}
           <Link
             to="/login"
             className="font-semibold text-amber-700 hover:text-amber-800"

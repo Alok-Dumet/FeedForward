@@ -1,15 +1,15 @@
-import { useEffect } from "react";
-import { useNavigate, Link, useLocation } from "react-router-dom";
-import { motion as Motion } from "motion/react";
+import { useEffect } from 'react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { motion as Motion } from 'motion/react';
 
-import { getDefaultRouteForUserType, getUserType } from "../../session.js";
-import { useSessionActions } from "../../hooks/useSession.js";
-import { useToast } from "../../hooks/useToast.js";
+import { getDefaultRouteForUserType, parseSession } from '../../session.js';
+import { useSessionActions } from '../../hooks/useSession.js';
+import { useToast } from '../../hooks/useToast.js';
 
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const message = location.state?.message ?? "";
+  const message = location.state?.message ?? '';
   const { setSession } = useSessionActions();
   const { showToast } = useToast();
 
@@ -18,7 +18,7 @@ export default function Login() {
       return;
     }
 
-    showToast(message, "success");
+    showToast(message, 'success');
     navigate(location.pathname, { replace: true, state: null });
   }, [location.pathname, message, navigate, showToast]);
 
@@ -30,26 +30,26 @@ export default function Login() {
     const password = e.currentTarget.elements.password.value;
 
     try {
-      const res = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
 
       if (!res.ok) {
-        showToast(data?.error ?? "Unable to log in", "error");
+        showToast(data?.error ?? 'Unable to log in', 'error');
         return;
       }
 
-      const sessionRes = await fetch("/api/session", {
-        headers: { Accept: "application/json" },
+      const sessionRes = await fetch('/api/session', {
+        headers: { Accept: 'application/json' },
       });
       const session = sessionRes.ok ? await sessionRes.json() : data;
-      const userType = getUserType(session);
+      const { userType } = parseSession(session);
 
       if (!userType) {
-        showToast("Unable to determine account type", "error");
+        showToast('Unable to determine account type', 'error');
         return;
       }
 
@@ -58,7 +58,7 @@ export default function Login() {
         replace: true,
       });
     } catch {
-      showToast("Network Error", "error");
+      showToast('Network Error', 'error');
     }
   }
 
@@ -67,7 +67,7 @@ export default function Login() {
       <Motion.section
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45, ease: "easeOut" }}
+        transition={{ duration: 0.45, ease: 'easeOut' }}
         className="w-full max-w-md rounded-3xl border border-white/60 bg-white/80 p-8 shadow-2xl backdrop-blur-md"
       >
         <div className="text-center">
@@ -122,7 +122,7 @@ export default function Login() {
         </form>
 
         <div className="mt-6 text-center text-sm text-slate-600">
-          Don&apos;t have an account?{" "}
+          Don&apos;t have an account?{' '}
           <Link
             to="/register"
             className="font-semibold text-amber-700 hover:text-amber-800"

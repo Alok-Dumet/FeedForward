@@ -3,11 +3,10 @@ from router import Router
 from sessions import get_user
 from utils import send_json
 
-
 router = Router()
 
 
-#We will format one food item from a history listing row
+# We will format one food item from a history listing row
 def build_history_food_item(row):
     return {
         "id": row[2],
@@ -21,7 +20,7 @@ def build_history_food_item(row):
     }
 
 
-#We will turn one row from either history query into the dict shape the frontend expects
+# We will turn one row from either history query into the dict shape the frontend expects
 def build_history_record(row, relationship):
     return {
         "id": row[0],
@@ -40,11 +39,13 @@ def build_history_record(row, relationship):
             "status": row[17],
             "claimed_at": row[18].isoformat() if row[18] else None,
             "resolved_at": row[19].isoformat() if row[19] else None,
-        } if row[15] else None,
+        }
+        if row[15]
+        else None,
     }
 
 
-#We will group history rows by listing so multiple foods render on one history card
+# We will group history rows by listing so multiple foods render on one history card
 def build_history_records(rows, relationship):
     records_by_id = {}
 
@@ -58,11 +59,11 @@ def build_history_records(rows, relationship):
     return list(records_by_id.values())
 
 
-#We will fetch finished listings the user created. The latest claim is joined laterally so cards can show who claimed it.
+# We will fetch finished listings the user created, joining the latest claim so cards can show who claimed it
 def get_created_history_rows(user_id):
     with db.cursor() as cur:
         cur.execute(
-            f"""
+            """
             SELECT
                 listings.id,
                 listings.listing_type,
@@ -107,17 +108,17 @@ def get_created_history_rows(user_id):
             ORDER BY COALESCE(latest_claim.resolved_at, latest_claim.claimed_at, listings.updated_at, listings.created_at) DESC,
                 listings.id DESC
             """,
-            (user_id,)
+            (user_id,),
         )
 
         return cur.fetchall()
 
 
-#We will fetch finished listings the user claimed. The matching claim is joined directly since we filter by claimant_user_id.
+# We will fetch finished listings the user claimed, joining the matching claim directly since we filter by claimant_user_id
 def get_claimed_history_rows(user_id):
     with db.cursor() as cur:
         cur.execute(
-            f"""
+            """
             SELECT
                 listings.id,
                 listings.listing_type,
@@ -151,13 +152,13 @@ def get_claimed_history_rows(user_id):
             ORDER BY COALESCE(claims.resolved_at, claims.claimed_at, listings.updated_at, listings.created_at) DESC,
                 listings.id DESC
             """,
-            (user_id,)
+            (user_id,),
         )
 
         return cur.fetchall()
 
 
-#GET endpoint handler that returns the current user's listing history
+# GET endpoint handler that returns the current user's listing history
 def get_history(handler):
     user = get_user(handler)
 
@@ -171,15 +172,14 @@ def get_history(handler):
     records = build_history_records(created_rows, "own")
     records += build_history_records(claimed_rows, "claimed")
 
-    return send_json(handler, 200, {
-        "filters": ["all", "completed", "cancelled"],
-        "records": records,
-        "current_user": {
-            "id": user["id"],
-            "role": user["role"],
-            "organization_name": user["organization_name"],
+    return send_json(
+        handler,
+        200,
+        {
+            "filters": ["all", "completed", "cancelled"],
+            "records": records,
         },
-    })
+    )
 
 
 router.get("/api/history", get_history)

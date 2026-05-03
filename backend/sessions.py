@@ -2,13 +2,14 @@ import secrets
 
 from database.database import db
 
-#We will store active sessions in memory for this local app
+# We will store active sessions in memory for this local app
 sessions = {}
 
-#We will use one cookie name for session lookup
+# We will use one cookie name for session lookup
 SESSION_COOKIE_NAME = "feedforward_session"
 
-#We will use this helper function for parsing cookies in from the user's request
+
+# We will use this helper function for parsing cookies in from the user's request
 def parse_cookies(self):
     cookie_header = self.headers.get("Cookie")
     if not cookie_header:
@@ -23,7 +24,8 @@ def parse_cookies(self):
 
     return cookies
 
-#We will create a unique session token for the given user
+
+# We will create a unique session token for the given user
 def create_session(user_id):
     while True:
         session_token = secrets.token_urlsafe(32)
@@ -31,11 +33,13 @@ def create_session(user_id):
             sessions[session_token] = user_id
             return session_token
 
-#We will build the session cookie header value
+
+# We will build the session cookie header value
 def build_session_cookie(session_token, max_age):
     return f"{SESSION_COOKIE_NAME}={session_token}; Path=/; HttpOnly; SameSite=Lax; Max-Age={max_age}"
 
-#We will get a user's id from their session cookie (if it exists)
+
+# We will get a user's id from their session cookie (if it exists)
 def get_session_user_id(self):
     cookies = parse_cookies(self)
     session_token = cookies.get(SESSION_COOKIE_NAME)
@@ -45,7 +49,8 @@ def get_session_user_id(self):
 
     return sessions.get(session_token)
 
-#We will load the current user once per request
+
+# We will load the current user once per request
 def get_user(self):
     cached = getattr(self, "_cached_user", None)
     if cached is not None:
@@ -74,7 +79,7 @@ def get_user(self):
                     ON locations.id = users.location_id
                 WHERE users.id = %s
                 """,
-                (user_id,)
+                (user_id,),
             )
             user = cur.fetchone()
     except Exception:
@@ -98,6 +103,7 @@ def get_user(self):
     self._cached_user = resolved
     return resolved
 
-#We will delete a session token when a user logs out
+
+# We will delete a session token when a user logs out
 def delete_session(session_token):
     sessions.pop(session_token, None)

@@ -7,7 +7,7 @@ function toFiniteNumber(value) {
 
 export function getRadiusMiles(request, fallback = 150) {
   const url = new URL(request.url);
-  const urlRadius = toFiniteNumber(url.searchParams.get("radius_miles"));
+  const urlRadius = toFiniteNumber(url.searchParams.get('radius_miles'));
 
   if (urlRadius !== null && urlRadius > 0) {
     return urlRadius;
@@ -56,10 +56,14 @@ export function withDistanceFilteredRecords(records, currentUser, radiusMiles) {
 
       return {
         ...record,
-        distance_miles: distance === null ? null : Math.round(distance * 10) / 10,
+        distance_miles:
+          distance === null ? null : Math.round(distance * 10) / 10,
       };
     })
-    .filter((record) => record.distance_miles === null || record.distance_miles <= radiusMiles)
+    .filter(
+      (record) =>
+        record.distance_miles === null || record.distance_miles <= radiusMiles
+    )
     .sort((a, b) => {
       if (a.distance_miles === null && b.distance_miles === null) {
         return 0;

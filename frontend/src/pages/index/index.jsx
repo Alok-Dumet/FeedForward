@@ -1,5 +1,5 @@
-import { Link } from "react-router-dom";
-import { motion as Motion } from "motion/react";
+import { Link } from 'react-router-dom';
+import { motion as Motion } from 'motion/react';
 
 export default function Index() {
   return (
@@ -7,12 +7,12 @@ export default function Index() {
       <Motion.section
         initial={{ opacity: 0, y: 30, scale: 0.96 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
         className="relative z-10 flex w-full max-w-4xl flex-col items-center justify-center rounded-[2rem] border border-white/70 bg-slate-950 px-8 py-12 shadow-2xl"
       >
         <Motion.h1
-          initial={{ opacity: 0, letterSpacing: "0.25em" }}
-          animate={{ opacity: 1, letterSpacing: "0.05em" }}
+          initial={{ opacity: 0, letterSpacing: '0.25em' }}
+          animate={{ opacity: 1, letterSpacing: '0.05em' }}
           transition={{ delay: 0.2, duration: 0.7 }}
           className="text-center text-4xl font-extrabold text-emerald-400 sm:text-6xl"
         >

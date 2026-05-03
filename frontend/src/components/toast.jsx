@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { ToastContext } from "../hooks/useToast.js";
+import { ToastContext } from '../hooks/useToast.js';
 
 const DEFAULT_DURATION = 5000;
 
@@ -20,23 +20,28 @@ export function ToastProvider({ children }) {
   }, []);
 
   const closeToast = useCallback((id) => {
-    setToasts((currentToasts) => currentToasts.filter((toast) => toast.id !== id));
+    setToasts((currentToasts) =>
+      currentToasts.filter((toast) => toast.id !== id)
+    );
   }, []);
 
-  const showToast = useCallback((message, type = "success", duration = DEFAULT_DURATION) => {
-    const currentTime = Date.now();
-    setNow(currentTime);
-    setToasts((currentToasts) => [
-      ...currentToasts,
-      {
-        id: crypto.randomUUID(),
-        message,
-        type,
-        duration,
-        expiresAt: currentTime + duration,
-      },
-    ]);
-  }, []);
+  const showToast = useCallback(
+    (message, type = 'success', duration = DEFAULT_DURATION) => {
+      const currentTime = Date.now();
+      setNow(currentTime);
+      setToasts((currentToasts) => [
+        ...currentToasts,
+        {
+          id: crypto.randomUUID(),
+          message,
+          type,
+          duration,
+          expiresAt: currentTime + duration,
+        },
+      ]);
+    },
+    []
+  );
 
   const value = useMemo(() => ({ showToast }), [showToast]);
 
@@ -47,28 +52,28 @@ export function ToastProvider({ children }) {
         {toasts.map((toast) => {
           const remainingMs = Math.max(0, toast.expiresAt - now);
           const remainingSeconds = Math.ceil(remainingMs / 1000);
-          const isError = toast.type === "error";
+          const isError = toast.type === 'error';
 
           return (
             <div
               key={toast.id}
               className={`pointer-events-auto overflow-hidden rounded-2xl border bg-white shadow-2xl ${
-                isError ? "border-red-200" : "border-emerald-200"
+                isError ? 'border-red-200' : 'border-emerald-200'
               }`}
             >
               <div className="flex items-start gap-3 px-4 py-3">
                 <span
                   className={`mt-1 h-3 w-3 shrink-0 rounded-full ${
-                    isError ? "bg-red-500" : "bg-emerald-500"
+                    isError ? 'bg-red-500' : 'bg-emerald-500'
                   }`}
                 />
                 <div className="min-w-0 flex-1">
                   <p
                     className={`text-xs font-semibold tracking-[0.15em] uppercase ${
-                      isError ? "text-red-700" : "text-emerald-700"
+                      isError ? 'text-red-700' : 'text-emerald-700'
                     }`}
                   >
-                    {isError ? "Error" : "Success"}
+                    {isError ? 'Error' : 'Success'}
                   </p>
                   <p className="mt-1 text-sm leading-6 font-medium text-slate-800">
                     {toast.message}

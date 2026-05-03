@@ -1,10 +1,9 @@
 import json
 from datetime import date, time
 from decimal import Decimal, InvalidOperation
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import parse_qs, urlparse
 
-
-#We will use this set as the single source of truth for valid food categories
+# We will use this set as the single source of truth for valid food categories
 ALLOWED_FOOD_CATEGORIES = {
     "produce",
     "dairy",
@@ -32,14 +31,15 @@ ALLOWED_AVAILABILITY_DAYS = {
 }
 
 
-#We will strip query strings and trailing slashes so routing and access checks agree
+# We will strip query strings and trailing slashes so routing and access checks agree
 def normalize_path(raw_path):
     path = urlparse(raw_path).path
     if len(path) > 1 and path.endswith("/"):
         path = path.rstrip("/")
     return path
 
-#We will use this helper function for sending JSON responses and cookies
+
+# We will use this helper function for sending JSON responses and cookies
 def send_json(self, status, data, headers=None):
     body = json.dumps(data).encode("utf-8")
     self.send_response(status)
@@ -53,7 +53,8 @@ def send_json(self, status, data, headers=None):
     self.end_headers()
     self.wfile.write(body)
 
-#We will use this helper function for parsing request bodies.
+
+# We will use this helper function for parsing request bodies.
 def parse_body(self):
     length = int(self.headers.get("Content-Length", 0))
     if not length:
@@ -61,7 +62,7 @@ def parse_body(self):
 
     raw = self.rfile.read(length)
 
-    #None is sent back if there's a malformed json or if the json sent wasn't a dictionary
+    # None is sent back if there's a malformed json or if the json sent wasn't a dictionary
     try:
         body = json.loads(raw.decode("utf-8"))
     except (UnicodeDecodeError, json.JSONDecodeError):
@@ -71,7 +72,8 @@ def parse_body(self):
 
     return body
 
-#We will use this helper function for stripping the whitespace from string values in the body
+
+# We will use this helper function for stripping the whitespace from string values in the body
 def strip_strings(body):
     stripped_body = {}
 
@@ -83,7 +85,8 @@ def strip_strings(body):
 
     return stripped_body
 
-#We will use this helper function for validating if the user sent all the proper field. Only None and empty strings count as missing.
+
+# We will use this helper function for validating if the user sent all the proper field. Only None and empty strings count as missing.
 def require_fields(body, field_names):
     missing = []
 
@@ -97,7 +100,8 @@ def require_fields(body, field_names):
 
     return missing
 
-#We will combine the parsing, stripping, and validation helpers into one function for our handlers
+
+# We will combine the parsing, stripping, and validation helpers into one function for our handlers
 def parse_validate_body(self, required_fields):
     body = parse_body(self)
 
@@ -107,7 +111,7 @@ def parse_validate_body(self, required_fields):
 
     body = strip_strings(body)
 
-    #It'll send back None if there was an error, otherwise it'll send back the validated body
+    # It'll send back None if there was an error, otherwise it'll send back the validated body
     missing = require_fields(body, required_fields)
     if missing:
         send_json(self, 400, {"error": f"Missing fields: {', '.join(missing)}"})
@@ -116,7 +120,7 @@ def parse_validate_body(self, required_fields):
     return body
 
 
-#We will pull a single query-string parameter out of the request URL, returning None if it's absent
+# We will pull a single query-string parameter out of the request URL, returning None if it's absent
 def get_query_param(handler, name):
     query = urlparse(handler.path).query
     values = parse_qs(query).get(name)
@@ -125,7 +129,7 @@ def get_query_param(handler, name):
     return values[0]
 
 
-#We will parse an optional ISO date string. None or "" returns None; anything else must be a valid date
+# We will parse an optional ISO date string. None or "" returns None; anything else must be a valid date
 def parse_optional_date(value, field_name):
     if value in (None, ""):
         return None
@@ -139,7 +143,7 @@ def parse_optional_date(value, field_name):
         raise ValueError(f"{field_name} must be a valid ISO date") from exc
 
 
-#We will parse a value into a Decimal and wrap any conversion error with a friendly field-named message
+# We will parse a value into a Decimal and wrap any conversion error with a friendly field-named message
 def parse_decimal(value, field_name):
     try:
         return Decimal(str(value))
@@ -147,7 +151,19 @@ def parse_decimal(value, field_name):
         raise ValueError(f"{field_name} must be a valid number") from exc
 
 
-#We will validate that a food category matches one database value exactly
+def parse_positive_int(value, field_name):
+    try:
+        parsed_value = int(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{field_name} must be a valid number.") from exc
+
+    if parsed_value <= 0:
+        raise ValueError(f"{field_name} must be greater than zero.")
+
+    return parsed_value
+
+
+# We will validate that a food category matches one database value exactly
 def validate_food_category(value):
     if not isinstance(value, str):
         return None
@@ -156,7 +172,7 @@ def validate_food_category(value):
     return value if value in ALLOWED_FOOD_CATEGORIES else None
 
 
-#We will validate the foods array sent by listing endpoints
+# We will validate the foods array sent by listing endpoints
 def parse_food_items(value):
     if not isinstance(value, list) or not value:
         raise ValueError("foods must be a non-empty array")
@@ -185,23 +201,22 @@ def parse_food_items(value):
         if quantity <= 0:
             raise ValueError(f"foods[{index}].quantity must be greater than 0")
 
-        foods.append({
-            "name": item["name"],
-            "description": item.get("description") or None,
-            "category": category,
-            "is_perishable": item["is_perishable"],
-            "quantity": quantity,
-            "quantity_unit": item["quantity_unit"],
-            "expiration_date": parse_optional_date(
-                item.get("expiration_date"),
-                f"foods[{index}].expiration_date"
-            ),
-        })
+        foods.append(
+            {
+                "name": item["name"],
+                "description": item.get("description") or None,
+                "category": category,
+                "is_perishable": item["is_perishable"],
+                "quantity": quantity,
+                "quantity_unit": item["quantity_unit"],
+                "expiration_date": parse_optional_date(item.get("expiration_date"), f"foods[{index}].expiration_date"),
+            }
+        )
 
     return foods
 
 
-#We will validate the optional list of days/times when a listing can be exchanged
+# We will validate the optional list of days/times when a listing can be exchanged
 def parse_availability_windows(value):
     if value in (None, ""):
         return []
@@ -233,10 +248,12 @@ def parse_availability_windows(value):
         if end_time <= start_time:
             raise ValueError(f"availability_windows[{index}].end_time must be after start_time")
 
-        windows.append({
-            "day": day,
-            "start_time": start_time.strftime("%H:%M"),
-            "end_time": end_time.strftime("%H:%M"),
-        })
+        windows.append(
+            {
+                "day": day,
+                "start_time": start_time.strftime("%H:%M"),
+                "end_time": end_time.strftime("%H:%M"),
+            }
+        )
 
     return windows

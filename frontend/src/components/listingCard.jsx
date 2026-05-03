@@ -1,5 +1,5 @@
-import { Link } from "react-router-dom";
-import { motion as Motion } from "motion/react";
+import { Link } from 'react-router-dom';
+import { motion as Motion } from 'motion/react';
 
 export default function ListingCard({
   eyebrow,
@@ -9,28 +9,17 @@ export default function ListingCard({
   highlightValue,
   detailItems = [],
   tags = [],
-  variant = "default",
+  variant = 'default',
   metaText,
   action,
 }) {
-  const inlineAction =
-    action?.placement === "inline" ? (
-      <Link
-        to={action.to}
-        className="inline-flex items-center gap-1 text-sm font-semibold text-slate-600 transition hover:text-amber-800"
-      >
-        <span>{action.label}</span>
-        <span aria-hidden="true">›</span>
-      </Link>
-    ) : null;
-
-  if (variant === "compactHistory") {
+  if (variant === 'compactHistory') {
     return (
       <Motion.article
         initial={{ opacity: 0, y: 22 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-        className="rounded-[1.5rem] border border-white/70 bg-white/80 px-5 py-4 shadow-lg backdrop-blur-md"
+        transition={{ duration: 0.4, ease: 'easeOut' }}
+        className="surface-glass-compact px-5 py-4"
       >
         <div className="min-w-0">
           <h3 className="text-lg font-bold text-slate-900">{title}</h3>
@@ -39,10 +28,7 @@ export default function ListingCard({
 
         {action ? (
           <div className="mt-5">
-            <Link
-              to={action.to}
-              className="inline-flex rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-amber-300 hover:text-amber-800"
-            >
+            <Link to={action.to} className="btn-soft">
               {action.label}
             </Link>
           </div>
@@ -55,8 +41,8 @@ export default function ListingCard({
     <Motion.article
       initial={{ opacity: 0, y: 22 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: "easeOut" }}
-      className="rounded-[1.75rem] border border-white/70 bg-white/85 p-6 shadow-xl backdrop-blur-md"
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+      className="surface-glass p-6"
     >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-3">
@@ -64,14 +50,18 @@ export default function ListingCard({
             {eyebrow}
           </p>
           <h3 className="text-2xl font-bold text-slate-900">{title}</h3>
-          <p className="max-w-2xl text-sm leading-6 text-slate-600">{summary}</p>
+          <p className="max-w-2xl text-sm leading-6 text-slate-600">
+            {summary}
+          </p>
         </div>
 
         <div className="rounded-2xl bg-emerald-50 px-4 py-3 text-right">
           <p className="text-xs font-semibold tracking-[0.15em] text-emerald-700 uppercase">
             {highlightLabel}
           </p>
-          <p className="mt-1 text-lg font-bold text-emerald-900">{highlightValue}</p>
+          <p className="mt-1 text-lg font-bold text-emerald-900">
+            {highlightValue}
+          </p>
         </div>
       </div>
 
@@ -100,14 +90,9 @@ export default function ListingCard({
         ))}
       </div>
 
-      {inlineAction ? <div className="mt-5">{inlineAction}</div> : null}
-
       {action ? (
-        <div className={`mt-5 ${action.placement === "inline" ? "hidden" : ""}`}>
-          <Link
-            to={action.to}
-            className="inline-flex rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-amber-300 hover:text-amber-800"
-          >
+        <div className="mt-5">
+          <Link to={action.to} className="btn-soft">
             {action.label}
           </Link>
         </div>
