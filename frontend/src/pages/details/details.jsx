@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLoaderData } from "react-router-dom";
 
+import { useToast } from "../../hooks/useToast.js";
 import { formatAvailabilityWindows } from "../../utils/formatDates.js";
 import { formatFoodCategory, formatFoodQuantity, getFoodTitle } from "../../utils/foods.js";
 
@@ -90,10 +91,12 @@ function getEditableFood(food) {
 
 export default function Details() {
   const { page, record } = useLoaderData();
+  const { showToast } = useToast();
   const [listing, setListing] = useState(record);
   const foods = listing.foods ?? [];
   const [status, setStatus] = useState(record.status);
-  const [actionState, setActionState] = useState({ status: "idle", message: "" });
+  const [isSubmittingAction, setIsSubmittingAction] = useState(false);
+  const [acceptedThisSession, setAcceptedThisSession] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editFoods, setEditFoods] = useState((record.foods ?? []).map(getEditableFood));
   const [editAvailability, setEditAvailability] = useState(record.availability_windows ?? []);
@@ -108,13 +111,13 @@ export default function Details() {
   const canEdit = !isHistory && isOwnListing && status === "available";
   const canCancel = !isHistory && isOwnListing && ["available", "claimed"].includes(status);
   const canComplete = !isHistory && isOwnListing && status === "claimed";
-  const actionPending = actionState.status === "submitting";
+  const actionPending = isSubmittingAction;
   const distanceLabel = isOffer
     ? "Distance we're willing to deliver"
     : "Distance we're willing to pick up";
 
   async function handleAcceptListing() {
-    setActionState({ status: "submitting", message: "" });
+    setIsSubmittingAction(true);
 
     try {
       const res = await fetch("/api/listings/accept", {
@@ -129,25 +132,22 @@ export default function Details() {
       const data = await res.json().catch(() => null);
 
       if (!res.ok) {
-        setActionState({
-          status: "error",
-          message: data?.error ?? "Unable to update this listing.",
-        });
+        showToast(data?.error ?? "Unable to update this listing.", "error");
         return;
       }
 
       setStatus("claimed");
-      setActionState({
-        status: "success",
-        message: "Accepted.",
-      });
+      setAcceptedThisSession(true);
+      showToast("Accepted.", "success");
     } catch {
-      setActionState({ status: "error", message: "Network error." });
+      showToast("Network error.", "error");
+    } finally {
+      setIsSubmittingAction(false);
     }
   }
 
   async function handleListingAction(endpoint, nextStatus, message) {
-    setActionState({ status: "submitting", message: "" });
+    setIsSubmittingAction(true);
 
     try {
       const res = await fetch(endpoint, {
@@ -160,17 +160,16 @@ export default function Details() {
       const data = await res.json().catch(() => null);
 
       if (!res.ok) {
-        setActionState({
-          status: "error",
-          message: data?.error ?? "Unable to update this listing.",
-        });
+        showToast(data?.error ?? "Unable to update this listing.", "error");
         return;
       }
 
       setStatus(nextStatus);
-      setActionState({ status: "success", message });
+      showToast(message, "success");
     } catch {
-      setActionState({ status: "error", message: "Network error." });
+      showToast("Network error.", "error");
+    } finally {
+      setIsSubmittingAction(false);
     }
   }
 
@@ -192,7 +191,7 @@ export default function Details() {
 
   async function handleSaveEdits(event) {
     event.preventDefault();
-    setActionState({ status: "submitting", message: "" });
+    setIsSubmittingAction(true);
 
     try {
       const res = await fetch("/api/listings/edit", {
@@ -214,10 +213,7 @@ export default function Details() {
       const data = await res.json().catch(() => null);
 
       if (!res.ok) {
-        setActionState({
-          status: "error",
-          message: data?.error ?? "Unable to save changes.",
-        });
+        showToast(data?.error ?? "Unable to save changes.", "error");
         return;
       }
 
@@ -234,9 +230,11 @@ export default function Details() {
         },
       }));
       setIsEditing(false);
-      setActionState({ status: "success", message: "Changes saved." });
+      showToast("Changes saved.", "success");
     } catch {
-      setActionState({ status: "error", message: "Network error." });
+      showToast("Network error.", "error");
+    } finally {
+      setIsSubmittingAction(false);
     }
   }
 
@@ -264,14 +262,16 @@ export default function Details() {
 
           {!isHistory ? (
             <div className="mt-5">
-              <button
-                type="button"
-                onClick={handleAcceptListing}
-                disabled={!canAccept || actionPending}
-                className="inline-flex cursor-pointer rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
-              >
-                {actionPending && canAccept ? "Working..." : "Accept"}
-              </button>
+              {!isOwnListing ? (
+                <button
+                  type="button"
+                  onClick={handleAcceptListing}
+                  disabled={!canAccept || actionPending}
+                  className="inline-flex cursor-pointer rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+                >
+                  {actionPending && canAccept ? "Working..." : "Accept"}
+                </button>
+              ) : null}
               {canEdit ? (
                 <button
                   type="button"
@@ -305,23 +305,9 @@ export default function Details() {
                   Complete
                 </button>
               ) : null}
-              {isOwnListing ? (
-                <p className="mt-2 text-sm text-slate-600">
-                  You created this listing, so it cannot be accepted from this view.
-                </p>
-              ) : null}
-              {!isOwnListing && status !== "available" && actionState.status !== "success" ? (
+              {!isOwnListing && status !== "available" && !acceptedThisSession ? (
                 <p className="mt-2 text-sm text-slate-600">
                   This listing is no longer available.
-                </p>
-              ) : null}
-              {actionState.message ? (
-                <p
-                  className={`mt-2 text-sm font-medium ${
-                    actionState.status === "error" ? "text-red-600" : "text-emerald-700"
-                  }`}
-                >
-                  {actionState.message}
                 </p>
               ) : null}
             </div>

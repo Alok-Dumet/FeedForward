@@ -1,16 +1,26 @@
-import { useState } from "react";
+import { useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { motion as Motion } from "motion/react";
 
 import { getDefaultRouteForUserType, getUserType } from "../../session.js";
 import { useSessionActions } from "../../hooks/useSession.js";
+import { useToast } from "../../hooks/useToast.js";
 
 export default function Login() {
-  const [error, setError] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
   const message = location.state?.message ?? "";
   const { setSession } = useSessionActions();
+  const { showToast } = useToast();
+
+  useEffect(() => {
+    if (!message) {
+      return;
+    }
+
+    showToast(message, "success");
+    navigate(location.pathname, { replace: true, state: null });
+  }, [location.pathname, message, navigate, showToast]);
 
   //We will submit credentials to /api/login, then read /api/session to determine where to redirect
   async function handleSubmit(e) {
@@ -18,10 +28,6 @@ export default function Login() {
 
     const email = e.currentTarget.elements.email.value;
     const password = e.currentTarget.elements.password.value;
-
-    if (location.state?.message) {
-      navigate(location.pathname, { replace: true, state: null });
-    }
 
     try {
       const res = await fetch("/api/login", {
@@ -32,7 +38,7 @@ export default function Login() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data?.error ?? "Unable to log in");
+        showToast(data?.error ?? "Unable to log in", "error");
         return;
       }
 
@@ -43,17 +49,16 @@ export default function Login() {
       const userType = getUserType(session);
 
       if (!userType) {
-        setError("Unable to determine account type");
+        showToast("Unable to determine account type", "error");
         return;
       }
 
-      setError("");
       setSession(session);
       navigate(getDefaultRouteForUserType(userType), {
         replace: true,
       });
     } catch {
-      setError("Network Error");
+      showToast("Network Error", "error");
     }
   }
 
@@ -107,11 +112,6 @@ export default function Login() {
               className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 transition outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
             />
           </div>
-
-          {message && (
-            <p className="text-sm font-medium text-emerald-700">{message}</p>
-          )}
-          {error && <p className="text-sm font-medium text-red-600">{error}</p>}
 
           <button
             type="submit"

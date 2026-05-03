@@ -78,8 +78,24 @@ def get_listing_details(handler):
                     ON claims.listing_id = listings.id
                     AND claims.status IN ('pending', 'accepted')
                 WHERE listings.id = %s
+                    AND (
+                        listings.creator_user_id = %s
+                        OR (
+                            listings.status = 'available'
+                            AND (
+                                (listings.listing_type = 'offer' AND %s = 'recipient_organization')
+                                OR (listings.listing_type = 'request' AND %s = 'food_provider')
+                            )
+                        )
+                        OR EXISTS (
+                            SELECT 1
+                            FROM claims AS user_claim
+                            WHERE user_claim.listing_id = listings.id
+                                AND user_claim.claimant_user_id = %s
+                        )
+                    )
                 """,
-                (listing_id,)
+                (listing_id, user["id"], user["role"], user["role"], user["id"])
             )
             rows = cur.fetchall()
     except Exception:

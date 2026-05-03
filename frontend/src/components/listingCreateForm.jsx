@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { useToast } from "../hooks/useToast.js";
 import FormField from "./formField.jsx";
 
 const FOOD_CATEGORIES = [
@@ -75,9 +76,8 @@ export default function ListingCreateForm({
   const [locationAddress, setLocationAddress] = useState(user.address_text ?? "");
   const [travelDistanceMiles, setTravelDistanceMiles] = useState("150");
   const [additionalInstructions, setAdditionalInstructions] = useState("");
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { showToast } = useToast();
 
   const hasLocationCoordinates = user.latitude && user.longitude;
 
@@ -120,11 +120,9 @@ export default function ListingCreateForm({
 
   async function handleSubmit(event) {
     event.preventDefault();
-    setError("");
-    setSuccess("");
 
     if (!hasLocationCoordinates) {
-      setError(locationUnavailableMessage);
+      showToast(locationUnavailableMessage, "error");
       return;
     }
 
@@ -150,13 +148,13 @@ export default function ListingCreateForm({
       const data = await res.json().catch(() => null);
 
       if (!res.ok) {
-        setError(data?.error ?? "Unable to publish listing.");
+        showToast(data?.error ?? "Unable to publish listing.", "error");
         return;
       }
 
-      setSuccess(successLabel);
+      showToast(successLabel, "success");
     } catch {
-      setError("Network error. Please try again.");
+      showToast("Network error. Please try again.", "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -420,11 +418,6 @@ export default function ListingCreateForm({
           ))}
         </div>
       </div>
-
-      {error ? <p className="mt-5 text-sm font-semibold text-red-600">{error}</p> : null}
-      {success ? (
-        <p className="mt-5 text-sm font-semibold text-emerald-700">{success}</p>
-      ) : null}
 
       <div className="mt-8 flex flex-wrap gap-3">
         <button

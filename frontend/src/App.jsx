@@ -2,6 +2,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import BackGround1 from "./components/background1.jsx";
+import { ToastProvider } from "./components/toast.jsx";
 import ErrorCheck from "./pages/errorCheck/errorCheck.jsx";
 import Index from "./pages/index/index.jsx";
 import Login from "./pages/login/login.jsx";
@@ -76,7 +77,7 @@ const router = createBrowserRouter([
       {
         path: "/offers/:id",
         element: <Details />,
-        loader: withProtectedLoader(offerDetailsLoader, ["recipient"]),
+        loader: withProtectedLoader(offerDetailsLoader),
       },
       {
         path: "/requests",
@@ -86,7 +87,7 @@ const router = createBrowserRouter([
       {
         path: "/requests/:id",
         element: <Details />,
-        loader: withProtectedLoader(requestDetailsLoader, ["donor"]),
+        loader: withProtectedLoader(requestDetailsLoader),
       },
       {
         path: "/history/:id",
@@ -140,7 +141,9 @@ const router = createBrowserRouter([
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <ToastProvider>
+        <RouterProvider router={router} />
+      </ToastProvider>
     </QueryClientProvider>
   );
 }

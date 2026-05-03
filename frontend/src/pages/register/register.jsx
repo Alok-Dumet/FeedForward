@@ -1,10 +1,11 @@
-import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion as Motion } from "motion/react";
 
+import { useToast } from "../../hooks/useToast.js";
+
 export default function Register() {
-  const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -37,9 +38,8 @@ export default function Register() {
 
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error);
+        showToast(data.error, "error");
       } else {
-        setError("");
         navigate("/login", {
           state: {
             message: "Registration successful. You can log in now."
@@ -47,7 +47,7 @@ export default function Register() {
         });
       }
     } catch {
-      setError("Network Error");
+      showToast("Network Error", "error");
     }
   }
 
@@ -213,8 +213,6 @@ export default function Register() {
               className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 transition outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
             />
           </div>
-
-          {error && <p className="text-sm font-medium text-red-600">{error}</p>}
 
           <button
             type="submit"
