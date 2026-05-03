@@ -31,7 +31,6 @@ import historyLoader from "./pages/history/historyLoader.jsx";
 import {
   getMyCreateRouteForUserType,
   getMyListingsRouteForUserType,
-  getSessionUserId,
   rootSessionLoader,
   withProtectedLoader,
 } from "./session.js";
@@ -102,29 +101,29 @@ const router = createBrowserRouter([
       {
         path: "/users/:id/offers",
         element: <UserOffers />,
-        loader: withProtectedLoader(userOffersLoader, ["donor"], ({ session, userType }) =>
-          getMyListingsRouteForUserType(userType, getSessionUserId(session))
+        loader: withProtectedLoader(userOffersLoader, ["donor"], ({ userId, userType }) =>
+          getMyListingsRouteForUserType(userType, userId)
         ),
       },
       {
         path: "/users/:id/offers/create",
         element: <UserOfferCreate />,
-        loader: withProtectedLoader(userOfferCreateLoader, ["donor"], ({ session, userType }) =>
-          getMyCreateRouteForUserType(userType, getSessionUserId(session))
+        loader: withProtectedLoader(userOfferCreateLoader, ["donor"], ({ userId, userType }) =>
+          getMyCreateRouteForUserType(userType, userId)
         ),
       },
       {
         path: "/users/:id/requests",
         element: <UserRequests />,
-        loader: withProtectedLoader(userRequestsLoader, ["recipient"], ({ session, userType }) =>
-          getMyListingsRouteForUserType(userType, getSessionUserId(session))
+        loader: withProtectedLoader(userRequestsLoader, ["recipient"], ({ userId, userType }) =>
+          getMyListingsRouteForUserType(userType, userId)
         ),
       },
       {
         path: "/users/:id/requests/create",
         element: <UserRequestCreate />,
-        loader: withProtectedLoader(userRequestCreateLoader, ["recipient"], ({ session, userType }) =>
-          getMyCreateRouteForUserType(userType, getSessionUserId(session))
+        loader: withProtectedLoader(userRequestCreateLoader, ["recipient"], ({ userId, userType }) =>
+          getMyCreateRouteForUserType(userType, userId)
         ),
       },
     ],

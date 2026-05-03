@@ -6,8 +6,7 @@ import {
   SESSION_QUERY_KEY,
   fetchSession,
   getDefaultRouteForUserType,
-  getSessionUserId,
-  getUserType,
+  parseSession,
 } from "../session.js";
 
 export function useSession() {
@@ -22,10 +21,8 @@ export function useSession() {
 
   const session = query.data ?? null;
   const user = session?.user ?? session ?? null;
-  const userType = getUserType(session);
-  const userId = getSessionUserId(session);
+  const { userId, userType, organizationName, role } = parseSession(session);
   const defaultRoute = userType ? getDefaultRouteForUserType(userType) : "/";
-  const organizationName = user?.organization_name ?? user?.name ?? "";
 
   return useMemo(
     () => ({
@@ -36,6 +33,7 @@ export function useSession() {
       userId,
       defaultRoute,
       organizationName,
+      role,
       isAuthenticated: Boolean(userType),
     }),
     [
@@ -46,6 +44,7 @@ export function useSession() {
       userId,
       defaultRoute,
       organizationName,
+      role,
     ]
   );
 }

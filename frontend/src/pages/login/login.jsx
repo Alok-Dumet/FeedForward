@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { motion as Motion } from "motion/react";
 
-import { getDefaultRouteForUserType, getUserType } from "../../session.js";
+import { getDefaultRouteForUserType, parseSession } from "../../session.js";
 import { useSessionActions } from "../../hooks/useSession.js";
 import { useToast } from "../../hooks/useToast.js";
 
@@ -46,7 +46,7 @@ export default function Login() {
         headers: { Accept: "application/json" },
       });
       const session = sessionRes.ok ? await sessionRes.json() : data;
-      const userType = getUserType(session);
+      const { userType } = parseSession(session);
 
       if (!userType) {
         showToast("Unable to determine account type", "error");

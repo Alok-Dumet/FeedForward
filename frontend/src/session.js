@@ -19,24 +19,22 @@ function getUserTypeFromRole(role) {
   return USER_TYPE_BY_BACKEND_ROLE[role] ?? null;
 }
 
-export function getUserType(session) {
-  return (
-    getUserTypeFromRole(session?.user?.role) ??
-    getUserTypeFromRole(session?.role) ??
-    session?.user?.user_type ??
-    session?.user_type ??
-    null
-  );
-}
+export function parseSession(raw) {
+  const user = raw?.user ?? raw ?? null;
+  const userIdValue = raw?.user?.id ?? raw?.id ?? null;
+  const role = raw?.user?.role ?? raw?.role ?? null;
+  const userType =
+    getUserTypeFromRole(role) ?? raw?.user?.user_type ?? raw?.user_type ?? null;
 
-export function getSessionUserId(session) {
-  const userId = session?.user?.id ?? session?.id ?? null;
-
-  if (userId === null || userId === undefined) {
-    return null;
-  }
-
-  return String(userId);
+  return {
+    userId:
+      userIdValue === null || userIdValue === undefined
+        ? null
+        : String(userIdValue),
+    userType,
+    organizationName: user?.organization_name ?? user?.name ?? "",
+    role,
+  };
 }
 
 export function getDefaultRouteForUserType(userType) {
@@ -135,12 +133,15 @@ export function withProtectedLoader(loader, allowedUserTypes, getRedirectPath) {
       return session;
     }
 
-    const userType = getUserType(session);
+    const parsedSession = parseSession(session);
+    const { userType } = parsedSession;
 
     if (allowedUserTypes && !allowedUserTypes.includes(userType)) {
       const redirectPath = getRedirectPath?.({
         args,
         session,
+        parsedSession,
+        userId: parsedSession.userId,
         userType,
       });
 
