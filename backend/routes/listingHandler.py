@@ -76,9 +76,7 @@ def build_food_item(row, start_index):
         "is_perishable": row[start_index + 4],
         "quantity": str(row[start_index + 5]),
         "quantity_unit": row[start_index + 6],
-        "expiration_date": (
-            row[start_index + 7].isoformat() if row[start_index + 7] else None
-        ),
+        "expiration_date": (row[start_index + 7].isoformat() if row[start_index + 7] else None),
     }
 
 
@@ -118,9 +116,7 @@ def build_listing_records(rows, relationship=None):
                 record["relationship"] = relationship
             records_by_id[listing_id] = record
 
-        records_by_id[listing_id]["foods"].append(
-            build_food_item(row, LISTING_FOOD_START_INDEX)
-        )
+        records_by_id[listing_id]["foods"].append(build_food_item(row, LISTING_FOOD_START_INDEX))
 
     return list(records_by_id.values())
 
@@ -143,9 +139,7 @@ def build_listing_detail_record(rows, user):
             "latitude": str(row[LISTING_LOCATION_LATITUDE_INDEX]),
             "longitude": str(row[LISTING_LOCATION_LONGITUDE_INDEX]),
         },
-        "foods": [
-            build_food_item(food_row, LISTING_FOOD_START_INDEX) for food_row in rows
-        ],
+        "foods": [build_food_item(food_row, LISTING_FOOD_START_INDEX) for food_row in rows],
         "creator": {
             "organization_name": row[LISTING_CREATOR_ORGANIZATION_INDEX],
             "email": row[DETAIL_CREATOR_EMAIL_INDEX],
@@ -166,20 +160,14 @@ def build_listing_claim(row):
         "id": row[DETAIL_CLAIM_START_INDEX],
         "claimant_user_id": row[DETAIL_CLAIM_START_INDEX + 1],
         "status": row[DETAIL_CLAIM_START_INDEX + 2],
-        "claimed_at": row[DETAIL_CLAIM_START_INDEX + 3].isoformat()
-        if row[DETAIL_CLAIM_START_INDEX + 3]
-        else None,
-        "resolved_at": row[DETAIL_CLAIM_START_INDEX + 4].isoformat()
-        if row[DETAIL_CLAIM_START_INDEX + 4]
-        else None,
+        "claimed_at": row[DETAIL_CLAIM_START_INDEX + 3].isoformat() if row[DETAIL_CLAIM_START_INDEX + 3] else None,
+        "resolved_at": row[DETAIL_CLAIM_START_INDEX + 4].isoformat() if row[DETAIL_CLAIM_START_INDEX + 4] else None,
     }
 
 
 def parse_listing_payload(body, *, require_coordinates):
     foods = parse_food_items(body["foods"])
-    availability_windows = parse_availability_windows(
-        body.get("availability_windows")
-    )
+    availability_windows = parse_availability_windows(body.get("availability_windows"))
     travel_distance_miles = int(body.get("travel_distance_miles", 0))
     if travel_distance_miles < 0:
         raise ValueError("travel_distance_miles must be 0 or greater")
@@ -271,9 +259,7 @@ def get_offers_requests(handler):
     except Exception as exc:
         db.rollback()
         print(f"[get_offers_requests] DB error: {exc!r}")
-        return send_json(
-            handler, 500, {"error": "Unable to load offers or requests."}
-        )
+        return send_json(handler, 500, {"error": "Unable to load offers or requests."})
 
     records = build_listing_records(rows)
 
@@ -465,9 +451,7 @@ def create_listing(handler, listing_type):
             )
             listing = cur.fetchone()
 
-            food_item_ids = insert_listing_food_items(
-                cur, listing[0], listing_payload["foods"], return_ids=True
-            )
+            food_item_ids = insert_listing_food_items(cur, listing[0], listing_payload["foods"], return_ids=True)
 
         db.commit()
     except errors.CheckViolation:
@@ -514,11 +498,7 @@ def create_listing(handler, listing_type):
                         "is_perishable": food["is_perishable"],
                         "quantity": str(food["quantity"]),
                         "quantity_unit": food["quantity_unit"],
-                        "expiration_date": (
-                            food["expiration_date"].isoformat()
-                            if food["expiration_date"]
-                            else None
-                        ),
+                        "expiration_date": (food["expiration_date"].isoformat() if food["expiration_date"] else None),
                     }
                     for index, food in enumerate(listing_payload["foods"])
                 ],
