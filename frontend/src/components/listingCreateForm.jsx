@@ -91,7 +91,7 @@ export default function ListingCreateForm({ listingType, user }) {
 
   return (
     <form className="surface-glass p-6" onSubmit={handleSubmit}>
-      <p className="text-xs font-semibold tracking-[0.18em] text-amber-700 uppercase">{copy.formLabel}</p>
+      <p className="label-small tracking-[0.18em] text-amber-700">{copy.formLabel}</p>
       <h2 className="mt-3 text-2xl font-bold text-slate-900">{copy.heading}</h2>
 
       <div className="mt-6 grid gap-5 sm:grid-cols-2">
@@ -131,7 +131,7 @@ export default function ListingCreateForm({ listingType, user }) {
             placeholder={copy.additionalInstructionsPlaceholder}
             value={additionalInstructions}
             onChange={(event) => setAdditionalInstructions(event.target.value)}
-            className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-900 outline-none transition focus:border-amber-300"
+            className="form-control text-sm leading-6"
           />
         </FormField>
       </div>
@@ -146,11 +146,7 @@ export default function ListingCreateForm({ listingType, user }) {
       />
 
       <div className="mt-8 flex flex-wrap gap-3">
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="inline-flex cursor-pointer items-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-500"
-        >
+        <button type="submit" disabled={isSubmitting} className="btn-primary inline-flex items-center gap-2 px-5 py-3 text-sm disabled:bg-slate-500">
           {isSubmitting ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" /> : null}
           {isSubmitting ? 'Publishing...' : copy.publishLabel}
         </button>

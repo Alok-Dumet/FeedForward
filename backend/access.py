@@ -70,7 +70,10 @@ def get_required_role(path):
 # Check whether this path needs a logged-in user of any role
 def needs_login(path):
     # checks for exact matches or prefix matches
-    return path in AUTHENTICATED_PATHS or path.startswith("/api/listings/") or any(path == page_path or path.startswith(f"{page_path}/") for page_path in AUTHENTICATED_PAGE_PATHS)
+    protected_api_path = any(path == api_path or path.startswith(f"{api_path}/") for api_path in AUTHENTICATED_API_PATHS)
+    protected_page_path = any(path == page_path or path.startswith(f"{page_path}/") for page_path in AUTHENTICATED_PAGE_PATHS)
+
+    return protected_api_path or protected_page_path
 
 
 # Checks if this path needs a specific role

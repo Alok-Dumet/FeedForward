@@ -32,7 +32,7 @@ function formatDate(value) {
 function DetailField({ label, value }) {
   return (
     <div>
-      <dt className="text-xs font-semibold tracking-[0.15em] text-slate-500 uppercase">{label}</dt>
+      <dt className="label-small tracking-[0.15em] text-slate-500">{label}</dt>
       <dd className="mt-1 text-sm text-slate-900">{value || 'To be confirmed'}</dd>
     </div>
   );
@@ -231,12 +231,7 @@ export default function Details() {
           {!isHistory ? (
             <div className="mt-5">
               {canAccept ? (
-                <button
-                  type="button"
-                  onClick={handleAcceptListing}
-                  disabled={actionPending}
-                  className="inline-flex cursor-pointer rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
-                >
+                <button type="button" onClick={handleAcceptListing} disabled={actionPending} className="btn-primary inline-flex px-5 py-3 text-sm">
                   {actionPending ? 'Working...' : 'Accept'}
                 </button>
               ) : null}
@@ -282,38 +277,19 @@ export default function Details() {
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <label className="grid gap-2 text-sm font-semibold text-slate-700">
                 Address
-                <input
-                  type="text"
-                  required
-                  value={editAddress}
-                  onChange={(event) => setEditAddress(event.target.value)}
-                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-                />
+                <input type="text" required value={editAddress} onChange={(event) => setEditAddress(event.target.value)} className="form-control text-sm" />
               </label>
 
               <label className="grid gap-2 text-sm font-semibold text-slate-700">
                 {distanceLabel}
-                <input
-                  type="number"
-                  required
-                  min="0"
-                  step="1"
-                  value={editDistance}
-                  onChange={(event) => setEditDistance(event.target.value)}
-                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-                />
+                <input type="number" required min="0" step="1" value={editDistance} onChange={(event) => setEditDistance(event.target.value)} className="form-control text-sm" />
               </label>
             </div>
 
             <div className="mt-5">
               <label className="grid gap-2 text-sm font-semibold text-slate-700">
                 Additional instructions
-                <textarea
-                  rows="3"
-                  value={editInstructions}
-                  onChange={(event) => setEditInstructions(event.target.value)}
-                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-900 outline-none transition focus:border-amber-300"
-                />
+                <textarea rows="3" value={editInstructions} onChange={(event) => setEditInstructions(event.target.value)} className="form-control text-sm leading-6" />
               </label>
             </div>
 
@@ -341,11 +317,7 @@ export default function Details() {
               removeLabel="Remove food item"
             />
 
-            <button
-              type="submit"
-              disabled={actionPending}
-              className="mt-6 inline-flex cursor-pointer rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
-            >
+            <button type="submit" disabled={actionPending} className="btn-primary mt-6 inline-flex px-5 py-3 text-sm">
               {actionPending ? 'Saving...' : 'Save Changes'}
             </button>
           </form>
@@ -367,7 +339,7 @@ export default function Details() {
 
                 {food.description ? (
                   <div className="mt-5 rounded-2xl bg-white px-4 py-3">
-                    <p className="text-xs font-semibold tracking-[0.15em] text-slate-500 uppercase">Description</p>
+                    <p className="label-small tracking-[0.15em] text-slate-500">Description</p>
                     <p className="mt-1 text-sm leading-6 text-slate-700">{food.description}</p>
                   </div>
                 ) : null}
@@ -386,7 +358,7 @@ export default function Details() {
 
           {listing.additional_instructions ? (
             <div className="mt-5 rounded-2xl bg-slate-100 px-4 py-3">
-              <p className="text-xs font-semibold tracking-[0.15em] text-slate-500 uppercase">Instructions</p>
+              <p className="label-small tracking-[0.15em] text-slate-500">Instructions</p>
               <p className="mt-1 text-sm leading-6 text-slate-700">{listing.additional_instructions}</p>
             </div>
           ) : null}

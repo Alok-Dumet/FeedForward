@@ -10,7 +10,7 @@ export default function History() {
 
   return (
     <ListingPageShell
-      eyebrow="History"
+      sectionLabel="History"
       description="Review completed and cancelled listings"
       items={filteredItems}
       filters={filters}

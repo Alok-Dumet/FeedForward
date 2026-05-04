@@ -5,6 +5,10 @@
     @apply inline-flex cursor-pointer rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-amber-300 hover:text-amber-800;
   }
 
+  .btn-primary {
+    @apply cursor-pointer rounded-2xl bg-slate-900 font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400;
+  }
+
   .btn-pill {
     @apply cursor-pointer rounded-full border px-4 py-2 text-sm font-medium transition;
   }
@@ -31,5 +35,17 @@
 
   .surface-glass-bar {
     @apply rounded-[1.5rem] border border-white/70 bg-white/75 shadow-lg backdrop-blur-md;
+  }
+
+  .form-control {
+    @apply w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 transition outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100;
+  }
+
+  .label-small {
+    @apply text-xs font-semibold uppercase;
+  }
+
+  .brand-label {
+    @apply text-sm font-medium tracking-[0.2em] text-amber-700 uppercase;
   }
 }

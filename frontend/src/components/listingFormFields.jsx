@@ -34,12 +34,7 @@ export function ListingAvailabilityEditor({
           {windows.map((window, index) => (
             <div key={index} className={itemClassName}>
               <FormField label="Day">
-                <select
-                  required
-                  value={window.day}
-                  onChange={(event) => onUpdate(index, 'day', event.target.value)}
-                  className="cursor-pointer rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-                >
+                <select required value={window.day} onChange={(event) => onUpdate(index, 'day', event.target.value)} className="form-control cursor-pointer text-sm">
                   {DAY_OPTIONS.map(([value, label]) => (
                     <option key={value} value={value}>
                       {label}
@@ -49,23 +44,11 @@ export function ListingAvailabilityEditor({
               </FormField>
 
               <FormField label="Start time">
-                <input
-                  type="time"
-                  required
-                  value={window.start_time}
-                  onChange={(event) => onUpdate(index, 'start_time', event.target.value)}
-                  className="cursor-pointer rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-                />
+                <input type="time" required value={window.start_time} onChange={(event) => onUpdate(index, 'start_time', event.target.value)} className="form-control cursor-pointer text-sm" />
               </FormField>
 
               <FormField label="End time">
-                <input
-                  type="time"
-                  required
-                  value={window.end_time}
-                  onChange={(event) => onUpdate(index, 'end_time', event.target.value)}
-                  className="cursor-pointer rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-                />
+                <input type="time" required value={window.end_time} onChange={(event) => onUpdate(index, 'end_time', event.target.value)} className="form-control cursor-pointer text-sm" />
               </FormField>
 
               <div className="flex items-end">
@@ -130,23 +113,11 @@ export function ListingFoodEditor({
 
             <div className="mt-5 grid gap-5 sm:grid-cols-2">
               <FormField label="Food name">
-                <input
-                  type="text"
-                  required
-                  placeholder={foodNamePlaceholder}
-                  value={food.name}
-                  onChange={(event) => onUpdate(index, 'name', event.target.value)}
-                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-                />
+                <input type="text" required placeholder={foodNamePlaceholder} value={food.name} onChange={(event) => onUpdate(index, 'name', event.target.value)} className="form-control text-sm" />
               </FormField>
 
               <FormField label="Category">
-                <select
-                  required
-                  value={food.category}
-                  onChange={(event) => onUpdate(index, 'category', event.target.value)}
-                  className="cursor-pointer rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-                >
+                <select required value={food.category} onChange={(event) => onUpdate(index, 'category', event.target.value)} className="form-control cursor-pointer text-sm">
                   {Object.entries(FOOD_CATEGORY_LABELS).map(([value, label]) => (
                     <option key={value} value={value}>
                       {label}
@@ -156,15 +127,7 @@ export function ListingFoodEditor({
               </FormField>
 
               <FormField label="Quantity">
-                <input
-                  type="number"
-                  required
-                  min="0.01"
-                  step="0.01"
-                  value={food.quantity}
-                  onChange={(event) => onUpdate(index, 'quantity', event.target.value)}
-                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-                />
+                <input type="number" required min="0.01" step="0.01" value={food.quantity} onChange={(event) => onUpdate(index, 'quantity', event.target.value)} className="form-control text-sm" />
               </FormField>
 
               <FormField label="Quantity unit">
@@ -174,17 +137,12 @@ export function ListingFoodEditor({
                   placeholder="Example: Boxes, pounds, trays, servings"
                   value={food.quantity_unit}
                   onChange={(event) => onUpdate(index, 'quantity_unit', event.target.value)}
-                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
+                  className="form-control text-sm"
                 />
               </FormField>
 
               <FormField label="Expiration date" hint="Leave blank if it does not expire.">
-                <input
-                  type="date"
-                  value={food.expiration_date}
-                  onChange={(event) => onUpdate(index, 'expiration_date', event.target.value)}
-                  className="cursor-pointer rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-                />
+                <input type="date" value={food.expiration_date} onChange={(event) => onUpdate(index, 'expiration_date', event.target.value)} className="form-control cursor-pointer text-sm" />
               </FormField>
 
               <label className="flex min-h-[4.75rem] cursor-pointer items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800">
@@ -200,7 +158,7 @@ export function ListingFoodEditor({
                   placeholder={foodDescriptionPlaceholder}
                   value={food.description}
                   onChange={(event) => onUpdate(index, 'description', event.target.value)}
-                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-900 outline-none transition focus:border-amber-300"
+                  className="form-control text-sm leading-6"
                 />
               </FormField>
             </div>

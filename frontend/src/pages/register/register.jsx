@@ -1,5 +1,4 @@
 import { useNavigate, Link } from 'react-router-dom';
-import { motion as Motion } from 'motion/react';
 
 import { useToast } from '../../components/toast.jsx';
 import TextInput from '../../components/textInput.jsx';
@@ -52,14 +51,9 @@ export default function Register() {
 
   return (
     <div className="flex min-h-screen items-center justify-center px-6">
-      <Motion.section
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45, ease: 'easeOut' }}
-        className="w-full max-w-xl rounded-3xl border border-white/60 bg-white/80 p-8 shadow-2xl backdrop-blur-md"
-      >
+      <section className="w-full max-w-xl rounded-3xl border border-white/60 bg-white/80 p-8 shadow-2xl backdrop-blur-md">
         <div className="text-center">
-          <p className="text-sm font-medium tracking-[0.2em] text-amber-700 uppercase">FeedForward</p>
+          <p className="brand-label">FeedForward</p>
           <h1 className="mt-3 text-3xl font-bold text-slate-900">Create account</h1>
           <p className="mt-2 text-sm text-slate-600">Sign up to start using FeedForward.</p>
         </div>
@@ -85,7 +79,7 @@ export default function Register() {
 
           <TextInput label="Password" name="password" type="password" autoComplete="new-password" />
 
-          <button type="submit" className="w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white transition hover:bg-slate-800 cursor-pointer">
+          <button type="submit" className="btn-primary w-full px-4 py-3">
             Register
           </button>
         </form>
@@ -96,7 +90,7 @@ export default function Register() {
             Log in
           </Link>
         </div>
-      </Motion.section>
+      </section>
     </div>
   );
 }

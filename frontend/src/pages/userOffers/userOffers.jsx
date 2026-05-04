@@ -14,7 +14,7 @@ export default function UserOffers() {
 
   return (
     <ListingPageShell
-      eyebrow="My Offers"
+      sectionLabel="My Offers"
       description="Manage your active offers"
       items={filteredItems}
       filters={MY_LISTINGS_FILTERS}

@@ -14,7 +14,7 @@ export default function UserRequests() {
 
   return (
     <ListingPageShell
-      eyebrow="My Requests"
+      sectionLabel="My Requests"
       description="Manage your active requests"
       items={filteredItems}
       filters={MY_LISTINGS_FILTERS}

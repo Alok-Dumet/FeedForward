@@ -63,7 +63,7 @@ export function ToastProvider({ children }) {
               <div className="flex items-start gap-3 px-4 py-3">
                 <span className={`mt-1 h-3 w-3 shrink-0 rounded-full ${isError ? 'bg-red-500' : 'bg-emerald-500'}`} />
                 <div className="min-w-0 flex-1">
-                  <p className={`text-xs font-semibold tracking-[0.15em] uppercase ${isError ? 'text-red-700' : 'text-emerald-700'}`}>{isError ? 'Error' : 'Success'}</p>
+                  <p className={`label-small tracking-[0.15em] ${isError ? 'text-red-700' : 'text-emerald-700'}`}>{isError ? 'Error' : 'Success'}</p>
                   <p className="mt-1 text-sm leading-6 font-medium text-slate-800">{toast.message}</p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">

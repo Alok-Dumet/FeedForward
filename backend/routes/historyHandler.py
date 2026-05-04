@@ -2,6 +2,7 @@ from database.database import db
 from sessions import get_user
 from utils import send_json
 
+
 # We will fetch unique completed or cancelled listings that the user posted or claimed
 def get_history_listing_rows(cur, user_id):
     cur.execute(

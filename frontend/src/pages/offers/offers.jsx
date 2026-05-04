@@ -18,7 +18,7 @@ export default function Offers() {
 
   return (
     <ListingPageShell
-      eyebrow="Available Offers"
+      sectionLabel="Available Offers"
       description="Browse available surplus food offers"
       items={filteredItems}
       filters={filters}

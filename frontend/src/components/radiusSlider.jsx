@@ -1,19 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-const DEFAULT_RADIUS = 150;
-const MIN_RADIUS = 25;
-const MAX_RADIUS = 6000;
-const RADIUS_STEP = 25;
-const DEBOUNCE_MS = 300;
-
 function normalizeRadius(value) {
   const radius = Number(value);
   if (Number.isFinite(radius) && radius > 0) {
     return radius;
   }
 
-  return DEFAULT_RADIUS;
+  return 150;
 }
 
 export default function RadiusSlider({ defaultMiles }) {
@@ -26,7 +20,7 @@ export default function RadiusSlider({ defaultMiles }) {
       const next = new URLSearchParams(searchParams);
       next.set('radius_miles', String(value));
       setSearchParams(next, { replace: true });
-    }, DEBOUNCE_MS);
+    }, 300);
     return () => clearTimeout(handle);
   }, [value, searchParams, setSearchParams]);
 
@@ -39,9 +33,9 @@ export default function RadiusSlider({ defaultMiles }) {
         id="radius_miles"
         name="radius_miles"
         type="range"
-        min={MIN_RADIUS}
-        max={MAX_RADIUS}
-        step={RADIUS_STEP}
+        min={25}
+        max={6000}
+        step={25}
         value={value}
         onChange={(e) => setValue(Number(e.target.value))}
         className="h-2 w-full max-w-md cursor-pointer appearance-none rounded-full bg-slate-200 accent-slate-900"

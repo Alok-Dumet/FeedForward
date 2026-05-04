@@ -18,7 +18,7 @@ export default function Requests() {
 
   return (
     <ListingPageShell
-      eyebrow="Active Requests"
+      sectionLabel="Active Requests"
       description="Browse active community food requests"
       items={filteredItems}
       filters={filters}
