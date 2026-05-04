@@ -1,12 +1,16 @@
 from sessions import get_user
 from utils import normalize_path, send_json
 
+# API AUTHENTICATION-------------------------------------------
+
+# API endpoints that anyone can call without being logged in
 PUBLIC_API_PATHS = {
     "/api/login",
     "/api/register",
     "/api/logout",
 }
 
+# API endpoints that require a logged-in user of any role
 AUTHENTICATED_API_PATHS = {
     "/api/session",
     "/api/listings",
@@ -19,95 +23,107 @@ AUTHENTICATED_API_PATHS = {
     "/api/history",
 }
 
-ROLE_PROTECTED_API_PATHS = {
-    "/api/listings/offers/create": "food_provider",
-    "/api/listings/requests/create": "recipient_organization",
+# API endpoints only food providers can call
+FOOD_PROVIDER_API_PATHS = {
+    "/api/listings/offers/create",
 }
 
+# API endpoints only recipient organizations can call
+RECIPIENT_ORGANIZATION_API_PATHS = {
+    "/api/listings/requests/create",
+}
+
+# PAGE AUTHENTICATION-------------------------------------------
+
+# Page paths anyone can load without being logged in
+PUBLIC_PAGE_PATHS = {
+    "/",
+    "/login",
+    "/register",
+    "/not_authorized",
+}
+
+# Page paths and prefixes that require a logged-in user of any role
 AUTHENTICATED_PAGE_PATHS = {
     "/history",
+    "/offers",
+    "/requests",
+    "/users",
 }
 
-AUTHENTICATED_PAGE_PREFIXES = (
-    "/offers/",
-    "/requests/",
-    "/history/",
-    "/users/",
-)
-
-ROLE_PROTECTED_PAGE_PATHS = {
-    "/offers": "recipient_organization",
-    "/requests": "food_provider",
+# Page paths only food providers can load
+FOOD_PROVIDER_PAGE_PATHS = {
+    "/requests",
 }
 
-USER_PAGE_SECTION_ROLES = {
-    "offers": "food_provider",
-    "requests": "recipient_organization",
+# Page paths only recipient organizations can load.
+RECIPIENT_ORGANIZATION_PAGE_PATHS = {
+    "/offers",
 }
 
 
+PUBLIC_PATHS = PUBLIC_API_PATHS | PUBLIC_PAGE_PATHS
+AUTHENTICATED_PATHS = AUTHENTICATED_API_PATHS | AUTHENTICATED_PAGE_PATHS
+FOOD_PROVIDER_PATHS = FOOD_PROVIDER_API_PATHS | FOOD_PROVIDER_PAGE_PATHS
+RECIPIENT_ORGANIZATION_PATHS = RECIPIENT_ORGANIZATION_API_PATHS | RECIPIENT_ORGANIZATION_PAGE_PATHS
+
+
+# Helper function for redirecting users
 def redirect(handler, location):
     handler.send_response(302)
     handler.send_header("Location", location)
     handler.end_headers()
 
 
-def get_api_required_role(path):
-    if path in ROLE_PROTECTED_API_PATHS:
-        return ROLE_PROTECTED_API_PATHS[path]
-    if path in AUTHENTICATED_API_PATHS:
-        return None
+# Return the role required for this path, or None if any logged-in user is allowed
+def get_required_role(path):
+    if path in FOOD_PROVIDER_PATHS:
+        return "food_provider"
+    if path in RECIPIENT_ORGANIZATION_PATHS:
+        return "recipient_organization"
     return None
 
 
-def is_known_protected_api(path):
-    return path in AUTHENTICATED_API_PATHS or path in ROLE_PROTECTED_API_PATHS
+# Check whether this path needs a logged-in user of any role
+def needs_login(path):
+    # checks for exact matches or prefix matches
+    return path in AUTHENTICATED_PATHS or any(path == page_path or path.startswith(f"{page_path}/") for page_path in AUTHENTICATED_PAGE_PATHS)
 
 
-def get_user_page_access(path):
-    parts = path.strip("/").split("/")
-    if len(parts) not in (3, 4):
-        return None, None
-
-    prefix, user_id, section, *rest = parts
-    if prefix != "users" or section not in USER_PAGE_SECTION_ROLES:
-        return None, None
-
-    if rest and rest != ["create"]:
-        return None, None
-
-    return USER_PAGE_SECTION_ROLES[section], user_id
+# Checks if this path needs a specific role
+def needs_specific_role(path):
+    return path in FOOD_PROVIDER_PATHS or path in RECIPIENT_ORGANIZATION_PATHS
 
 
-def get_page_required_role(path):
-    user_page_role, _ = get_user_page_access(path)
-    if user_page_role:
-        return user_page_role
-    return ROLE_PROTECTED_PAGE_PATHS.get(path)
+# Sends an error message or redirects to not_authorized page depending on if the request was for an API endpoint or page
+def reject_request(handler, path, status, message):
+    if path.startswith("/api/"):
+        send_json(handler, status, {"error": message})
+    else:
+        redirect(handler, "/not_authorized")
 
 
-def is_protected_page(path):
-    return path in AUTHENTICATED_PAGE_PATHS or path in ROLE_PROTECTED_PAGE_PATHS or path.startswith(AUTHENTICATED_PAGE_PREFIXES)
-
-
+# Main authentication middleware. If it returns True the request gets passed to the route handlers. Otherwise an error is returned
 def enforce_access(handler):
     path = normalize_path(handler.path)
 
+    # Assets are always allowed
     if path.startswith("/assets/"):
         return True
 
-    if path.startswith("/api/") and path not in PUBLIC_API_PATHS and not is_known_protected_api(path):
+    # Public paths are always allowed
+    if path in PUBLIC_PATHS:
         return True
 
-    is_api = path.startswith("/api/")
-    if is_api and path in PUBLIC_API_PATHS:
+    # If this path is not listed at all by us, the default behaviour of access.py is to let it pass
+    # app.py will return an error and the frontend will serve an error page
+    path_is_protected = needs_login(path) or needs_specific_role(path)
+    if not path_is_protected:
         return True
 
-    required_role = get_api_required_role(path) if is_api else get_page_required_role(path)
-    needs_auth = is_api or is_protected_page(path)
-    if not needs_auth:
-        return True
+    required_role = get_required_role(path)
 
+    # We check if the user has a session to see if they are authenticated. Then we check if they have the required role if necessary
     try:
         user = get_user(handler)
     except Exception:
@@ -115,22 +131,11 @@ def enforce_access(handler):
         return False
 
     if user is None:
-        if is_api:
-            send_json(handler, 401, {"error": "Not authenticated"})
-        else:
-            redirect(handler, "/not_authorized")
+        reject_request(handler, path, 401, "Not authenticated")
         return False
 
     if required_role and user["role"] != required_role:
-        if is_api:
-            send_json(handler, 403, {"error": "Not authorized"})
-        else:
-            redirect(handler, "/not_authorized")
-        return False
-
-    _, page_user_id = get_user_page_access(path)
-    if page_user_id and str(user["id"]) != page_user_id:
-        redirect(handler, "/not_authorized")
+        reject_request(handler, path, 403, "Not authorized")
         return False
 
     return True

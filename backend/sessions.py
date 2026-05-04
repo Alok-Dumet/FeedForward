@@ -2,14 +2,13 @@ import secrets
 
 from database.database import db
 
-# We will store active sessions in memory for this local app
+# We will store active sessions in memory
 sessions = {}
 
-# We will use one cookie name for session lookup
 SESSION_COOKIE_NAME = "feedforward_session"
 
 
-# We will use this helper function for parsing cookies in from the user's request
+# We will parse cookies in from the user's request
 def parse_cookies(self):
     cookie_header = self.headers.get("Cookie")
     if not cookie_header:
@@ -35,6 +34,7 @@ def create_session(user_id):
 
 
 # We will build the session cookie header value
+# We don't have HTTPS setup yet so we're not using secure...
 def build_session_cookie(session_token, max_age):
     return f"{SESSION_COOKIE_NAME}={session_token}; Path=/; HttpOnly; SameSite=Lax; Max-Age={max_age}"
 
@@ -50,7 +50,7 @@ def get_session_user_id(self):
     return sessions.get(session_token)
 
 
-# We will load the current user once per request
+# We will load the current user from the database by searching if the id loaded from the session matches any records
 def get_user(self):
     cached = getattr(self, "_cached_user", None)
     if cached is not None:
@@ -104,6 +104,6 @@ def get_user(self):
     return resolved
 
 
-# We will delete a session token when a user logs out
+# We will delete the users session from the server when they logs out
 def delete_session(session_token):
     sessions.pop(session_token, None)

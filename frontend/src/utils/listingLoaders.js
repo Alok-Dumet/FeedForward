@@ -1,20 +1,18 @@
 import { getRadiusMiles, withDistanceFilteredRecords } from './distance.js';
+import { FOOD_CATEGORY_LABELS } from './foods.js';
 import {
   buildOwnListingItem,
   buildPublicListingItem,
 } from './listingBuilders.js';
 import { loaderFetch } from './loaderFetch.js';
 
-function getListingFilters(items, allFilterLabel) {
-  if (items.length === 0) {
-    return [];
-  }
-
-  const itemFilters = Array.from(
-    new Set(items.flatMap((item) => item.tags))
-  ).sort();
-
-  return [allFilterLabel, ...itemFilters];
+function getListingFilters(allFilterLabel) {
+  return [
+    allFilterLabel,
+    'Perishable',
+    'Shelf-stable',
+    ...Object.values(FOOD_CATEGORY_LABELS),
+  ];
 }
 
 export function createPublicListingsLoader({ allFilterLabel, errorMessage }) {
@@ -29,7 +27,7 @@ export function createPublicListingsLoader({ allFilterLabel, errorMessage }) {
     const items = records.map(buildPublicListingItem);
 
     return {
-      filters: getListingFilters(items, allFilterLabel),
+      filters: getListingFilters(allFilterLabel),
       items,
       radiusMiles,
     };

@@ -1,7 +1,6 @@
 import { loaderFetch } from '../../utils/loaderFetch.js';
 import {
   formatFoodQuantity,
-  getFoodTags,
   getFoodTitle,
   getPrimaryFood,
 } from '../../utils/foods.js';
@@ -37,14 +36,15 @@ function buildItem(record) {
     timeline: buildTimeline(record),
     location: record.location ?? 'Location unavailable',
     recordType,
-    tags: [ownership, status, recordType, ...getFoodTags(record)],
+    tags: [ownership, status],
   };
 }
 
 //We will pick the most informative timestamp to show on the card based on the record's final status
 function buildTimeline(record) {
-  if (record.claim?.resolved_at) {
-    return `${formatStatus(record.status)} on ${formatDate(record.claim.resolved_at)}`;
+  if (['completed', 'cancelled'].includes(record.status)) {
+    const resolvedAt = record.claim?.resolved_at ?? record.updated_at;
+    return `${formatStatus(record.status)} on ${formatDate(resolvedAt)}`;
   }
   return `Posted on ${formatDate(record.created_at)}`;
 }

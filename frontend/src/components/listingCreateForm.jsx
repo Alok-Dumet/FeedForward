@@ -62,20 +62,18 @@ export default function ListingCreateForm({ listingType, user }) {
       removeItem: removeAvailabilityWindow,
     },
   ] = useEditableList([], EMPTY_AVAILABILITY_WINDOW);
-  const [locationAddress, setLocationAddress] = useState(
-    user.address_text ?? ''
-  );
   const [travelDistanceMiles, setTravelDistanceMiles] = useState('150');
   const [additionalInstructions, setAdditionalInstructions] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { showToast } = useToast();
 
-  const hasLocationCoordinates = user.latitude && user.longitude;
+  const hasAccountLocation =
+    user.address_text && user.latitude && user.longitude;
 
   async function handleSubmit(event) {
     event.preventDefault();
 
-    if (!hasLocationCoordinates) {
+    if (!hasAccountLocation) {
       showToast(copy.locationUnavailableMessage, 'error');
       return;
     }
@@ -91,9 +89,6 @@ export default function ListingCreateForm({ listingType, user }) {
         body: JSON.stringify({
           foods: foods.map(getTrimmedFood),
           availability_windows: availabilityWindows,
-          address_text: locationAddress.trim(),
-          latitude: user.latitude,
-          longitude: user.longitude,
           travel_distance_miles: Number(travelDistanceMiles),
           additional_instructions: additionalInstructions.trim(),
         }),
@@ -123,13 +118,9 @@ export default function ListingCreateForm({ listingType, user }) {
 
       <div className="mt-6 grid gap-5 sm:grid-cols-2">
         <FormField label="Listing address">
-          <input
-            type="text"
-            required
-            value={locationAddress}
-            onChange={(event) => setLocationAddress(event.target.value)}
-            className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
-          />
+          <p className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+            {user.address_text ?? 'Account location unavailable'}
+          </p>
         </FormField>
 
         <FormField label={copy.travelDistanceLabel}>

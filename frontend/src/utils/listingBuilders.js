@@ -46,6 +46,6 @@ export function buildOwnListingItem(record) {
     location: record.location.address_text,
     audience: record.creator.organization_name,
     detailsPath: `/${listingPath}/${record.id}?from=my-listings`,
-    tags: [ownership, ...getFoodTags(record)],
+    tags: [ownership],
   };
 }

@@ -6,156 +6,136 @@ from utils import send_json
 router = Router()
 
 
-# We will format one food item from a history listing row
-def build_history_food_item(row):
-    return {
-        "id": row[2],
-        "description": row[3],
-        "name": row[4],
-        "category": row[5],
-        "is_perishable": row[6],
-        "quantity": str(row[7]),
-        "quantity_unit": row[8],
-        "expiration_date": row[9].isoformat() if row[9] else None,
-    }
+# We will fetch unique completed or cancelled listings that the user posted or claimed
+def get_history_listing_rows(cur, user_id):
+    cur.execute(
+        """
+        SELECT
+            listings.id AS listing_id,
+            listings.listing_type AS listing_type,
+            listings.status AS status,
+            listings.availability_windows AS availability_windows,
+            locations.address_text AS address_text,
+            listings.created_at AS created_at,
+            listings.updated_at AS updated_at,
+            claims.id AS claim_id,
+            claims.claimant_user_id AS claimant_user_id,
+            claims.claimed_at AS claimed_at,
+            claims.resolved_at AS resolved_at,
+            'own' AS relationship
+        FROM listings
+        JOIN locations
+            ON locations.id = listings.location_id
+        LEFT JOIN claims
+            ON claims.listing_id = listings.id
+        WHERE listings.creator_user_id = %s
+            AND listings.status IN ('completed', 'cancelled')
+
+        UNION
+
+        SELECT
+            listings.id AS listing_id,
+            listings.listing_type AS listing_type,
+            listings.status AS status,
+            listings.availability_windows AS availability_windows,
+            locations.address_text AS address_text,
+            listings.created_at AS created_at,
+            listings.updated_at AS updated_at,
+            claims.id AS claim_id,
+            claims.claimant_user_id AS claimant_user_id,
+            claims.claimed_at AS claimed_at,
+            claims.resolved_at AS resolved_at,
+            'claimed' AS relationship
+        FROM claims
+        JOIN listings
+            ON listings.id = claims.listing_id
+        JOIN locations
+            ON locations.id = listings.location_id
+        WHERE claims.claimant_user_id = %s
+            AND listings.status IN ('completed', 'cancelled')
+
+        ORDER BY resolved_at DESC NULLS LAST, updated_at DESC, listing_id DESC
+        """,
+        (user_id, user_id),
+    )
+
+    return cur.fetchall()
 
 
-# We will turn one row from either history query into the dict shape the frontend expects
-def build_history_record(row, relationship):
-    return {
-        "id": row[0],
-        "listing_id": row[0],
-        "listing_type": row[1],
-        "foods": [],
-        "availability_windows": row[11],
-        "location": row[12],
-        "status": row[10],
-        "relationship": relationship,
-        "created_at": row[13].isoformat() if row[13] else None,
-        "updated_at": row[14].isoformat() if row[14] else None,
-        "claim": {
-            "id": row[15],
-            "claimant_user_id": row[16],
-            "status": row[17],
-            "claimed_at": row[18].isoformat() if row[18] else None,
-            "resolved_at": row[19].isoformat() if row[19] else None,
-        }
-        if row[15]
-        else None,
-    }
+# We will fetch all listing_items for the history listing ids in one query
+def get_food_rows(cur, listing_ids):
+    if not listing_ids:
+        return []
+
+    cur.execute(
+        """
+        SELECT
+            listing_id,
+            id,
+            food_description,
+            food_name,
+            food_category,
+            is_perishable,
+            quantity,
+            quantity_unit,
+            expiration_date
+        FROM listing_food_items
+        WHERE listing_id = ANY(%s)
+        ORDER BY listing_id, id
+        """,
+        (listing_ids,),
+    )
+
+    return cur.fetchall()
 
 
-# We will group history rows by listing so multiple foods render on one history card
-def build_history_records(rows, relationship):
-    records_by_id = {}
+# We will format the listing_items and attach the matching listings
+def build_history_records(listing_rows, food_rows):
+    grouped_listing_items = {}
 
-    for row in rows:
+    # Stores lisiting_items in a dictionary, using listing_id as the key and and an array of its listing_items as the value
+    for row in food_rows:
         listing_id = row[0]
-        if listing_id not in records_by_id:
-            records_by_id[listing_id] = build_history_record(row, relationship)
-
-        records_by_id[listing_id]["foods"].append(build_history_food_item(row))
-
-    return list(records_by_id.values())
-
-
-# We will fetch finished listings the user created, joining the latest claim so cards can show who claimed it
-def get_created_history_rows(user_id):
-    with db.cursor() as cur:
-        cur.execute(
-            """
-            SELECT
-                listings.id,
-                listings.listing_type,
-                listing_food_items.id,
-                listing_food_items.food_description,
-                listing_food_items.food_name,
-                listing_food_items.food_category,
-                listing_food_items.is_perishable,
-                listing_food_items.quantity,
-                listing_food_items.quantity_unit,
-                listing_food_items.expiration_date,
-                listings.status,
-                listings.availability_windows,
-                locations.address_text,
-                listings.created_at,
-                listings.updated_at,
-                latest_claim.id,
-                latest_claim.claimant_user_id,
-                latest_claim.status,
-                latest_claim.claimed_at,
-                latest_claim.resolved_at
-            FROM listings
-            JOIN locations
-                ON locations.id = listings.location_id
-            JOIN listing_food_items
-                ON listing_food_items.listing_id = listings.id
-            LEFT JOIN LATERAL (
-                SELECT
-                    claims.id,
-                    claims.claimant_user_id,
-                    claims.status,
-                    claims.claimed_at,
-                    claims.resolved_at
-                FROM claims
-                WHERE claims.listing_id = listings.id
-                ORDER BY COALESCE(claims.resolved_at, claims.claimed_at) DESC, claims.id DESC
-                LIMIT 1
-            ) AS latest_claim
-                ON TRUE
-            WHERE listings.creator_user_id = %s
-                AND listings.status IN ('completed', 'cancelled')
-            ORDER BY COALESCE(latest_claim.resolved_at, latest_claim.claimed_at, listings.updated_at, listings.created_at) DESC,
-                listings.id DESC
-            """,
-            (user_id,),
+        grouped_listing_items.setdefault(listing_id, []).append(
+            {
+                "id": row[1],
+                "description": row[2],
+                "name": row[3],
+                "category": row[4],
+                "is_perishable": row[5],
+                "quantity": str(row[6]),
+                "quantity_unit": row[7],
+                "expiration_date": row[8].isoformat() if row[8] else None,
+            }
         )
 
-        return cur.fetchall()
-
-
-# We will fetch finished listings the user claimed, joining the matching claim directly since we filter by claimant_user_id
-def get_claimed_history_rows(user_id):
-    with db.cursor() as cur:
-        cur.execute(
-            """
-            SELECT
-                listings.id,
-                listings.listing_type,
-                listing_food_items.id,
-                listing_food_items.food_description,
-                listing_food_items.food_name,
-                listing_food_items.food_category,
-                listing_food_items.is_perishable,
-                listing_food_items.quantity,
-                listing_food_items.quantity_unit,
-                listing_food_items.expiration_date,
-                listings.status,
-                listings.availability_windows,
-                locations.address_text,
-                listings.created_at,
-                listings.updated_at,
-                claims.id,
-                claims.claimant_user_id,
-                claims.status,
-                claims.claimed_at,
-                claims.resolved_at
-            FROM claims
-            JOIN listings
-                ON listings.id = claims.listing_id
-            JOIN locations
-                ON locations.id = listings.location_id
-            JOIN listing_food_items
-                ON listing_food_items.listing_id = listings.id
-            WHERE claims.claimant_user_id = %s
-                AND listings.status IN ('completed', 'cancelled')
-            ORDER BY COALESCE(claims.resolved_at, claims.claimed_at, listings.updated_at, listings.created_at) DESC,
-                listings.id DESC
-            """,
-            (user_id,),
+    # Stores listings in an array of dictionaries and provides it it's matching listing_items
+    records = []
+    for row in listing_rows:
+        records.append(
+            {
+                "id": row[0],
+                "listing_id": row[0],
+                "listing_type": row[1],
+                "status": row[2],
+                "availability_windows": row[3],
+                "location": row[4],
+                "created_at": row[5].isoformat() if row[5] else None,
+                "updated_at": row[6].isoformat() if row[6] else None,
+                "claim": {
+                    "id": row[7],
+                    "claimant_user_id": row[8],
+                    "claimed_at": row[9].isoformat() if row[9] else None,
+                    "resolved_at": row[10].isoformat() if row[10] else None,
+                }
+                if row[7]
+                else None,
+                "relationship": row[11],
+                "foods": grouped_listing_items.get(row[0], []),
+            }
         )
 
-        return cur.fetchall()
+    return records
 
 
 # GET endpoint handler that returns the current user's listing history
@@ -163,21 +143,20 @@ def get_history(handler):
     user = get_user(handler)
 
     try:
-        created_rows = get_created_history_rows(user["id"])
-        claimed_rows = get_claimed_history_rows(user["id"])
+        with db.cursor() as cur:
+            listing_rows = get_history_listing_rows(cur, user["id"])
+            listing_ids = [row[0] for row in listing_rows]
+            food_rows = get_food_rows(cur, listing_ids)
     except Exception:
         db.rollback()
         return send_json(handler, 500, {"error": "Unable to load history."})
-
-    records = build_history_records(created_rows, "own")
-    records += build_history_records(claimed_rows, "claimed")
 
     return send_json(
         handler,
         200,
         {
             "filters": ["all", "completed", "cancelled"],
-            "records": records,
+            "records": build_history_records(listing_rows, food_rows),
         },
     )
 

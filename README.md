@@ -1,29 +1,226 @@
 # FeedForward
 
-## Project Status
+FeedForward is a food redistribution web app for connecting organizations that have surplus food with organizations that need food.
 
-FeedForward is currently under active development.
+The app has two account types:
 
-While the core system architecture has been established — including authentication, session management, and database integration — many backend API features are still being built and have not yet been merged into the main application.
+- Food providers can create food offers and accept recipient food requests.
+- Recipient organizations can create food requests and accept provider food offers.
 
-### What is currently complete
-- Landing page
-- User registration
-- User login
-- Authentication & session handling
-- Database setup and schema
+Users can create listings, browse opposite-role listings, accept listings, manage their own listings, cancel listings, complete accepted listings, and view completed or cancelled history.
 
-### What is in progress
-- Backend API endpoints
-- Donation workflows
-- Search and discovery features
-- Reservation/claim logic
-- Notifications and coordination systems
+## Tech Stack
 
-These features exist in development branches and are being actively worked on, but are not yet reflected in the main deployed experience.
+### Backend
 
-## Note
+- Python `http.server`
+- Custom router in `backend/router.py`
+- Custom access middleware in `backend/access.py`
+- PostgreSQL database through `psycopg2`
+- Supabase-hosted PostgreSQL database
+- In-memory session storage with HTTP-only cookies
+- Nominatim/OpenStreetMap geocoding during registration
 
-At this stage, the application does not yet represent the full intended functionality of FeedForward.
+### Frontend
 
-If you’re evaluating my work, I encourage you to explore my other projects in the meantime while this system continues to be developed and integrated.
+- React 19
+- Vite
+- React Router
+- TanStack Query
+- Tailwind CSS
+
+## Main Features
+
+- User registration and login
+- Role-based access for food providers and recipient organizations
+- Food offer creation
+- Food request creation
+- Public browse pages for opposite-role listings
+- Listing detail pages
+- Listing editing while listings are still available
+- Listing accepting/claiming
+- Listing cancellation
+- Listing completion
+- User listing management pages
+- Listing history for completed and cancelled listings
+- Backend route protection for API endpoints and protected page loads
+- Frontend not-authorized page for users who try to access pages outside their role
+
+## Project Structure
+
+```text
+backend/
+  app.py                    Backend entry point
+  router.py                 Small custom route handler
+  access.py                 Authentication and role access checks
+  sessions.py               In-memory session handling
+  utils.py                  Shared backend parsing and validation helpers
+  geocoding.py              City/state geocoding helper
+  database/
+    database.py             PostgreSQL connection
+    dumped_schema.sql       Current database schema
+  routes/
+    authHandler.py          Login, logout, register, session
+    listingHandler.py       Listings, details, create, edit
+    claimHandler.py         Accept, cancel, complete listings
+    historyHandler.py       Completed/cancelled history
+    serveHandler.py         Serves the built React app
+
+frontend/
+  src/
+    App.jsx                 Frontend routes
+    session.js              Frontend session and route helpers
+    pages/                  Page-level route components and loaders
+    components/             Shared UI components
+    hooks/                  Shared React hooks
+    utils/                  Shared frontend helpers
+```
+
+## Backend Access Model
+
+Backend access rules live in `backend/access.py`.
+
+The app separates routes into these groups:
+
+- Public routes that anyone can access
+- Authenticated routes that require any logged-in user
+- Food-provider-only routes
+- Recipient-organization-only routes
+
+The backend protects API endpoints first. Frontend route checks exist to keep the normal user experience clean, but the backend is the main protection against misuse.
+
+## Listing Location Behavior
+
+When a user registers, the app stores that user's organization location.
+
+When a user creates an offer or request, the listing uses the user's saved organization location. The create listing form does not create a new location record for every listing.
+
+## Running The Project
+
+### 1. Install Python Dependencies
+
+From the repo root:
+
+```bash
+pip install -r requirements.txt
+```
+
+### 2. Install Frontend Dependencies
+
+```bash
+cd frontend
+npm install
+```
+
+### 3. Configure Environment Variables
+
+Create an `.env` file available to the backend with:
+
+```bash
+DATABASE_URL=your_postgres_connection_string
+```
+
+The database schema is stored in:
+
+```text
+backend/database/dumped_schema.sql
+```
+
+### 4. Build The Frontend
+
+The Python backend serves the built frontend from `frontend/dist`.
+
+```bash
+cd frontend
+npm run build
+```
+
+### 5. Start The Backend
+
+Run the backend from the `backend` directory:
+
+```bash
+cd backend
+python3 app.py
+```
+
+The app runs at:
+
+```text
+http://localhost:3000
+```
+
+## Useful Commands
+
+Run frontend linting:
+
+```bash
+cd frontend
+npm run lint
+```
+
+Build the frontend:
+
+```bash
+cd frontend
+npm run build
+```
+
+Check backend Python syntax:
+
+```bash
+python3 -m py_compile backend/app.py backend/router.py backend/access.py backend/sessions.py backend/utils.py backend/geocoding.py backend/routes/*.py
+```
+
+## API Overview
+
+### Auth
+
+- `POST /api/register`
+- `POST /api/login`
+- `POST /api/logout`
+- `GET /api/session`
+
+### Listings
+
+- `GET /api/listings`
+- `GET /api/my-listings`
+- `GET /api/listings/details?id=...`
+- `POST /api/listings/offers/create`
+- `POST /api/listings/requests/create`
+- `PATCH /api/listings/edit`
+
+### Claims
+
+- `POST /api/listings/accept`
+- `POST /api/listings/cancel`
+- `POST /api/listings/complete`
+
+### History
+
+- `GET /api/history`
+
+## Frontend Routes
+
+- `/`
+- `/login`
+- `/register`
+- `/not_authorized`
+- `/offers`
+- `/offers/:id`
+- `/requests`
+- `/requests/:id`
+- `/users/:id/offers`
+- `/users/:id/offers/create`
+- `/users/:id/requests`
+- `/users/:id/requests/create`
+- `/history`
+- `/history/:id`
+
+## Notes
+
+Sessions are stored in backend memory instead of the database. This keeps the implementation simple, but it means sessions disappear when the backend restarts.
+
+The session cookie is HTTP-only and uses `SameSite=Lax`. The app does not currently set the `Secure` cookie flag because HTTPS is not set up yet.
+
+The backend currently supports `GET`, `POST`, and `PATCH` requests. It does not implement `DELETE`; users cancel listings instead of deleting them.

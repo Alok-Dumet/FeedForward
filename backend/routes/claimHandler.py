@@ -16,8 +16,8 @@ def accept_listing(handler):
 
     try:
         listing_id = parse_positive_int(body["listing_id"], "listing_id")
-    except ValueError as exc:
-        return send_json(handler, 400, {"error": str(exc)})
+    except ValueError:
+        return send_json(handler, 400, {"error": "Invalid listing id."})
 
     try:
         user = get_user(handler)
@@ -27,15 +27,24 @@ def accept_listing(handler):
                 """
                 INSERT INTO claims(
                     listing_id,
-                    claimant_user_id,
-                    status
+                    claimant_user_id
                 )
-                VALUES(%s, %s, 'accepted')
-                RETURNING id, listing_id, claimant_user_id, status, claimed_at
+                VALUES(%s, %s)
+                RETURNING id, listing_id, claimant_user_id, claimed_at
                 """,
                 (listing_id, user["id"]),
             )
             claim = cur.fetchone()
+
+            cur.execute(
+                """
+                UPDATE listings
+                SET status = 'claimed',
+                    updated_at = NOW()
+                WHERE id = %s
+                """,
+                (listing_id,),
+            )
 
         db.commit()
     except errors.UniqueViolation:
@@ -47,6 +56,7 @@ def accept_listing(handler):
     except errors.RaiseException as exc:
         db.rollback()
 
+        # Database triggers provide short custom messages for claim errors
         message = str(exc)
 
         if "Listing" in message and "does not exist" in message:
@@ -72,11 +82,8 @@ def accept_listing(handler):
     return send_json(
         handler,
         201,
-        {"claim": {"id": claim[0], "listing_id": claim[1], "claimant_user_id": claim[2], "status": claim[3], "claimed_at": claim[4].isoformat()}},
+        {"claim": {"id": claim[0], "listing_id": claim[1], "claimant_user_id": claim[2], "claimed_at": claim[3].isoformat()}},
     )
-
-
-router.post("/api/listings/accept", accept_listing)
 
 
 # POST endpoint handler that cancels a listing owned by the current user
@@ -87,8 +94,8 @@ def cancel_listing(handler):
 
     try:
         listing_id = parse_positive_int(body["listing_id"], "listing_id")
-    except ValueError as exc:
-        return send_json(handler, 400, {"error": str(exc)})
+    except ValueError:
+        return send_json(handler, 400, {"error": "Invalid listing id."})
 
     user = get_user(handler)
 
@@ -100,7 +107,6 @@ def cancel_listing(handler):
                 FROM listings
                 LEFT JOIN claims AS active_claim
                     ON active_claim.listing_id = listings.id
-                    AND active_claim.status IN ('pending', 'accepted')
                 WHERE listings.id = %s
                     AND listings.creator_user_id = %s
                 """,
@@ -120,26 +126,27 @@ def cancel_listing(handler):
                 cur.execute(
                     """
                     UPDATE claims
-                    SET status = 'cancelled',
-                        resolved_at = NOW()
+                    SET resolved_at = NOW()
                     WHERE id = %s
-                    RETURNING id, status, resolved_at
+                    RETURNING id, resolved_at
                     """,
                     (listing[2],),
                 )
-                result = cur.fetchone()
+                claim = cur.fetchone()
             else:
-                cur.execute(
-                    """
-                    UPDATE listings
-                    SET status = 'cancelled',
-                        updated_at = NOW()
-                    WHERE id = %s
-                    RETURNING id, status, updated_at
-                    """,
-                    (listing_id,),
-                )
-                result = cur.fetchone()
+                claim = None
+
+            cur.execute(
+                """
+                UPDATE listings
+                SET status = 'cancelled',
+                    updated_at = NOW()
+                WHERE id = %s
+                RETURNING id, status, updated_at
+                """,
+                (listing_id,),
+            )
+            result = cur.fetchone()
 
         db.commit()
     except Exception:
@@ -155,7 +162,7 @@ def cancel_listing(handler):
             "result": {
                 "id": result[0],
                 "status": result[1],
-                "resolved_at": result[2].isoformat() if result[2] else None,
+                "resolved_at": claim[1].isoformat() if claim else result[2].isoformat(),
             },
         },
     )
@@ -169,8 +176,8 @@ def complete_listing(handler):
 
     try:
         listing_id = parse_positive_int(body["listing_id"], "listing_id")
-    except ValueError as exc:
-        return send_json(handler, 400, {"error": str(exc)})
+    except ValueError:
+        return send_json(handler, 400, {"error": "Invalid listing id."})
 
     user = get_user(handler)
 
@@ -178,27 +185,37 @@ def complete_listing(handler):
         with db.cursor() as cur:
             cur.execute(
                 """
-                UPDATE claims
+                UPDATE listings
                 SET status = 'completed',
-                    resolved_at = NOW()
-                WHERE claims.listing_id = %s
-                    AND claims.status = 'accepted'
+                    updated_at = NOW()
+                WHERE id = %s
+                    AND creator_user_id = %s
+                    AND status = 'claimed'
                     AND EXISTS (
                         SELECT 1
-                        FROM listings
-                        WHERE listings.id = claims.listing_id
-                            AND listings.creator_user_id = %s
-                            AND listings.status = 'claimed'
+                        FROM claims
+                        WHERE claims.listing_id = listings.id
                     )
-                RETURNING id, listing_id, claimant_user_id, status, resolved_at
+                RETURNING id
                 """,
                 (listing_id, user["id"]),
             )
-            claim = cur.fetchone()
+            updated_listing = cur.fetchone()
 
-            if not claim:
+            if not updated_listing:
                 db.rollback()
                 return send_json(handler, 409, {"error": "This listing cannot be completed."})
+
+            cur.execute(
+                """
+                UPDATE claims
+                SET resolved_at = NOW()
+                WHERE listing_id = %s
+                RETURNING id, listing_id, claimant_user_id, resolved_at
+                """,
+                (listing_id,),
+            )
+            claim = cur.fetchone()
 
         db.commit()
     except Exception:
@@ -213,13 +230,13 @@ def complete_listing(handler):
                 "id": claim[0],
                 "listing_id": claim[1],
                 "claimant_user_id": claim[2],
-                "status": claim[3],
-                "resolved_at": claim[4].isoformat() if claim[4] else None,
+                "resolved_at": claim[3].isoformat() if claim[3] else None,
             },
             "listing_status": "completed",
         },
     )
 
 
+router.post("/api/listings/accept", accept_listing)
 router.post("/api/listings/cancel", cancel_listing)
 router.post("/api/listings/complete", complete_listing)

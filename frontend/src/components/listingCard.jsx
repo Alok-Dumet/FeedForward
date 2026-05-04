@@ -26,6 +26,17 @@ export default function ListingCard({
           <p className="mt-1 text-sm text-slate-500">{metaText}</p>
         </div>
 
+        <div className="mt-4 flex flex-wrap gap-2">
+          {tags.map((tag) => (
+            <span
+              key={tag}
+              className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800"
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+
         {action ? (
           <div className="mt-5">
             <Link to={action.to} className="btn-soft">

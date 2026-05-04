@@ -31,7 +31,7 @@ ALLOWED_AVAILABILITY_DAYS = {
 }
 
 
-# We will strip query strings and trailing slashes so routing and access checks agree
+# We will strip query strings and trailing slashes
 def normalize_path(raw_path):
     path = urlparse(raw_path).path
     if len(path) > 1 and path.endswith("/"):
@@ -39,7 +39,7 @@ def normalize_path(raw_path):
     return path
 
 
-# We will use this helper function for sending JSON responses and cookies
+# We will use this for sending JSON responses and cookies
 def send_json(self, status, data, headers=None):
     body = json.dumps(data).encode("utf-8")
     self.send_response(status)
@@ -54,7 +54,7 @@ def send_json(self, status, data, headers=None):
     self.wfile.write(body)
 
 
-# We will use this helper function for parsing request bodies.
+# We will use this for parsing request bodies
 def parse_body(self):
     length = int(self.headers.get("Content-Length", 0))
     if not length:
@@ -73,7 +73,7 @@ def parse_body(self):
     return body
 
 
-# We will use this helper function for stripping the whitespace from string values in the body
+# We will use this for stripping the whitespace from string values in the body
 def strip_strings(body):
     stripped_body = {}
 
@@ -86,7 +86,7 @@ def strip_strings(body):
     return stripped_body
 
 
-# We will use this helper function for validating if the user sent all the proper field. Only None and empty strings count as missing.
+# We will use this for validating if the user sent all the proper field. Only None and empty strings count as missing fields
 def require_fields(body, field_names):
     missing = []
 
@@ -120,8 +120,8 @@ def parse_validate_body(self, required_fields):
     return body
 
 
-# We will pull a single query-string parameter out of the request URL, returning None if it's absent
-def get_query_param(handler, name):
+# We will check if a single query param was sent and return it
+def parse_query_param(handler, name):
     query = urlparse(handler.path).query
     values = parse_qs(query).get(name)
     if not values:
@@ -129,8 +129,8 @@ def get_query_param(handler, name):
     return values[0]
 
 
-# We will parse an optional ISO date string. None or "" returns None; anything else must be a valid date
-def parse_optional_date(value, field_name):
+# We will check if the input is an ISO formatted date
+def parse_ISO_date(value, field_name):
     if value in (None, ""):
         return None
 
@@ -143,7 +143,7 @@ def parse_optional_date(value, field_name):
         raise ValueError(f"{field_name} must be a valid ISO date") from exc
 
 
-# We will parse a value into a Decimal and wrap any conversion error with a friendly field-named message
+# We will parse a value to see if it can be a Decimal for database fields like latitude, longitude, quantity
 def parse_decimal(value, field_name):
     try:
         return Decimal(str(value))
@@ -151,6 +151,7 @@ def parse_decimal(value, field_name):
         raise ValueError(f"{field_name} must be a valid number") from exc
 
 
+# We will pasre a value to see if it can be a positive integer for database fields like listing_id
 def parse_positive_int(value, field_name):
     try:
         parsed_value = int(value)
@@ -163,7 +164,7 @@ def parse_positive_int(value, field_name):
     return parsed_value
 
 
-# We will validate that a food category matches one database value exactly
+# We will validate that a food category exists among our fixed categories
 def validate_food_category(value):
     if not isinstance(value, str):
         return None
@@ -209,7 +210,7 @@ def parse_food_items(value):
                 "is_perishable": item["is_perishable"],
                 "quantity": quantity,
                 "quantity_unit": item["quantity_unit"],
-                "expiration_date": parse_optional_date(item.get("expiration_date"), f"foods[{index}].expiration_date"),
+                "expiration_date": parse_ISO_date(item.get("expiration_date"), f"foods[{index}].expiration_date"),
             }
         )
 
