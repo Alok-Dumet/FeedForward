@@ -4,7 +4,7 @@ import { buildHistoryItem, formatHistoryStatus } from '../../utils/listings.js';
 const HISTORY_OWNERSHIP_FILTERS = ['Posted by you', 'Claimed by you'];
 
 export default async function historyLoader({ request }) {
-  const payload = await loaderFetch('/api/history', request, 'Unable to load history.');
+  const payload = await loaderFetch('/api/listings?scope=history', request, 'Unable to load history.');
   const filters = (payload.filters ?? []).map((filter) => {
     if (filter === 'all') {
       return 'All records';

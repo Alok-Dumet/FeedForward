@@ -99,17 +99,26 @@ export default function Details() {
     distanceLabel = "Distance we're willing to deliver";
   }
 
-  async function handleListingAction(endpoint, message, onSuccess) {
+  async function handleListingAction(endpoint, message, onSuccess, body = null) {
     setIsSubmittingAction(true);
 
+    let method = 'POST';
+    if (body) {
+      method = 'PATCH';
+    }
+
     try {
-      const res = await fetch(endpoint, {
-        method: 'POST',
+      const requestOptions = {
+        method,
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ listing_id: listing.id }),
-      });
+      };
+      if (body) {
+        requestOptions.body = JSON.stringify(body);
+      }
+
+      const res = await fetch(endpoint, requestOptions);
       const data = await res.json().catch(() => null);
 
       if (!res.ok) {
@@ -134,7 +143,7 @@ export default function Details() {
   }
 
   function handleAcceptListing() {
-    return handleListingAction('/api/listings/accept', 'Claimed.', (data) => {
+    return handleListingAction(`/api/listings/${listing.id}/claim`, 'Claimed.', (data) => {
       setStatus('claimed');
       setListing((currentListing) => ({
         ...currentListing,
@@ -149,13 +158,12 @@ export default function Details() {
     setIsSubmittingAction(true);
 
     try {
-      const res = await fetch('/api/listings/edit', {
+      const res = await fetch(`/api/listings/${listing.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          listing_id: listing.id,
           foods: editFoods,
           availability_windows: editAvailability,
           address_text: editAddress.trim(),
@@ -241,7 +249,7 @@ export default function Details() {
               {canCancel ? (
                 <button
                   type="button"
-                  onClick={() => handleListingAction('/api/listings/cancel', 'Listing cancelled.', () => setStatus('cancelled'))}
+                  onClick={() => handleListingAction(`/api/listings/${listing.id}/status`, 'Listing cancelled.', () => setStatus('cancelled'), { status: 'cancelled' })}
                   disabled={actionPending}
                   className="ml-3 inline-flex cursor-pointer rounded-2xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-700 transition hover:border-red-300 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
                 >
@@ -251,7 +259,7 @@ export default function Details() {
               {canComplete ? (
                 <button
                   type="button"
-                  onClick={() => handleListingAction('/api/listings/complete', 'Listing completed.', () => setStatus('completed'))}
+                  onClick={() => handleListingAction(`/api/listings/${listing.id}/status`, 'Listing completed.', () => setStatus('completed'), { status: 'completed' })}
                   disabled={actionPending}
                   className="ml-3 inline-flex cursor-pointer rounded-2xl bg-emerald-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
                 >

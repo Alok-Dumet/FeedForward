@@ -129,6 +129,12 @@ def parse_query_param(handler, name):
     return values[0]
 
 
+# We will check if a single route path param was sent and return it
+def parse_path_param(handler, name):
+    path_params = getattr(handler, "path_params", {})
+    return path_params.get(name)
+
+
 # We will check if the input is an ISO formatted date
 def parse_ISO_date(value, field_name):
     if value in (None, ""):
@@ -162,6 +168,14 @@ def parse_positive_int(value, field_name):
         raise ValueError(f"{field_name} must be greater than zero.")
 
     return parsed_value
+
+
+# We will parse a route path param as a positive integer and return None if it is missing or invalid
+def parse_positive_path_param(handler, name, field_name):
+    try:
+        return parse_positive_int(parse_path_param(handler, name), field_name)
+    except ValueError:
+        return None
 
 
 # We will validate that a food category exists among our fixed categories

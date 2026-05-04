@@ -1,10 +1,6 @@
 from database.database import db
-from router import Router
 from sessions import get_user
 from utils import send_json
-
-router = Router()
-
 
 # We will fetch unique completed or cancelled listings that the user posted or claimed
 def get_history_listing_rows(cur, user_id):
@@ -138,7 +134,7 @@ def build_history_records(listing_rows, food_rows):
     return records
 
 
-# GET endpoint handler that returns the current user's listing history
+# We will return the current user's listing history for the listings history scope
 def get_history(handler):
     user = get_user(handler)
 
@@ -160,6 +156,3 @@ def get_history(handler):
             "records": build_history_records(listing_rows, food_rows),
         },
     )
-
-
-router.get("/api/history", get_history)

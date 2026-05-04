@@ -3,20 +3,15 @@ from psycopg2 import errors
 from database.database import db
 from router import Router
 from sessions import get_user
-from utils import parse_positive_int, parse_validate_body, send_json
+from utils import parse_positive_path_param, parse_validate_body, send_json
 
 router = Router()
 
 
-# POST endpoint handler that accepts and claims a listing
-def accept_listing(handler):
-    body = parse_validate_body(handler, ["listing_id"])
-    if body is None:
-        return
-
-    try:
-        listing_id = parse_positive_int(body["listing_id"], "listing_id")
-    except ValueError:
+# POST endpoint handler for claiming a listing
+def claim_listing(handler):
+    listing_id = parse_positive_path_param(handler, "id", "Listing id")
+    if not listing_id:
         return send_json(handler, 400, {"error": "Invalid listing id."})
 
     try:
@@ -86,17 +81,26 @@ def accept_listing(handler):
     )
 
 
-# POST endpoint handler that cancels a listing owned by the current user
-def cancel_listing(handler):
-    body = parse_validate_body(handler, ["listing_id"])
+# PATCH endpoint handler for changing a listing status
+def update_listing_status(handler):
+    body = parse_validate_body(handler, ["status"])
     if body is None:
         return
 
-    try:
-        listing_id = parse_positive_int(body["listing_id"], "listing_id")
-    except ValueError:
+    listing_id = parse_positive_path_param(handler, "id", "Listing id")
+    if not listing_id:
         return send_json(handler, 400, {"error": "Invalid listing id."})
 
+    if body["status"] == "cancelled":
+        return cancel_listing(handler, listing_id)
+    if body["status"] == "completed":
+        return complete_listing(handler, listing_id)
+
+    return send_json(handler, 400, {"error": "Status must be cancelled or completed."})
+
+
+# We will cancel a listing owned by the current user
+def cancel_listing(handler, listing_id):
     user = get_user(handler)
 
     try:
@@ -168,17 +172,8 @@ def cancel_listing(handler):
     )
 
 
-# POST endpoint handler that marks an accepted listing as completed
-def complete_listing(handler):
-    body = parse_validate_body(handler, ["listing_id"])
-    if body is None:
-        return
-
-    try:
-        listing_id = parse_positive_int(body["listing_id"], "listing_id")
-    except ValueError:
-        return send_json(handler, 400, {"error": "Invalid listing id."})
-
+# We will mark an accepted listing as completed
+def complete_listing(handler, listing_id):
     user = get_user(handler)
 
     try:
@@ -237,6 +232,5 @@ def complete_listing(handler):
     )
 
 
-router.post("/api/listings/accept", accept_listing)
-router.post("/api/listings/cancel", cancel_listing)
-router.post("/api/listings/complete", complete_listing)
+router.post("/api/listings/:id/claim", claim_listing)
+router.patch("/api/listings/:id/status", update_listing_status)

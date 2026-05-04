@@ -38,7 +38,7 @@ def verify_password(password, stored_password_hash):
     return hmac.compare_digest(actual_hash, expected_hash)
 
 
-# POST endpoint handler that registers a new user account
+# POST endpoint handler for registering a new user account
 def register(handler):
     body = parse_validate_body(handler, ["email", "password", "role", "organization_name", "street_address", "address_text", "city", "state"])
     if body is None:
@@ -116,7 +116,7 @@ def register(handler):
     )
 
 
-# POST endpoint handler that logs in a user and starts a session
+# POST endpoint handler for logging in a user and starting a session
 def login(handler):
     body = parse_validate_body(handler, ["email", "password"])
     if body is None:
@@ -159,7 +159,7 @@ def login(handler):
     )
 
 
-# POST endpoint handler that logs out the current user
+# POST endpoint handler for logging out the current user
 def logout(handler):
     cookies = parse_cookies(handler)
     session_token = cookies.get(SESSION_COOKIE_NAME)
@@ -170,7 +170,7 @@ def logout(handler):
     return send_json(handler, 200, {"success": "Logout successful"}, headers=[("Set-Cookie", build_session_cookie("", 0))])
 
 
-# GET endpoint handler that returns the current authenticated user
+# GET endpoint handler for returning the current authenticated user
 def get_session(handler):
     return send_json(handler, 200, {"user": get_user(handler)})
 

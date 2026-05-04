@@ -5,7 +5,7 @@ import os
 DIST_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist"))
 
 
-# GET request handler that serves assets or the frontend app shell
+# We will serve built assets or the frontend app shell
 def handle(handler):
     if handler.path.startswith("/assets/"):
         handle_assets(handler)
@@ -13,7 +13,7 @@ def handle(handler):
         serve_frontend(handler)
 
 
-# GET request handler that serves built frontend assets
+# We will serve built frontend assets
 def handle_assets(handler):
     requested = os.path.realpath(os.path.join(DIST_DIR, handler.path.lstrip("/")))
     if not (requested == DIST_DIR or requested.startswith(DIST_DIR + os.sep)):
@@ -35,7 +35,7 @@ def handle_assets(handler):
         handler.end_headers()
 
 
-# GET request handler that serves the built frontend app shell
+# We will serve the built frontend app shell
 def serve_frontend(handler):
     index_path = os.path.join(DIST_DIR, "index.html")
     try:

@@ -4,7 +4,6 @@ from access import enforce_access
 from routes import (
     authHandler,
     claimHandler,
-    historyHandler,
     listingHandler,
     serveHandler,
 )
@@ -14,7 +13,6 @@ ROUTERS = [
     authHandler.router,
     listingHandler.router,
     claimHandler.router,
-    historyHandler.router,
 ]
 
 

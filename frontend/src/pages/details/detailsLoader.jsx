@@ -1,7 +1,7 @@
 import { loaderFetch } from '../../utils/format.js';
 
 async function loadListingDetails({ params, request }, page) {
-  const payload = await loaderFetch(`/api/listings/details?id=${encodeURIComponent(params.id)}`, request, 'Unable to load listing details.');
+  const payload = await loaderFetch(`/api/listings/${encodeURIComponent(params.id)}`, request, 'Unable to load listing details.');
 
   if (page.type && (!payload.record || payload.record.type !== page.type)) {
     throw new Response('Listing not found.', { status: 404 });

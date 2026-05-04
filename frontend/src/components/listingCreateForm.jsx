@@ -10,7 +10,6 @@ const LISTING_COPY = {
   offer: {
     heading: 'Offer details',
     formLabel: 'Offer Form',
-    endpoint: '/api/listings/offers/create',
     publishLabel: 'Publish offer',
     successLabel: 'Offer published.',
     locationUnavailableMessage: 'Your account needs a valid location before you can publish an offer.',
@@ -23,7 +22,6 @@ const LISTING_COPY = {
   request: {
     heading: 'Request details',
     formLabel: 'Request Form',
-    endpoint: '/api/listings/requests/create',
     publishLabel: 'Publish request',
     successLabel: 'Request published.',
     locationUnavailableMessage: 'Your account needs a valid location before you can publish a request.',
@@ -57,12 +55,13 @@ export default function ListingCreateForm({ listingType, user }) {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch(copy.endpoint, {
+      const res = await fetch('/api/listings', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          type: listingType,
           foods: foods.map(getTrimmedFood),
           availability_windows: availabilityWindows,
           travel_distance_miles: Number(travelDistanceMiles),

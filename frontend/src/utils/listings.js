@@ -5,10 +5,6 @@ import { FOOD_CATEGORY_LABELS, formatAvailabilityWindows, formatNumber, getRadiu
 
 export const MY_LISTINGS_FILTERS = ['All listings', 'Posted by you', 'Claimed by you'];
 
-// =============================================================================
-// Form constants — used by the listing create/edit forms
-// =============================================================================
-
 export const EMPTY_FOOD = {
   name: '',
   description: '',
@@ -47,7 +43,7 @@ export function getTrimmedFood(food) {
   };
 }
 
-//We will reshape one /api/listings record into the card shape that listingPageShell expects
+//We will reshape one public listing record into the card shape that listingPageShell expects
 export function buildPublicListingItem(record) {
   const distance = `${formatNumber(record.distance_miles)} mi away`;
   const summary = summarizeFoods(record);
@@ -64,7 +60,7 @@ export function buildPublicListingItem(record) {
   };
 }
 
-//We will reshape an /api/my-listings record into the card shape userOffers/userRequests expect
+//We will reshape a current-user listing record into the card shape userOffers/userRequests expect
 export function buildOwnListingItem(record) {
   let ownership = 'Claimed by you';
   if (record.relationship === 'own') {
@@ -105,7 +101,7 @@ function formatHistoryDate(value) {
   return historyDateFmt.format(date);
 }
 
-//We will reshape one /api/history record into the card shape the history page expects
+//We will reshape one history listing record into the card shape the history page expects
 export function buildHistoryItem(record) {
   let ownership = 'Claimed by you';
   if (record.relationship === 'own') {
@@ -174,7 +170,7 @@ export function createPublicListingsLoader({ allFilterLabel, errorMessage }) {
 
 export function createUserListingsLoader(errorMessage) {
   return async function userListingsLoader({ request }) {
-    const payload = await loaderFetch('/api/my-listings', request, errorMessage);
+    const payload = await loaderFetch('/api/listings?scope=mine', request, errorMessage);
     return {
       items: (payload.records ?? []).map(buildOwnListingItem),
     };

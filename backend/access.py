@@ -14,23 +14,6 @@ PUBLIC_API_PATHS = {
 AUTHENTICATED_API_PATHS = {
     "/api/session",
     "/api/listings",
-    "/api/my-listings",
-    "/api/listings/details",
-    "/api/listings/edit",
-    "/api/listings/accept",
-    "/api/listings/cancel",
-    "/api/listings/complete",
-    "/api/history",
-}
-
-# API endpoints only food providers can call
-FOOD_PROVIDER_API_PATHS = {
-    "/api/listings/offers/create",
-}
-
-# API endpoints only recipient organizations can call
-RECIPIENT_ORGANIZATION_API_PATHS = {
-    "/api/listings/requests/create",
 }
 
 # PAGE AUTHENTICATION-------------------------------------------
@@ -64,8 +47,8 @@ RECIPIENT_ORGANIZATION_PAGE_PATHS = {
 
 PUBLIC_PATHS = PUBLIC_API_PATHS | PUBLIC_PAGE_PATHS
 AUTHENTICATED_PATHS = AUTHENTICATED_API_PATHS | AUTHENTICATED_PAGE_PATHS
-FOOD_PROVIDER_PATHS = FOOD_PROVIDER_API_PATHS | FOOD_PROVIDER_PAGE_PATHS
-RECIPIENT_ORGANIZATION_PATHS = RECIPIENT_ORGANIZATION_API_PATHS | RECIPIENT_ORGANIZATION_PAGE_PATHS
+FOOD_PROVIDER_PATHS = FOOD_PROVIDER_PAGE_PATHS
+RECIPIENT_ORGANIZATION_PATHS = RECIPIENT_ORGANIZATION_PAGE_PATHS
 
 
 # Helper function for redirecting users
@@ -87,7 +70,7 @@ def get_required_role(path):
 # Check whether this path needs a logged-in user of any role
 def needs_login(path):
     # checks for exact matches or prefix matches
-    return path in AUTHENTICATED_PATHS or any(path == page_path or path.startswith(f"{page_path}/") for page_path in AUTHENTICATED_PAGE_PATHS)
+    return path in AUTHENTICATED_PATHS or path.startswith("/api/listings/") or any(path == page_path or path.startswith(f"{page_path}/") for page_path in AUTHENTICATED_PAGE_PATHS)
 
 
 # Checks if this path needs a specific role

@@ -2,11 +2,12 @@ from psycopg2.extras import Json, execute_values
 
 from database.database import db
 from router import Router
+from routes.historyHandler import get_history
 from sessions import get_user
 from utils import (
     parse_availability_windows,
     parse_food_items,
-    parse_positive_int,
+    parse_positive_path_param,
     parse_query_param,
     parse_validate_body,
     send_json,
@@ -99,7 +100,7 @@ def get_food_rows(cur, listing_ids):
     return cur.fetchall()
 
 
-# We will build the slim listing card records used by /api/listings and GET /api/my-listings
+# We will build the slim listing card records used by public and current-user listing views
 # Each record contains the listing fields, location, creator's organization name, its food items, and an optional relationship ("own" or "claimed")
 def build_listing_records(listing_rows, food_rows):
     grouped_foods = {}
@@ -199,7 +200,7 @@ def build_listing_detail_record(listing_row, food_rows, user):
     }
 
 
-# Helper function for checking if the user's submitted listing in malformed
+# We will validate and reshape a submitted listing body before writing it to the database
 def parse_listing_payload(body):
     foods = parse_food_items(body["foods"])
     availability_windows = parse_availability_windows(body.get("availability_windows"))
@@ -219,7 +220,7 @@ def parse_listing_payload(body):
     return listing_payload
 
 
-# Helper function for inserting a new listing_item when editing or creating a listing
+# We will insert food rows for a listing and return the new food ids
 def insert_listing_food_items(cur, listing_id, foods):
     inserted_foods = execute_values(
         cur,
@@ -243,8 +244,8 @@ def insert_listing_food_items(cur, listing_id, foods):
     return [food[0] for food in inserted_foods]
 
 
-# GET endpoint handler that returns requests for providers or offers for recipients
-def get_offers_requests(handler):
+# We will return requests for providers or offers for recipients
+def get_browse_listings(handler):
     user = get_user(handler)
     user_role = user["role"]
 
@@ -291,7 +292,18 @@ def get_offers_requests(handler):
     )
 
 
-# GET endpoint handler that returns the current user's active and claimed listings
+# GET endpoint handler for listing collections
+def get_listings(handler):
+    scope = parse_query_param(handler, "scope")
+
+    if scope == "mine":
+        return get_my_listings(handler)
+    if scope == "history":
+        return get_history(handler)
+    return get_browse_listings(handler)
+
+
+# We will return the current user's active and claimed listings
 def get_my_listings(handler):
     user = get_user(handler)
 
@@ -329,15 +341,10 @@ def get_my_listings(handler):
     )
 
 
-# GET endpoint handler that returns the full details for one listing
+# GET endpoint handler for one listing
 def get_listing_details(handler):
-    listing_id = parse_query_param(handler, "id")
+    listing_id = parse_positive_path_param(handler, "id", "Listing id")
     if not listing_id:
-        return send_json(handler, 400, {"error": "Missing listing id."})
-
-    try:
-        listing_id = parse_positive_int(listing_id, "Listing id")
-    except ValueError:
         return send_json(handler, 400, {"error": "Invalid listing id."})
 
     try:
@@ -384,13 +391,22 @@ def get_listing_details(handler):
     )
 
 
-# The core code for create_offer and create_request POST endpoint handlers
-def create_listing(handler, listing_type):
-    body = parse_validate_body(handler, ["foods"])
+# POST endpoint handler for creating a listing
+def create_listing(handler):
+    body = parse_validate_body(handler, ["type", "foods"])
     if body is None:
         return
 
+    listing_type = body["type"]
+    if listing_type not in ("offer", "request"):
+        return send_json(handler, 400, {"error": "Listing type must be offer or request."})
+
     user = get_user(handler)
+    if listing_type == "offer" and user["role"] != "food_provider":
+        return send_json(handler, 403, {"error": "Only food providers can create offers."})
+    if listing_type == "request" and user["role"] != "recipient_organization":
+        return send_json(handler, 403, {"error": "Only recipient organizations can create requests."})
+
     if not user["location_id"]:
         return send_json(handler, 400, {"error": "Your account needs a valid location before creating a listing."})
 
@@ -440,7 +456,7 @@ def create_listing(handler, listing_type):
         handler,
         201,
         {
-            listing_type: {
+            "listing": {
                 "id": listing[0],
                 "creator_user_id": user["id"],
                 "type": listing_type,
@@ -474,22 +490,11 @@ def create_listing(handler, listing_type):
     )
 
 
-# POST endpoint handler that creates an offer
-def create_offer(handler):
-    return create_listing(handler, "offer")
-
-
-# POST endpoint handler that creates a request
-def create_request(handler):
-    return create_listing(handler, "request")
-
-
-# PATCH endpoint handler that updates an available listing owned by the current user
+# PATCH endpoint handler for updating an available listing owned by the current user
 def edit_listing(handler):
     body = parse_validate_body(
         handler,
         [
-            "listing_id",
             "foods",
             "availability_windows",
             "address_text",
@@ -499,9 +504,11 @@ def edit_listing(handler):
     if body is None:
         return
 
-    try:
-        listing_id = parse_positive_int(body["listing_id"], "listing_id")
+    listing_id = parse_positive_path_param(handler, "id", "Listing id")
+    if not listing_id:
+        return send_json(handler, 400, {"error": "Invalid listing id."})
 
+    try:
         listing_payload = parse_listing_payload(body)
     except (TypeError, ValueError):
         return send_json(handler, 400, {"error": "Listing information is invalid."})
@@ -579,9 +586,7 @@ def edit_listing(handler):
     )
 
 
-router.get("/api/listings", get_offers_requests)
-router.get("/api/my-listings", get_my_listings)
-router.get("/api/listings/details", get_listing_details)
-router.post("/api/listings/offers/create", create_offer)
-router.post("/api/listings/requests/create", create_request)
-router.patch("/api/listings/edit", edit_listing)
+router.get("/api/listings", get_listings)
+router.post("/api/listings", create_listing)
+router.get("/api/listings/:id", get_listing_details)
+router.patch("/api/listings/:id", edit_listing)
