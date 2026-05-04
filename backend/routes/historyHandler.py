@@ -147,8 +147,9 @@ def get_history(handler):
             listing_rows = get_history_listing_rows(cur, user["id"])
             listing_ids = [row[0] for row in listing_rows]
             food_rows = get_food_rows(cur, listing_ids)
-    except Exception:
+    except Exception as exc:
         db.rollback()
+        print(f"[get_history] DB error: {exc}")
         return send_json(handler, 500, {"error": "Unable to load history."})
 
     return send_json(

@@ -9,16 +9,17 @@ const DEBOUNCE_MS = 300;
 
 function normalizeRadius(value) {
   const radius = Number(value);
-  return Number.isFinite(radius) && radius > 0 ? radius : DEFAULT_RADIUS;
+  if (Number.isFinite(radius) && radius > 0) {
+    return radius;
+  }
+
+  return DEFAULT_RADIUS;
 }
 
-//We will render a labeled range input that pushes radius_miles into the URL search params, debounced so dragging doesn't refetch on every pixel
 export default function RadiusSlider({ defaultMiles }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const urlRadius = searchParams.get('radius_miles');
-  const [value, setValue] = useState(
-    normalizeRadius(urlRadius ?? defaultMiles)
-  );
+  const [value, setValue] = useState(normalizeRadius(urlRadius ?? defaultMiles));
 
   useEffect(() => {
     const handle = setTimeout(() => {
@@ -31,10 +32,7 @@ export default function RadiusSlider({ defaultMiles }) {
 
   return (
     <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-      <label
-        htmlFor="radius_miles"
-        className="text-sm font-semibold text-slate-600"
-      >
+      <label htmlFor="radius_miles" className="text-sm font-semibold text-slate-600">
         Within {value} {value === 1 ? 'mile' : 'miles'}
       </label>
       <input

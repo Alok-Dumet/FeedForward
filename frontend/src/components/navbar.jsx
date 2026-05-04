@@ -1,77 +1,64 @@
 import { useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 
-import {
-  getDefaultRouteForUserType,
-  getMyCreateRouteForUserType,
-  getMyListingsRouteForUserType,
-} from '../session.js';
-import { useSession, useSessionActions } from '../hooks/useSession.js';
+import { DEFAULT_ROUTE_BY_ROLE, getMyListingRouteForRole, useSession, useSessionActions } from '../session.js';
 
-const baseLinkClassName =
-  'cursor-pointer rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-amber-50 hover:text-amber-800';
+const baseLinkClassName = 'cursor-pointer rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-amber-50 hover:text-amber-800';
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { userType, userId } = useSession();
+  const { role, userId } = useSession();
   const { clearSession } = useSessionActions();
 
-  if (!userType) {
+  if (!role) {
     return null;
   }
 
-  const createAction = {
-    label: userType === 'donor' ? 'Create Offer' : 'Create Request',
-    to: getMyCreateRouteForUserType(userType, userId),
-  };
-  const isMyListingsDetail =
-    new URLSearchParams(location.search).get('from') === 'my-listings' &&
-    (location.pathname.startsWith('/offers/') ||
-      location.pathname.startsWith('/requests/'));
+  const isDonor = role === 'food_provider';
+  const isMyListingsDetail = new URLSearchParams(location.search).get('from') === 'my-listings' && (location.pathname.startsWith('/offers/') || location.pathname.startsWith('/requests/'));
+  let browseLabel = 'Offers';
+  let browsePath = '/offers';
+  let myListingsLabel = 'My Requests';
+  let createLabel = 'Create Request';
+  if (isDonor) {
+    browseLabel = 'Requests';
+    browsePath = '/requests';
+    myListingsLabel = 'My Offers';
+    createLabel = 'Create Offer';
+  }
 
-  const navItems =
-    userType === 'donor'
-      ? [
-          {
-            label: 'Requests',
-            to: '/requests',
-            isActive: (routerIsActive) => routerIsActive && !isMyListingsDetail,
-          },
-          {
-            label: 'My Offers',
-            to: getMyListingsRouteForUserType(userType, userId),
-            end: true,
-            isActive: (routerIsActive) => routerIsActive || isMyListingsDetail,
-          },
-          { label: 'History', to: '/history' },
-          createAction,
-        ]
-      : [
-          {
-            label: 'Offers',
-            to: '/offers',
-            isActive: (routerIsActive) => routerIsActive && !isMyListingsDetail,
-          },
-          {
-            label: 'My Requests',
-            to: getMyListingsRouteForUserType(userType, userId),
-            end: true,
-            isActive: (routerIsActive) => routerIsActive || isMyListingsDetail,
-          },
-          { label: 'History', to: '/history' },
-          createAction,
-        ];
+  const navItems = [
+    {
+      label: browseLabel,
+      to: browsePath,
+      isActive: (routerIsActive) => routerIsActive && !isMyListingsDetail,
+    },
+    {
+      label: myListingsLabel,
+      to: getMyListingRouteForRole(role, userId),
+      end: true,
+      isActive: (routerIsActive) => routerIsActive || isMyListingsDetail,
+    },
+    { label: 'History', to: '/history' },
+    {
+      label: createLabel,
+      to: getMyListingRouteForRole(role, userId, '/create'),
+    },
+  ];
 
   function getNavLinkClassName(item, routerIsActive, extraClassName = '') {
-    const isActive = item.isActive?.(routerIsActive) ?? routerIsActive;
+    let isActive = routerIsActive;
+    if (item.isActive) {
+      isActive = item.isActive(routerIsActive);
+    }
+    let activeClassName = '';
+    if (isActive) {
+      activeClassName = 'bg-slate-900 text-white hover:bg-slate-900 hover:text-white';
+    }
 
-    return `${baseLinkClassName} ${extraClassName} ${
-      isActive
-        ? 'bg-slate-900 text-white hover:bg-slate-900 hover:text-white'
-        : ''
-    }`;
+    return `${baseLinkClassName} ${extraClassName} ${activeClassName}`;
   }
 
   async function handleLogout() {
@@ -83,7 +70,7 @@ export default function Navbar() {
         method: 'POST',
       });
     } catch {
-      // Local dev may not expose a logout endpoint.
+      // Local dev may not expose a logout endpoint
     }
 
     navigate('/login', { replace: true });
@@ -93,26 +80,13 @@ export default function Navbar() {
     <header className="sticky top-0 z-30 px-4 pt-4 sm:px-6 lg:px-8">
       <div className="mx-auto w-full max-w-6xl rounded-[1.75rem] border border-white/70 bg-white/80 px-4 py-4 shadow-lg backdrop-blur-md sm:px-6">
         <div className="flex items-center justify-between gap-4">
-          <Link
-            to={getDefaultRouteForUserType(userType)}
-            className="cursor-pointer text-lg font-extrabold tracking-[0.08em] text-slate-950 uppercase"
-          >
+          <Link to={DEFAULT_ROUTE_BY_ROLE[role] ?? '/login'} className="cursor-pointer text-lg font-extrabold tracking-[0.08em] text-slate-950 uppercase">
             FeedForward
           </Link>
 
-          <nav
-            className="hidden items-center gap-2 md:flex"
-            aria-label="Primary"
-          >
+          <nav className="hidden items-center gap-2 md:flex" aria-label="Primary">
             {navItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.end}
-                className={({ isActive }) =>
-                  getNavLinkClassName(item, isActive)
-                }
-              >
+              <NavLink key={item.to} to={item.to} end={item.end} className={({ isActive }) => getNavLinkClassName(item, isActive)}>
                 {item.label}
               </NavLink>
             ))}
@@ -137,30 +111,14 @@ export default function Navbar() {
         </div>
 
         {isMenuOpen ? (
-          <nav
-            id="mobile-navigation"
-            className="mt-4 flex flex-col gap-2 border-t border-slate-200/80 pt-4 md:hidden"
-            aria-label="Mobile primary"
-          >
+          <nav id="mobile-navigation" className="mt-4 flex flex-col gap-2 border-t border-slate-200/80 pt-4 md:hidden" aria-label="Mobile primary">
             {navItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.end}
-                onClick={() => setIsMenuOpen(false)}
-                className={({ isActive }) =>
-                  getNavLinkClassName(item, isActive, 'text-left')
-                }
-              >
+              <NavLink key={item.to} to={item.to} end={item.end} onClick={() => setIsMenuOpen(false)} className={({ isActive }) => getNavLinkClassName(item, isActive, 'text-left')}>
                 {item.label}
               </NavLink>
             ))}
 
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="btn-soft justify-center"
-            >
+            <button type="button" onClick={handleLogout} className="btn-soft justify-center">
               Logout
             </button>
           </nav>

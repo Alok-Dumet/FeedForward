@@ -25,36 +25,18 @@ export default function Index() {
           transition={{ delay: 0.35, duration: 0.5 }}
           className="mt-5 max-w-2xl text-center text-base leading-7 text-slate-300 sm:text-lg"
         >
-          Connecting surplus food providers with organizations that can put it
-          to use.
+          Connecting surplus food providers with organizations that can put it to use.
         </Motion.p>
 
-        <Motion.div
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.5 }}
-          className="mt-8 flex flex-wrap items-center justify-center gap-4"
-        >
-          <Motion.div
-            whileHover={{ scale: 1.05, y: -2 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <Link
-              to="/login"
-              className="inline-flex rounded-2xl bg-emerald-600 px-8 py-3 text-lg font-semibold text-white shadow-lg transition hover:bg-emerald-500"
-            >
+        <Motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.5 }} className="mt-8 flex flex-wrap items-center justify-center gap-4">
+          <Motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.98 }}>
+            <Link to="/login" className="inline-flex rounded-2xl bg-emerald-600 px-8 py-3 text-lg font-semibold text-white shadow-lg transition hover:bg-emerald-500">
               Log In
             </Link>
           </Motion.div>
 
-          <Motion.div
-            whileHover={{ scale: 1.05, y: -2 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <Link
-              to="/register"
-              className="inline-flex rounded-2xl border-2 border-white/70 bg-white px-8 py-3 text-lg font-semibold text-slate-900 shadow-lg transition hover:bg-slate-100"
-            >
+          <Motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.98 }}>
+            <Link to="/register" className="inline-flex rounded-2xl border-2 border-white/70 bg-white px-8 py-3 text-lg font-semibold text-slate-900 shadow-lg transition hover:bg-slate-100">
               Register
             </Link>
           </Motion.div>

@@ -1,28 +1,32 @@
-import { loaderFetch } from '../../utils/loaderFetch.js';
+import { loaderFetch } from '../../utils/format.js';
 
 async function loadListingDetails({ params, request }, page) {
-  const payload = await loaderFetch(
-    `/api/listings/details?id=${encodeURIComponent(params.id)}`,
-    request,
-    'Unable to load listing details.'
-  );
+  const payload = await loaderFetch(`/api/listings/details?id=${encodeURIComponent(params.id)}`, request, 'Unable to load listing details.');
 
-  if (page.type && payload.record?.type !== page.type) {
+  if (page.type && (!payload.record || payload.record.type !== page.type)) {
     throw new Response('Listing not found.', { status: 404 });
   }
 
   const url = new URL(request.url);
-  const currentUser = payload.record?.current_user;
+  let currentUser = null;
+  if (payload.record) {
+    currentUser = payload.record.current_user;
+  }
   let resolvedPage = page;
 
-  if (url.searchParams.get('from') === 'my-listings' && currentUser?.id) {
+  if (url.searchParams.get('from') === 'my-listings' && currentUser && currentUser.id) {
     const isDonor = currentUser.role === 'food_provider';
+    let backTo = `/users/${currentUser.id}/requests`;
+    let backLabel = 'My Requests';
+    if (isDonor) {
+      backTo = `/users/${currentUser.id}/offers`;
+      backLabel = 'My Offers';
+    }
+
     resolvedPage = {
       ...page,
-      backTo: isDonor
-        ? `/users/${currentUser.id}/offers`
-        : `/users/${currentUser.id}/requests`,
-      backLabel: isDonor ? 'My Offers' : 'My Requests',
+      backTo,
+      backLabel,
     };
   }
 

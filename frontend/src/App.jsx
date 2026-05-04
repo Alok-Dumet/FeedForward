@@ -8,27 +8,18 @@ import Index from './pages/index/index.jsx';
 import Login from './pages/login/login.jsx';
 import Register from './pages/register/register.jsx';
 import NotAuthorized from './pages/notAuthorized/notAuthorized.jsx';
-import Offers from './pages/offers/offers.jsx';
-import offersLoader from './pages/offers/offersLoader.jsx';
-import Requests from './pages/requests/requests.jsx';
-import requestsLoader from './pages/requests/requestsLoader.jsx';
+import Offers, { offersLoader } from './pages/offers/offers.jsx';
+import Requests, { requestsLoader } from './pages/requests/requests.jsx';
 import Details from './pages/details/details.jsx';
-import {
-  historyDetailsLoader,
-  offerDetailsLoader,
-  requestDetailsLoader,
-} from './pages/details/detailsLoader.jsx';
-import UserOffers from './pages/userOffers/userOffers.jsx';
-import userOffersLoader from './pages/userOffers/userOffersLoader.jsx';
-import UserRequests from './pages/userRequests/userRequests.jsx';
-import userRequestsLoader from './pages/userRequests/userRequestsLoader.jsx';
-import UserOfferCreate from './pages/userOfferCreate/userOfferCreate.jsx';
-import userOfferCreateLoader from './pages/userOfferCreate/userOfferCreateLoader.jsx';
-import UserRequestCreate from './pages/userRequestCreate/userRequestCreate.jsx';
-import userRequestCreateLoader from './pages/userRequestCreate/userRequestCreateLoader.jsx';
+import { historyDetailsLoader, offerDetailsLoader, requestDetailsLoader } from './pages/details/detailsLoader.jsx';
+import UserOffers, { userOffersLoader } from './pages/userOffers/userOffers.jsx';
+import UserRequests, { userRequestsLoader } from './pages/userRequests/userRequests.jsx';
+import UserOfferCreate, { userOfferCreateLoader } from './pages/userOfferCreate/userOfferCreate.jsx';
+import UserRequestCreate, { userRequestCreateLoader } from './pages/userRequestCreate/userRequestCreate.jsx';
 import History from './pages/history/history.jsx';
 import historyLoader from './pages/history/historyLoader.jsx';
-import { rootSessionLoader, withProtectedLoader } from './session.js';
+import { withProtectedLoader } from './auth.js';
+import { fetchSession } from './session.js';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -44,29 +35,17 @@ const router = createBrowserRouter([
   {
     id: 'root',
     element: <BackGround1 />,
-    loader: rootSessionLoader,
+    loader: ({ request }) => fetchSession(request),
     errorElement: <ErrorCheck />,
     children: [
-      {
-        path: '/',
-        element: <Index />,
-      },
-      {
-        path: '/login',
-        element: <Login />,
-      },
-      {
-        path: '/register',
-        element: <Register />,
-      },
-      {
-        path: '/not_authorized',
-        element: <NotAuthorized />,
-      },
+      { path: '/', element: <Index /> },
+      { path: '/login', element: <Login /> },
+      { path: '/register', element: <Register /> },
+      { path: '/not_authorized', element: <NotAuthorized /> },
       {
         path: '/offers',
         element: <Offers />,
-        loader: withProtectedLoader(offersLoader, ['recipient']),
+        loader: withProtectedLoader(offersLoader, ['recipient_organization']),
       },
       {
         path: '/offers/:id',
@@ -76,7 +55,7 @@ const router = createBrowserRouter([
       {
         path: '/requests',
         element: <Requests />,
-        loader: withProtectedLoader(requestsLoader, ['donor']),
+        loader: withProtectedLoader(requestsLoader, ['food_provider']),
       },
       {
         path: '/requests/:id',
@@ -84,34 +63,34 @@ const router = createBrowserRouter([
         loader: withProtectedLoader(requestDetailsLoader),
       },
       {
-        path: '/history/:id',
-        element: <Details />,
-        loader: withProtectedLoader(historyDetailsLoader),
-      },
-      {
         path: '/history',
         element: <History />,
         loader: withProtectedLoader(historyLoader),
       },
       {
+        path: '/history/:id',
+        element: <Details />,
+        loader: withProtectedLoader(historyDetailsLoader),
+      },
+      {
         path: '/users/:id/offers',
         element: <UserOffers />,
-        loader: withProtectedLoader(userOffersLoader, ['donor']),
+        loader: withProtectedLoader(userOffersLoader, ['food_provider']),
       },
       {
         path: '/users/:id/offers/create',
         element: <UserOfferCreate />,
-        loader: withProtectedLoader(userOfferCreateLoader, ['donor']),
+        loader: withProtectedLoader(userOfferCreateLoader, ['food_provider']),
       },
       {
         path: '/users/:id/requests',
         element: <UserRequests />,
-        loader: withProtectedLoader(userRequestsLoader, ['recipient']),
+        loader: withProtectedLoader(userRequestsLoader, ['recipient_organization']),
       },
       {
         path: '/users/:id/requests/create',
         element: <UserRequestCreate />,
-        loader: withProtectedLoader(userRequestCreateLoader, ['recipient']),
+        loader: withProtectedLoader(userRequestCreateLoader, ['recipient_organization']),
       },
     ],
   },

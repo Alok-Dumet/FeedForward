@@ -56,7 +56,7 @@ FOOD_PROVIDER_PAGE_PATHS = {
     "/requests",
 }
 
-# Page paths only recipient organizations can load.
+# Page paths only recipient organizations can load
 RECIPIENT_ORGANIZATION_PAGE_PATHS = {
     "/offers",
 }

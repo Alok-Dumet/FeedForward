@@ -34,7 +34,7 @@ def create_session(user_id):
 
 
 # We will build the session cookie header value
-# We don't have HTTPS setup yet so we're not using secure...
+# We don't have HTTPS setup yet so we're not using secure
 def build_session_cookie(session_token, max_age):
     return f"{SESSION_COOKIE_NAME}={session_token}; Path=/; HttpOnly; SameSite=Lax; Max-Age={max_age}"
 

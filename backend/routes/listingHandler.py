@@ -93,14 +93,14 @@ def get_food_rows(cur, listing_ids):
         WHERE listing_id = ANY(%s)
         ORDER BY listing_id, id
         """,
-        (listing_ids)
+        (listing_ids,),
     )
 
     return cur.fetchall()
 
 
 # We will build the slim listing card records used by /api/listings and GET /api/my-listings
-# Each record contains the listing fields, location, creator's organization name, its food items, and an optional "relationship" tag ("own" or "claimed")
+# Each record contains the listing fields, location, creator's organization name, its food items, and an optional relationship ("own" or "claimed")
 def build_listing_records(listing_rows, food_rows):
     grouped_foods = {}
     for food in food_rows:
@@ -146,7 +146,7 @@ def build_listing_records(listing_rows, food_rows):
     return records
 
 
-# We will build the detailed listing record for the details page.
+# We will build the detailed listing record for the details page
 # It additionally stores creator email, the claim record (if claimed), and some columns from the creator
 def build_listing_detail_record(listing_row, food_rows, user):
     row = listing_row
@@ -309,14 +309,15 @@ def get_my_listings(handler):
                 WHERE claims.claimant_user_id = %s
                     AND listings.status = 'claimed'
 
-                ORDER BY updated_at DESC, id DESC
+                ORDER BY 9 DESC, 1 DESC
                 """,
                 ("own", user["id"], "claimed", user["id"]),
             )
             listing_rows = cur.fetchall()
             food_rows = get_food_rows(cur, [row[0] for row in listing_rows])
-    except Exception:
+    except Exception as exc:
         db.rollback()
+        print(f"[get_my_listings] DB error: {exc}")
         return send_json(handler, 500, {"error": "Unable to load your listings."})
 
     return send_json(
@@ -471,6 +472,7 @@ def create_listing(handler, listing_type):
             }
         },
     )
+
 
 # POST endpoint handler that creates an offer
 def create_offer(handler):
