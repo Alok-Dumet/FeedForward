@@ -5,7 +5,7 @@ export const DEFAULT_ROUTE_BY_ROLE = {
   food_provider: '/requests',
   recipient_organization: '/offers',
 };
-export const USER_LISTING_SEGMENT_BY_ROLE = {
+const USER_LISTING_SEGMENT_BY_ROLE = {
   food_provider: 'offers',
   recipient_organization: 'requests',
 };
@@ -71,21 +71,14 @@ export function useSession() {
   });
 
   const session = sessionQuery.data ?? null;
-  let user = null;
-  if (session) {
-    user = session.user;
-  }
-  const { userId, role, organizationName } = parseSession(session);
+  const { userId, role } = parseSession(session);
   const defaultRoute = DEFAULT_ROUTE_BY_ROLE[role] ?? '/login';
 
   return {
     ...sessionQuery,
-    session,
-    user,
     role,
     userId,
     defaultRoute,
-    organizationName,
     isAuthenticated: Boolean(role),
   };
 }

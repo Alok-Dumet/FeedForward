@@ -18,7 +18,7 @@ import UserOfferCreate, { userOfferCreateLoader } from './pages/userOfferCreate/
 import UserRequestCreate, { userRequestCreateLoader } from './pages/userRequestCreate/userRequestCreate.jsx';
 import History from './pages/history/history.jsx';
 import historyLoader from './pages/history/historyLoader.jsx';
-import { withProtectedLoader } from './auth.js';
+import { requireSession } from './auth.js';
 import { fetchSession } from './session.js';
 
 const queryClient = new QueryClient({
@@ -45,52 +45,52 @@ const router = createBrowserRouter([
       {
         path: '/offers',
         element: <Offers />,
-        loader: withProtectedLoader(offersLoader, ['recipient_organization']),
+        loader: requireSession(offersLoader),
       },
       {
         path: '/offers/:id',
         element: <Details />,
-        loader: withProtectedLoader(offerDetailsLoader),
+        loader: requireSession(offerDetailsLoader),
       },
       {
         path: '/requests',
         element: <Requests />,
-        loader: withProtectedLoader(requestsLoader, ['food_provider']),
+        loader: requireSession(requestsLoader),
       },
       {
         path: '/requests/:id',
         element: <Details />,
-        loader: withProtectedLoader(requestDetailsLoader),
+        loader: requireSession(requestDetailsLoader),
       },
       {
         path: '/history',
         element: <History />,
-        loader: withProtectedLoader(historyLoader),
+        loader: requireSession(historyLoader),
       },
       {
         path: '/history/:id',
         element: <Details />,
-        loader: withProtectedLoader(historyDetailsLoader),
+        loader: requireSession(historyDetailsLoader),
       },
       {
         path: '/users/:id/offers',
         element: <UserOffers />,
-        loader: withProtectedLoader(userOffersLoader, ['food_provider']),
+        loader: requireSession(userOffersLoader),
       },
       {
         path: '/users/:id/offers/create',
         element: <UserOfferCreate />,
-        loader: withProtectedLoader(userOfferCreateLoader, ['food_provider']),
+        loader: requireSession(userOfferCreateLoader),
       },
       {
         path: '/users/:id/requests',
         element: <UserRequests />,
-        loader: withProtectedLoader(userRequestsLoader, ['recipient_organization']),
+        loader: requireSession(userRequestsLoader),
       },
       {
         path: '/users/:id/requests/create',
         element: <UserRequestCreate />,
-        loader: withProtectedLoader(userRequestCreateLoader, ['recipient_organization']),
+        loader: requireSession(userRequestCreateLoader),
       },
     ],
   },

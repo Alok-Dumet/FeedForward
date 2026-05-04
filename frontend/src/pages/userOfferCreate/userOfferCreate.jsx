@@ -2,9 +2,9 @@
 import { useLoaderData } from 'react-router-dom';
 
 import ListingCreateForm from '../../components/listingCreateForm.jsx';
-import { createUserListingLoader } from '../../utils/listings.js';
+import { userListingCreateLoader } from '../../utils/listings.js';
 
-export const userOfferCreateLoader = createUserListingLoader('Food Provider');
+export const userOfferCreateLoader = userListingCreateLoader;
 
 export default function UserOfferCreate() {
   const { user } = useLoaderData();

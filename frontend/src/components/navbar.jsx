@@ -1,23 +1,29 @@
 import { useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 
-import { DEFAULT_ROUTE_BY_ROLE, getMyListingRouteForRole, useSession, useSessionActions } from '../session.js';
-
-const baseLinkClassName = 'cursor-pointer rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-amber-50 hover:text-amber-800';
+import { getMyListingRouteForRole, useSession, useSessionActions } from '../session.js';
+import { apiRequest } from '../utils/api.js';
+import { useToast } from './toast.jsx';
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { role, userId } = useSession();
+  const { defaultRoute, role, userId } = useSession();
   const { clearSession } = useSessionActions();
+  const { showToast } = useToast();
 
   if (!role) {
     return null;
   }
 
   const isDonor = role === 'food_provider';
-  const isMyListingsDetail = new URLSearchParams(location.search).get('from') === 'my-listings' && (location.pathname.startsWith('/offers/') || location.pathname.startsWith('/requests/'));
+  const searchParams = new URLSearchParams(location.search);
+  const cameFromMyListings = searchParams.get('from') === 'my-listings';
+  const isListingDetailsPage = location.pathname.startsWith('/offers/') || location.pathname.startsWith('/requests/');
+  const isMyListingsDetail = cameFromMyListings && isListingDetailsPage;
+  const myListingsPath = getMyListingRouteForRole(role, userId);
+  const createListingPath = getMyListingRouteForRole(role, userId, '/create');
   let browseLabel = 'Offers';
   let browsePath = '/offers';
   let myListingsLabel = 'My Requests';
@@ -37,14 +43,14 @@ export default function Navbar() {
     },
     {
       label: myListingsLabel,
-      to: getMyListingRouteForRole(role, userId),
+      to: myListingsPath,
       end: true,
       isActive: (routerIsActive) => routerIsActive || isMyListingsDetail,
     },
     { label: 'History', to: '/history' },
     {
       label: createLabel,
-      to: getMyListingRouteForRole(role, userId, '/create'),
+      to: createListingPath,
     },
   ];
 
@@ -53,26 +59,28 @@ export default function Navbar() {
     if (item.isActive) {
       isActive = item.isActive(routerIsActive);
     }
-    let activeClassName = '';
     if (isActive) {
-      activeClassName = 'bg-slate-900 text-white hover:bg-slate-900 hover:text-white';
+      return `nav-link ${extraClassName} nav-link-active`.trim();
     }
 
-    return `${baseLinkClassName} ${extraClassName} ${activeClassName}`;
+    return `nav-link ${extraClassName}`.trim();
   }
 
   async function handleLogout() {
-    clearSession();
     setIsMenuOpen(false);
 
     try {
-      await fetch('/api/logout', {
+      await apiRequest('/api/logout', {
         method: 'POST',
+        errorMessage: 'Unable to log out.',
+        networkErrorMessage: 'Network error while logging out.',
       });
-    } catch {
-      // Local dev may not expose a logout endpoint
+    } catch (error) {
+      showToast(error.message, 'error');
+      return;
     }
 
+    clearSession();
     navigate('/login', { replace: true });
   }
 
@@ -80,7 +88,7 @@ export default function Navbar() {
     <header className="sticky top-0 z-30 px-4 pt-4 sm:px-6 lg:px-8">
       <div className="mx-auto w-full max-w-6xl rounded-[1.75rem] border border-white/70 bg-white/80 px-4 py-4 shadow-lg backdrop-blur-md sm:px-6">
         <div className="flex items-center justify-between gap-4">
-          <Link to={DEFAULT_ROUTE_BY_ROLE[role] ?? '/login'} className="cursor-pointer text-lg font-extrabold tracking-[0.08em] text-slate-950 uppercase">
+          <Link to={defaultRoute} className="cursor-pointer text-lg font-extrabold tracking-[0.08em] text-slate-950 uppercase">
             FeedForward
           </Link>
 

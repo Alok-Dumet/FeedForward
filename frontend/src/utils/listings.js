@@ -3,8 +3,10 @@ import { redirect } from 'react-router-dom';
 import { parseSession } from '../session.js';
 import { FOOD_CATEGORY_LABELS, formatAvailabilityWindows, formatNumber, getRadiusMiles, haversineMiles, loaderFetch, summarizeFoods } from './format.js';
 
+//We will reuse these filter labels on the current user's listings pages
 export const MY_LISTINGS_FILTERS = ['All listings', 'Posted by you', 'Claimed by you'];
 
+//We will use this as the blank food item when creating or editing listings
 export const EMPTY_FOOD = {
   name: '',
   description: '',
@@ -15,36 +17,15 @@ export const EMPTY_FOOD = {
   expiration_date: '',
 };
 
+//We will use this as the blank availability window when creating or editing listings
 export const EMPTY_AVAILABILITY_WINDOW = {
   day: 'monday',
   start_time: '09:00',
   end_time: '17:00',
 };
 
-export const DAY_OPTIONS = [
-  ['monday', 'Monday'],
-  ['tuesday', 'Tuesday'],
-  ['wednesday', 'Wednesday'],
-  ['thursday', 'Thursday'],
-  ['friday', 'Friday'],
-  ['saturday', 'Saturday'],
-  ['sunday', 'Sunday'],
-];
-
-export function getTrimmedFood(food) {
-  return {
-    name: food.name.trim(),
-    description: food.description.trim(),
-    category: food.category,
-    is_perishable: food.is_perishable,
-    quantity: food.quantity,
-    quantity_unit: food.quantity_unit.trim(),
-    expiration_date: food.expiration_date,
-  };
-}
-
 //We will reshape one public listing record into the card shape that listingPageShell expects
-export function buildPublicListingItem(record) {
+function buildPublicListingItem(record) {
   const distance = `${formatNumber(record.distance_miles)} mi away`;
   const summary = summarizeFoods(record);
 
@@ -61,7 +42,7 @@ export function buildPublicListingItem(record) {
 }
 
 //We will reshape a current-user listing record into the card shape userOffers/userRequests expect
-export function buildOwnListingItem(record) {
+function buildOwnListingItem(record) {
   let ownership = 'Claimed by you';
   if (record.relationship === 'own') {
     ownership = 'Posted by you';
@@ -88,57 +69,7 @@ export function buildOwnListingItem(record) {
   };
 }
 
-export function formatHistoryStatus(status) {
-  if (status === 'completed') return 'Completed';
-  if (status === 'cancelled') return 'Cancelled';
-  return status;
-}
-
-const historyDateFmt = new Intl.DateTimeFormat('en-US', { dateStyle: 'long' });
-
-function formatHistoryDate(value) {
-  const date = new Date(value);
-  return historyDateFmt.format(date);
-}
-
-//We will reshape one history listing record into the card shape the history page expects
-export function buildHistoryItem(record) {
-  let ownership = 'Claimed by you';
-  if (record.relationship === 'own') {
-    ownership = 'Posted by you';
-  }
-
-  let recordType = 'Request record';
-  if (record.listing_type === 'offer') {
-    recordType = 'Offer record';
-  }
-
-  const status = formatHistoryStatus(record.status);
-  let timeline = `Posted on ${formatHistoryDate(record.created_at)}`;
-  if (['completed', 'cancelled'].includes(record.status)) {
-    let resolvedAt = record.updated_at;
-    if (record.claim && record.claim.resolved_at) {
-      resolvedAt = record.claim.resolved_at;
-    }
-
-    timeline = `${status} on ${formatHistoryDate(resolvedAt)}`;
-  }
-
-  const summary = summarizeFoods(record);
-
-  return {
-    id: record.listing_id,
-    status,
-    title: summary.title,
-    summary: '',
-    quantity: summary.quantity,
-    timeline,
-    location: record.location,
-    recordType,
-    tags: [ownership, status],
-  };
-}
-
+//We will create a loader for public offers or requests pages
 export function createPublicListingsLoader({ allFilterLabel, errorMessage }) {
   return async function publicListingsLoader({ request }) {
     const payload = await loaderFetch('/api/listings', request, errorMessage);
@@ -168,6 +99,7 @@ export function createPublicListingsLoader({ allFilterLabel, errorMessage }) {
   };
 }
 
+//We will create a loader for the current user's own listing pages
 export function createUserListingsLoader(errorMessage) {
   return async function userListingsLoader({ request }) {
     const payload = await loaderFetch('/api/listings?scope=mine', request, errorMessage);
@@ -177,28 +109,25 @@ export function createUserListingsLoader(errorMessage) {
   };
 }
 
-//We will build a loader for /users/:id/{offers|requests}/create that rejects mismatched user ids
-export function createUserListingLoader(roleLabel) {
-  return async function loader({ params }, session) {
-    const { userId, organizationName } = parseSession(session);
-    let user = {};
-    if (session && session.user) {
-      user = session.user;
-    }
+//We will load data for /users/:id/{offers|requests}/create and reject mismatched user ids
+export async function userListingCreateLoader({ params }, session) {
+  const { userId, organizationName } = parseSession(session);
+  let user = {};
+  if (session && session.user) {
+    user = session.user;
+  }
 
-    if (params.id !== userId) {
-      return redirect('/not_authorized');
-    }
+  if (params.id !== userId) {
+    return redirect('/not_authorized');
+  }
 
-    return {
-      user: {
-        id: userId,
-        name: organizationName,
-        role: roleLabel,
-        address_text: user.address_text,
-        latitude: user.latitude,
-        longitude: user.longitude,
-      },
-    };
+  return {
+    user: {
+      id: userId,
+      name: organizationName,
+      address_text: user.address_text,
+      latitude: user.latitude,
+      longitude: user.longitude,
+    },
   };
 }

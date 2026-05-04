@@ -2,7 +2,8 @@ import { useState } from 'react';
 
 import useEditableList from '../hooks/useEditableList.js';
 import { useToast } from './toast.jsx';
-import { EMPTY_AVAILABILITY_WINDOW, EMPTY_FOOD, getTrimmedFood } from '../utils/listings.js';
+import { apiRequest } from '../utils/api.js';
+import { EMPTY_AVAILABILITY_WINDOW, EMPTY_FOOD } from '../utils/listings.js';
 import FormField from './formField.jsx';
 import { ListingAvailabilityEditor, ListingFoodEditor } from './listingFormFields.jsx';
 
@@ -33,6 +34,19 @@ const LISTING_COPY = {
   },
 };
 
+//We will remove extra spaces from food fields before sending them to the backend
+function getTrimmedFood(food) {
+  return {
+    name: food.name.trim(),
+    description: food.description.trim(),
+    category: food.category,
+    is_perishable: food.is_perishable,
+    quantity: food.quantity,
+    quantity_unit: food.quantity_unit.trim(),
+    expiration_date: food.expiration_date,
+  };
+}
+
 export default function ListingCreateForm({ listingType, user }) {
   const copy = LISTING_COPY[listingType];
   const [foods, { updateItem: updateFood, addItem: addFood, removeItem: removeFood }] = useEditableList([{ ...EMPTY_FOOD }], EMPTY_FOOD);
@@ -55,35 +69,22 @@ export default function ListingCreateForm({ listingType, user }) {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch('/api/listings', {
+      await apiRequest('/api/listings', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+        body: {
           type: listingType,
           foods: foods.map(getTrimmedFood),
           availability_windows: availabilityWindows,
           travel_distance_miles: Number(travelDistanceMiles),
           additional_instructions: additionalInstructions.trim(),
-        }),
+        },
+        errorMessage: 'Unable to publish listing.',
+        networkErrorMessage: 'Network error. Please try again.',
       });
 
-      const data = await res.json().catch(() => null);
-
-      if (!res.ok) {
-        let errorMessage = 'Unable to publish listing.';
-        if (data && data.error) {
-          errorMessage = data.error;
-        }
-
-        showToast(errorMessage, 'error');
-        return;
-      }
-
       showToast(copy.successLabel, 'success');
-    } catch {
-      showToast('Network error. Please try again.', 'error');
+    } catch (error) {
+      showToast(error.message, 'error');
     } finally {
       setIsSubmitting(false);
     }

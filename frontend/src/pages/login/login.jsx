@@ -4,6 +4,7 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { DEFAULT_ROUTE_BY_ROLE, parseSession, useSessionActions } from '../../session.js';
 import { useToast } from '../../components/toast.jsx';
 import TextInput from '../../components/textInput.jsx';
+import { apiRequest } from '../../utils/api.js';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -32,22 +33,11 @@ export default function Login() {
     const password = e.currentTarget.elements.password.value;
 
     try {
-      const res = await fetch('/api/login', {
+      const data = await apiRequest('/api/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: { email, password },
+        errorMessage: 'Unable to log in',
       });
-      const data = await res.json();
-
-      if (!res.ok) {
-        let errorMessage = 'Unable to log in';
-        if (data && data.error) {
-          errorMessage = data.error;
-        }
-
-        showToast(errorMessage, 'error');
-        return;
-      }
 
       const sessionRes = await fetch('/api/session', {
         headers: { Accept: 'application/json' },
@@ -68,8 +58,8 @@ export default function Login() {
       navigate(DEFAULT_ROUTE_BY_ROLE[role] ?? '/login', {
         replace: true,
       });
-    } catch {
-      showToast('Network Error', 'error');
+    } catch (error) {
+      showToast(error.message, 'error');
     }
   }
 

@@ -1,6 +1,7 @@
 import { FOOD_CATEGORY_LABELS } from '../utils/format.js';
-import { DAY_OPTIONS } from '../utils/listings.js';
 import FormField from './formField.jsx';
+
+const DAY_OPTIONS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
 export function ListingAvailabilityEditor({
   title,
@@ -9,10 +10,10 @@ export function ListingAvailabilityEditor({
   onUpdate,
   onRemove,
   emptyMessage = null,
-  sectionClassName = 'mt-8 rounded-3xl border border-slate-200 bg-white/80 p-5',
-  titleClassName = 'text-xl font-bold text-slate-900',
-  gridClassName = 'mt-4 grid gap-4',
-  itemClassName = 'grid gap-4 rounded-2xl border border-slate-200 bg-white p-4 sm:grid-cols-[1fr_1fr_1fr_auto]',
+  sectionClassName = 'listing-availability-section',
+  titleClassName = 'listing-availability-title',
+  gridClassName = 'listing-availability-grid',
+  itemClassName = 'listing-availability-item',
 }) {
   return (
     <section className={sectionClassName}>
@@ -35,9 +36,9 @@ export function ListingAvailabilityEditor({
             <div key={index} className={itemClassName}>
               <FormField label="Day">
                 <select required value={window.day} onChange={(event) => onUpdate(index, 'day', event.target.value)} className="form-control cursor-pointer text-sm">
-                  {DAY_OPTIONS.map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
+                  {DAY_OPTIONS.map((day) => (
+                    <option key={day} value={day}>
+                      {day.charAt(0).toUpperCase() + day.slice(1)}
                     </option>
                   ))}
                 </select>
@@ -78,8 +79,8 @@ export function ListingFoodEditor({
   foodNamePlaceholder = 'Example: Hawaiian Pizza',
   foodDescriptionPlaceholder = 'Example: Thin crust, pineapple, onions, olives, stuffed crust',
   sectionClassName = 'mt-8',
-  gridClassName = 'mt-4 grid gap-5',
-  itemClassName = 'rounded-3xl border border-slate-200 bg-white/80 p-5',
+  gridClassName = 'listing-food-grid',
+  itemClassName = 'listing-food-item',
   removeLabel = 'Remove',
 }) {
   return (

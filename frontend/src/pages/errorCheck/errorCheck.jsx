@@ -15,7 +15,7 @@ export default function ErrorCheck() {
   let title = 'Something went wrong';
   let message = 'An unexpected error occurred.';
 
-  //Checks if a router occured
+  //Checks if a routeError occured
   if (isRouteErrorResponse(error)) {
     title = `${error.status} ${error.statusText}`;
     message = error.data;

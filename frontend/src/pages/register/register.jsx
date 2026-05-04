@@ -2,6 +2,7 @@ import { useNavigate, Link } from 'react-router-dom';
 
 import { useToast } from '../../components/toast.jsx';
 import TextInput from '../../components/textInput.jsx';
+import { apiRequest } from '../../utils/api.js';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -17,12 +18,9 @@ export default function Register() {
     const addressText = [streetAddress, city, [state, postalCode].filter(Boolean).join(' ')].filter(Boolean).join(', ');
 
     try {
-      const res = await fetch('/api/register', {
+      await apiRequest('/api/register', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+        body: {
           email: e.currentTarget.elements.email.value,
           password: e.currentTarget.elements.password.value,
           role: e.currentTarget.elements.role.value,
@@ -31,21 +29,17 @@ export default function Register() {
           address_text: addressText,
           city,
           state,
-        }),
+        },
+        errorMessage: 'Unable to register',
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        showToast(data.error, 'error');
-      } else {
-        navigate('/login', {
-          state: {
-            message: 'Registration successful. You can log in now.',
-          },
-        });
-      }
-    } catch {
-      showToast('Network Error', 'error');
+      navigate('/login', {
+        state: {
+          message: 'Registration successful. You can log in now.',
+        },
+      });
+    } catch (error) {
+      showToast(error.message, 'error');
     }
   }
 
