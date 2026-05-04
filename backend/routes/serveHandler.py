@@ -1,7 +1,7 @@
 import mimetypes
 import os
 
-# We will resolve the dist directory once at import time so the path is absolute regardless of where the server was launched from
+# We will get the path to the dist directory
 DIST_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist"))
 
 
