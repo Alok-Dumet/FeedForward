@@ -44,7 +44,8 @@ Users can create listings, browse opposite-role listings, accept listings, manag
 - User listing management pages
 - Listing history for completed and cancelled listings
 - Backend route protection for API endpoints and protected page loads
-- Frontend not-authorized page for users who try to access pages outside their role
+- Frontend session checks for protected pages
+- Frontend not-authorized page for users without a valid session
 
 ## Project Structure
 
@@ -61,19 +62,23 @@ backend/
     dumped_schema.sql       Current database schema
   routes/
     authHandler.py          Login, logout, register, session
-    listingHandler.py       Listings, details, create, edit
+    listingHandler.py       Listing browse, details, create, edit
     claimHandler.py         Accept, cancel, complete listings
-    historyHandler.py       Completed/cancelled history
+    historyHandler.py       History query helper
     serveHandler.py         Serves the built React app
 
 frontend/
   src/
     App.jsx                 Frontend routes
-    session.js              Frontend session and route helpers
+    auth.js                 Loader helper that requires a session
+    session.js              Frontend session cache and route helpers
     pages/                  Page-level route components and loaders
     components/             Shared UI components
     hooks/                  Shared React hooks
-    utils/                  Shared frontend helpers
+    utils/
+      api.js                Shared helper for frontend API writes
+      format.js             Display formatting helpers
+      listings.js           Shared listing loaders and listing data helpers
 ```
 
 ## Backend Access Model
@@ -88,6 +93,8 @@ The app separates routes into these groups:
 - Recipient-organization-only routes
 
 The backend protects API endpoints first. Frontend route checks exist to keep the normal user experience clean, but the backend is the main protection against misuse.
+
+The frontend checks whether a session exists before loading protected routes. Role authorization is handled by the backend.
 
 ## Listing Location Behavior
 
@@ -184,21 +191,32 @@ python3 -m py_compile backend/app.py backend/router.py backend/access.py backend
 ### Listings
 
 - `GET /api/listings`
-- `GET /api/my-listings`
-- `GET /api/listings/details?id=...`
-- `POST /api/listings/offers/create`
-- `POST /api/listings/requests/create`
-- `PATCH /api/listings/edit`
+- `GET /api/listings?scope=mine`
+- `GET /api/listings?scope=history`
+- `POST /api/listings`
+- `GET /api/listings/:id`
+- `PATCH /api/listings/:id`
 
 ### Claims
 
-- `POST /api/listings/accept`
-- `POST /api/listings/cancel`
-- `POST /api/listings/complete`
+- `POST /api/listings/:id/claim`
+- `PATCH /api/listings/:id/status`
 
-### History
+The status endpoint accepts:
 
-- `GET /api/history`
+```json
+{
+  "status": "cancelled"
+}
+```
+
+or:
+
+```json
+{
+  "status": "completed"
+}
+```
 
 ## Frontend Routes
 
