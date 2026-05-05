@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
 const ToastContext = createContext(null);
 
@@ -35,7 +35,7 @@ export function ToastProvider({ children }) {
     return () => window.clearInterval(timer);
   }, [toasts.length]);
 
-  function showToast(message, type = 'success') {
+  const showToast = useCallback((message, type = 'success') => {
     setToasts((currentToasts) => [
       ...currentToasts,
       {
@@ -44,7 +44,7 @@ export function ToastProvider({ children }) {
         secondsLeft: 5,
       },
     ]);
-  }
+  }, []);
 
   const value = { showToast };
 
@@ -67,7 +67,12 @@ export function ToastProvider({ children }) {
                   <p className={`label-small tracking-[0.15em] ${isError ? 'text-red-700' : 'text-emerald-700'}`}>{isError ? 'Error' : 'Success'}</p>
                   <p className="mt-1 text-sm leading-6 font-medium text-slate-800">{toast.message}</p>
                 </div>
-                <span className="text-xs font-semibold text-slate-500">{toast.secondsLeft}s</span>
+                <span className="flex shrink-0 items-center gap-2 text-slate-500">
+                  <span className="text-xs font-semibold">{toast.secondsLeft}s</span>
+                  <span className="text-lg leading-none font-bold" aria-hidden="true">
+                    &times;
+                  </span>
+                </span>
               </div>
             </button>
           );
