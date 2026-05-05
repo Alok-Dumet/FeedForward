@@ -1,6 +1,4 @@
--- =====================================================================
 -- TABLES
--- =====================================================================
 
 CREATE TABLE public.locations (
     id           BIGSERIAL PRIMARY KEY,
@@ -136,9 +134,7 @@ CREATE UNIQUE INDEX claims_one_claim_per_listing_idx
     ON public.claims (listing_id);
 
 
--- =====================================================================
 -- TRIGGER FUNCTIONS
--- =====================================================================
 
 CREATE OR REPLACE FUNCTION public.enforce_claim_business_rules()
 RETURNS TRIGGER
@@ -195,9 +191,7 @@ END;
 $$;
 
 
--- =====================================================================
 -- TRIGGERS
--- =====================================================================
 
 CREATE TRIGGER claims_enforce_business_rules_trg
     BEFORE INSERT OR UPDATE OF listing_id, claimant_user_id
