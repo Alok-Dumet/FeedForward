@@ -34,7 +34,7 @@ export default function UserRequests() {
           detailItems={[
             { label: 'Available Times', value: item.availability },
             { label: 'Area', value: item.location },
-            { label: 'Serving', value: item.audience },
+            { label: 'Organization', value: item.audience },
           ]}
         />
       )}
