@@ -2,8 +2,10 @@ import hashlib
 import hmac
 import secrets
 
+from psycopg2 import errors
+
 from database.database import db
-from geocoding import GeocodingError, geocode_city_state
+from geocoding import geocode_city_state
 from router import Router
 from sessions import (
     SESSION_COOKIE_NAME,
@@ -25,7 +27,7 @@ def hash_password(password):
     return f"{salt}${password_hash}"
 
 
-# We will recompute the hash with the stored salt and constant-time compare it to the stored hash
+# We will recompute the hash with the users password and stored salt and compare it to the stored hash
 def verify_password(password, stored_password_hash):
     try:
         salt, expected_hash = stored_password_hash.split("$", 1)
@@ -36,7 +38,7 @@ def verify_password(password, stored_password_hash):
     return hmac.compare_digest(actual_hash, expected_hash)
 
 
-# POST endpoint handler that registers a new user account
+# POST endpoint handler for registering a new user account
 def register(handler):
     body = parse_validate_body(handler, ["email", "password", "role", "organization_name", "street_address", "address_text", "city", "state"])
     if body is None:
@@ -52,8 +54,8 @@ def register(handler):
 
     try:
         latitude, longitude = geocode_city_state(body["city"], body["state"])
-    except GeocodingError as exc:
-        return send_json(handler, 400, {"error": str(exc)})
+    except ValueError:
+        return send_json(handler, 400, {"error": "Unable to verify that city and state. Please check it and try again."})
 
     password_hash = hash_password(body["password"])
 
@@ -91,22 +93,30 @@ def register(handler):
             )
             user = cur.fetchone()
         db.commit()
+    except errors.UniqueViolation:
+        db.rollback()
+        return send_json(handler, 400, {"error": "That email is already registered."})
     except Exception as exc:
         db.rollback()
-        error_text = str(exc).lower()
-
-        if "duplicate key" in error_text or "users_email_key" in error_text:
-            return send_json(handler, 400, {"error": "That email is already registered."})
-
         print(f"[register] DB error: {exc!r}")
         return send_json(handler, 500, {"error": "Unable to register user due to a server error."})
 
     return send_json(
-        handler, 201, {"success": "User registered", "user": {"id": user[0], "email": user[1], "role": user[2], "organization_name": user[3]}}
+        handler,
+        201,
+        {
+            "success": "User registered",
+            "user": {
+                "id": user[0],
+                "email": user[1],
+                "role": user[2],
+                "organization_name": user[3],
+            },
+        },
     )
 
 
-# POST endpoint handler that logs in a user and starts a session
+# POST endpoint handler for logging in a user and starting a session
 def login(handler):
     body = parse_validate_body(handler, ["email", "password"])
     if body is None:
@@ -149,7 +159,7 @@ def login(handler):
     )
 
 
-# POST endpoint handler that logs out the current user
+# POST endpoint handler for logging out the current user
 def logout(handler):
     cookies = parse_cookies(handler)
     session_token = cookies.get(SESSION_COOKIE_NAME)
@@ -160,7 +170,7 @@ def logout(handler):
     return send_json(handler, 200, {"success": "Logout successful"}, headers=[("Set-Cookie", build_session_cookie("", 0))])
 
 
-# GET endpoint handler that returns the current authenticated user
+# GET endpoint handler for returning the current authenticated user
 def get_session(handler):
     return send_json(handler, 200, {"user": get_user(handler)})
 

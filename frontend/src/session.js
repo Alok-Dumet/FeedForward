@@ -1,56 +1,39 @@
-import { redirect } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useRouteLoaderData } from 'react-router-dom';
 
-const DEFAULT_ROUTE_BY_USER_TYPE = {
-  donor: '/requests',
-  recipient: '/offers',
+export const DEFAULT_ROUTE_BY_ROLE = {
+  food_provider: '/requests',
+  recipient_organization: '/offers',
 };
-const USER_LISTING_SEGMENT_BY_USER_TYPE = {
-  donor: 'offers',
-  recipient: 'requests',
-};
-const USER_TYPE_BY_BACKEND_ROLE = {
-  food_provider: 'donor',
-  recipient_organization: 'recipient',
+const USER_LISTING_SEGMENT_BY_ROLE = {
+  food_provider: 'offers',
+  recipient_organization: 'requests',
 };
 
-export const SESSION_QUERY_KEY = ['session'];
-
-function getUserTypeFromRole(role) {
-  if (!role) {
-    return null;
+//We will pull out the uerId, role, and organizationName from the users session
+export function parseSession(sessionData) {
+  if (!sessionData || !sessionData.user) {
+    return {
+      userId: null,
+      role: null,
+      organizationName: '',
+    };
   }
 
-  return USER_TYPE_BY_BACKEND_ROLE[role] ?? null;
-}
-
-export function parseSession(raw) {
-  const user = raw?.user ?? raw ?? null;
-  const userIdValue = raw?.user?.id ?? raw?.id ?? null;
-  const role = raw?.user?.role ?? raw?.role ?? null;
-  const userType =
-    getUserTypeFromRole(role) ?? raw?.user?.user_type ?? raw?.user_type ?? null;
-
   return {
-    userId:
-      userIdValue === null || userIdValue === undefined
-        ? null
-        : String(userIdValue),
-    userType,
-    organizationName: user?.organization_name ?? user?.name ?? '',
-    role,
+    userId: String(sessionData.user.id),
+    role: sessionData.user.role,
+    organizationName: sessionData.user.organization_name,
   };
 }
 
-export function getDefaultRouteForUserType(userType) {
-  return DEFAULT_ROUTE_BY_USER_TYPE[userType] ?? '/login';
-}
-
-function getMyListingRouteForUserType(userType, userId, suffix = '') {
+//We will build routes for the logged in user's own listing pages
+export function getMyListingRouteForRole(role, userId, suffix = '') {
   if (!userId) {
-    return getDefaultRouteForUserType(userType);
+    return DEFAULT_ROUTE_BY_ROLE[role] ?? '/login';
   }
 
-  const listingSegment = USER_LISTING_SEGMENT_BY_USER_TYPE[userType];
+  const listingSegment = USER_LISTING_SEGMENT_BY_ROLE[role];
   if (!listingSegment) {
     return '/login';
   }
@@ -58,85 +41,60 @@ function getMyListingRouteForUserType(userType, userId, suffix = '') {
   return `/users/${userId}/${listingSegment}${suffix}`;
 }
 
-export function getMyListingsRouteForUserType(userType, userId) {
-  return getMyListingRouteForUserType(userType, userId);
-}
-
-export function getMyCreateRouteForUserType(userType, userId) {
-  return getMyListingRouteForUserType(userType, userId, '/create');
-}
-
-async function parseJsonResponse(res) {
-  const contentType = res.headers.get('content-type') ?? '';
-
-  if (!contentType.includes('application/json')) {
-    return null;
-  }
-
-  try {
-    return await res.json();
-  } catch {
-    return null;
-  }
-}
-
+//We will ask the backend who is logged in and return null when nobody is
 export async function fetchSession(request) {
   try {
-    const res = await fetch('/api/session', {
-      signal: request?.signal,
-      headers: {
-        Accept: 'application/json',
-      },
+    const sessionResponse = await fetch('/api/session', {
+      signal: request ? request.signal : undefined,
+      headers: { Accept: 'application/json' },
     });
-    const session = await parseJsonResponse(res);
 
-    if (res.status === 401) {
+    if (!sessionResponse.ok) {
       return null;
     }
 
-    if (res.ok && session) {
-      return session;
-    }
-
-    return null;
+    return await sessionResponse.json();
   } catch {
     return null;
   }
 }
 
-export async function rootSessionLoader({ request }) {
-  return fetchSession(request);
+//We will keep the current session in TanStack Query so any component can read it
+export function useSession() {
+  const rootSession = useRouteLoaderData('root') ?? null;
+
+  const sessionQuery = useQuery({
+    queryKey: ['session'],
+    queryFn: () => fetchSession(),
+    initialData: rootSession,
+    staleTime: Infinity,
+  });
+
+  const session = sessionQuery.data ?? null;
+  const { userId, role } = parseSession(session);
+  const defaultRoute = DEFAULT_ROUTE_BY_ROLE[role] ?? '/login';
+
+  return {
+    ...sessionQuery,
+    role,
+    userId,
+    defaultRoute,
+    isAuthenticated: Boolean(role),
+  };
 }
 
-export async function requireSession(request) {
-  const session = await fetchSession(request);
+//We will expose helpers for changing the cached session after login or logout
+export function useSessionActions() {
+  const queryClient = useQueryClient();
 
-  if (!session) {
-    return redirect('/not_authorized');
-  }
-
-  return session;
-}
-
-export function withProtectedLoader(loader, allowedUserTypes) {
-  return async (args) => {
-    const session = await requireSession(args.request);
-
-    if (session instanceof Response) {
-      return session;
-    }
-
-    const parsedSession = parseSession(session);
-    const { userType } = parsedSession;
-
-    if (allowedUserTypes && !allowedUserTypes.includes(userType)) {
-      return redirect('/not_authorized');
-    }
-
-    if (!loader) {
-      return session;
-    }
-
-    return loader(args, session);
+  return {
+    //We will store a new authenticated session in the shared cache
+    setSession(session) {
+      queryClient.setQueryData(['session'], session ?? null);
+    },
+    //We will clear the shared session cache when the user logs out
+    clearSession() {
+      queryClient.setQueryData(['session'], null);
+    },
   };
 }

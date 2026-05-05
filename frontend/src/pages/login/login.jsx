@@ -1,15 +1,18 @@
 import { useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { motion as Motion } from 'motion/react';
 
-import { getDefaultRouteForUserType, parseSession } from '../../session.js';
-import { useSessionActions } from '../../hooks/useSession.js';
-import { useToast } from '../../hooks/useToast.js';
+import { DEFAULT_ROUTE_BY_ROLE, parseSession, useSessionActions } from '../../session.js';
+import { useToast } from '../../components/toast.jsx';
+import TextInput from '../../components/textInput.jsx';
+import { apiRequest } from '../../utils/api.js';
 
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const message = location.state?.message ?? '';
+  let message = '';
+  if (location.state) {
+    message = location.state.message ?? '';
+  }
   const { setSession } = useSessionActions();
   const { showToast } = useToast();
 
@@ -30,107 +33,61 @@ export default function Login() {
     const password = e.currentTarget.elements.password.value;
 
     try {
-      const res = await fetch('/api/login', {
+      const data = await apiRequest('/api/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: { email, password },
+        errorMessage: 'Unable to log in',
       });
-      const data = await res.json();
-
-      if (!res.ok) {
-        showToast(data?.error ?? 'Unable to log in', 'error');
-        return;
-      }
 
       const sessionRes = await fetch('/api/session', {
         headers: { Accept: 'application/json' },
       });
-      const session = sessionRes.ok ? await sessionRes.json() : data;
-      const { userType } = parseSession(session);
+      let session = data;
+      if (sessionRes.ok) {
+        session = await sessionRes.json();
+      }
 
-      if (!userType) {
+      const { role } = parseSession(session);
+
+      if (!role) {
         showToast('Unable to determine account type', 'error');
         return;
       }
 
       setSession(session);
-      navigate(getDefaultRouteForUserType(userType), {
+      navigate(DEFAULT_ROUTE_BY_ROLE[role] ?? '/login', {
         replace: true,
       });
-    } catch {
-      showToast('Network Error', 'error');
+    } catch (error) {
+      showToast(error.message, 'error');
     }
   }
 
   return (
     <div className="flex min-h-screen items-center justify-center px-6">
-      <Motion.section
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45, ease: 'easeOut' }}
-        className="w-full max-w-md rounded-3xl border border-white/60 bg-white/80 p-8 shadow-2xl backdrop-blur-md"
-      >
+      <section className="w-full max-w-md rounded-3xl border border-white/60 bg-white/80 p-8 shadow-2xl backdrop-blur-md">
         <div className="text-center">
-          <p className="text-sm font-medium tracking-[0.2em] text-amber-700 uppercase">
-            FeedForward
-          </p>
+          <p className="brand-label">FeedForward</p>
           <h1 className="mt-3 text-3xl font-bold text-slate-900">Log in</h1>
-          <p className="mt-2 text-sm text-slate-600">
-            Welcome back. Sign in to continue.
-          </p>
+          <p className="mt-2 text-sm text-slate-600">Welcome back. Sign in to continue.</p>
         </div>
 
         <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
-          <div>
-            <label
-              htmlFor="email"
-              className="mb-2 block text-sm font-medium text-slate-700"
-            >
-              Email
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 transition outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
-            />
-          </div>
+          <TextInput label="Email" name="email" type="email" autoComplete="email" />
+          <TextInput label="Password" name="password" type="password" autoComplete="current-password" />
 
-          <div>
-            <label
-              htmlFor="password"
-              className="mb-2 block text-sm font-medium text-slate-700"
-            >
-              Password
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 transition outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white transition hover:bg-slate-800 cursor-pointer"
-          >
+          <button type="submit" className="btn-primary w-full px-4 py-3">
             Log In
           </button>
         </form>
 
         <div className="mt-6 text-center text-sm text-slate-600">
           Don&apos;t have an account?{' '}
-          <Link
-            to="/register"
-            className="font-semibold text-amber-700 hover:text-amber-800"
-          >
+          <Link to="/register" className="font-semibold text-amber-700 hover:text-amber-800">
             Register
           </Link>
         </div>
-      </Motion.section>
+      </section>
     </div>
   );
 }

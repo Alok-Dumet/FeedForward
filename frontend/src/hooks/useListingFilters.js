@@ -1,47 +1,43 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useNavigation } from 'react-router-dom';
+import { useState } from 'react';
 
-export default function useListingFilters(items, filters) {
-  const navigation = useNavigation();
-  const [activeFilters, setActiveFilters] = useState([]);
-  const [isLocalFiltering, setIsLocalFiltering] = useState(false);
-  const allFilter = filters[0] ?? null;
-  const filteredItems = useMemo(() => {
-    if (activeFilters.length === 0) {
-      return items;
-    }
+const ALL_FILTERS = new Set(['All offers', 'All requests', 'All listings', 'All records']);
 
-    return items.filter((item) =>
-      activeFilters.every((filter) => item.tags.includes(filter))
-    );
-  }, [activeFilters, items]);
+// Decides how to change filters based on what filter gets selected
+// The all button removes all filters
+// Selecting an active filter de-selects it
+// Otherwise the filter is added
+function getNextFilters(currentFilters, selectedFilter) {
+  if (!selectedFilter || ALL_FILTERS.has(selectedFilter)) {
+    return [];
+  }
 
-  useEffect(() => {
-    if (!isLocalFiltering) {
-      return undefined;
-    }
+  if (currentFilters.includes(selectedFilter)) {
+    return currentFilters.filter((filter) => filter !== selectedFilter);
+  }
 
-    const handle = window.setTimeout(() => setIsLocalFiltering(false), 250);
-    return () => window.clearTimeout(handle);
-  }, [filteredItems, isLocalFiltering]);
+  return [...currentFilters, selectedFilter];
+}
+
+// Returns true if a listing matches all the currently selected filters
+function itemHasEveryFilter(item, activeFilters) {
+  return activeFilters.every((filter) => item.tags.includes(filter));
+}
+
+// Our custom hook that will return the currently active filters and items and a function updates them anytime a filter is selected
+export default function useListingFilters(items) {
+  const [activeFilters, setActiveFiltersState] = useState([]);
+
+  // Whenever a user touches a filter we update what filters are active
+  function setActiveFilters(selectedFilter) {
+    setActiveFiltersState((currentFilters) => getNextFilters(currentFilters, selectedFilter));
+  }
+
+  // Filter all our items based on what filters are active
+  const filteredItems = activeFilters.length === 0 ? items : items.filter((item) => itemHasEveryFilter(item, activeFilters));
 
   return {
     activeFilters,
     filteredItems,
-    isFiltering: isLocalFiltering || navigation.state !== 'idle',
-    setActiveFilters(filter) {
-      setIsLocalFiltering(true);
-      setActiveFilters((currentFilters) => {
-        if (!filter || filter === allFilter) {
-          return [];
-        }
-        if (currentFilters.includes(filter)) {
-          return currentFilters.filter(
-            (currentFilter) => currentFilter !== filter
-          );
-        }
-        return [...currentFilters, filter];
-      });
-    },
+    setActiveFilters,
   };
 }

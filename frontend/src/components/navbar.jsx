@@ -1,91 +1,86 @@
 import { useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 
-import {
-  getDefaultRouteForUserType,
-  getMyCreateRouteForUserType,
-  getMyListingsRouteForUserType,
-} from '../session.js';
-import { useSession, useSessionActions } from '../hooks/useSession.js';
-
-const baseLinkClassName =
-  'cursor-pointer rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-amber-50 hover:text-amber-800';
+import { getMyListingRouteForRole, useSession, useSessionActions } from '../session.js';
+import { apiRequest } from '../utils/api.js';
+import { useToast } from './toast.jsx';
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { userType, userId } = useSession();
+  const { defaultRoute, role, userId } = useSession();
   const { clearSession } = useSessionActions();
+  const { showToast } = useToast();
 
-  if (!userType) {
+  if (!role) {
     return null;
   }
 
-  const createAction = {
-    label: userType === 'donor' ? 'Create Offer' : 'Create Request',
-    to: getMyCreateRouteForUserType(userType, userId),
-  };
-  const isMyListingsDetail =
-    new URLSearchParams(location.search).get('from') === 'my-listings' &&
-    (location.pathname.startsWith('/offers/') ||
-      location.pathname.startsWith('/requests/'));
+  const isDonor = role === 'food_provider';
+  const searchParams = new URLSearchParams(location.search);
+  const cameFromMyListings = searchParams.get('from') === 'my-listings';
+  const isListingDetailsPage = location.pathname.startsWith('/offers/') || location.pathname.startsWith('/requests/');
+  const isMyListingsDetail = cameFromMyListings && isListingDetailsPage;
+  const myListingsPath = getMyListingRouteForRole(role, userId);
+  const createListingPath = getMyListingRouteForRole(role, userId, '/create');
+  let browseLabel = 'Offers';
+  let browsePath = '/offers';
+  let myListingsLabel = 'My Requests';
+  let createLabel = 'Create Request';
+  if (isDonor) {
+    browseLabel = 'Requests';
+    browsePath = '/requests';
+    myListingsLabel = 'My Offers';
+    createLabel = 'Create Offer';
+  }
 
-  const navItems =
-    userType === 'donor'
-      ? [
-          {
-            label: 'Requests',
-            to: '/requests',
-            isActive: (routerIsActive) => routerIsActive && !isMyListingsDetail,
-          },
-          {
-            label: 'My Offers',
-            to: getMyListingsRouteForUserType(userType, userId),
-            end: true,
-            isActive: (routerIsActive) => routerIsActive || isMyListingsDetail,
-          },
-          { label: 'History', to: '/history' },
-          createAction,
-        ]
-      : [
-          {
-            label: 'Offers',
-            to: '/offers',
-            isActive: (routerIsActive) => routerIsActive && !isMyListingsDetail,
-          },
-          {
-            label: 'My Requests',
-            to: getMyListingsRouteForUserType(userType, userId),
-            end: true,
-            isActive: (routerIsActive) => routerIsActive || isMyListingsDetail,
-          },
-          { label: 'History', to: '/history' },
-          createAction,
-        ];
+  const navItems = [
+    {
+      label: browseLabel,
+      to: browsePath,
+      isActive: (routerIsActive) => routerIsActive && !isMyListingsDetail,
+    },
+    {
+      label: myListingsLabel,
+      to: myListingsPath,
+      end: true,
+      isActive: (routerIsActive) => routerIsActive || isMyListingsDetail,
+    },
+    { label: 'History', to: '/history' },
+    {
+      label: createLabel,
+      to: createListingPath,
+    },
+  ];
 
   function getNavLinkClassName(item, routerIsActive, extraClassName = '') {
-    const isActive = item.isActive?.(routerIsActive) ?? routerIsActive;
+    let isActive = routerIsActive;
+    if (item.isActive) {
+      isActive = item.isActive(routerIsActive);
+    }
+    if (isActive) {
+      return `nav-link ${extraClassName} nav-link-active`.trim();
+    }
 
-    return `${baseLinkClassName} ${extraClassName} ${
-      isActive
-        ? 'bg-slate-900 text-white hover:bg-slate-900 hover:text-white'
-        : ''
-    }`;
+    return `nav-link ${extraClassName}`.trim();
   }
 
   async function handleLogout() {
-    clearSession();
     setIsMenuOpen(false);
 
     try {
-      await fetch('/api/logout', {
+      await apiRequest('/api/logout', {
         method: 'POST',
+        errorMessage: 'Unable to log out.',
+        networkErrorMessage: 'Network error while logging out.',
       });
-    } catch {
-      // Local dev may not expose a logout endpoint.
+    } catch (error) {
+      showToast(error.message, 'error');
+      return;
     }
 
+    clearSession();
     navigate('/login', { replace: true });
   }
 
@@ -93,26 +88,13 @@ export default function Navbar() {
     <header className="sticky top-0 z-30 px-4 pt-4 sm:px-6 lg:px-8">
       <div className="mx-auto w-full max-w-6xl rounded-[1.75rem] border border-white/70 bg-white/80 px-4 py-4 shadow-lg backdrop-blur-md sm:px-6">
         <div className="flex items-center justify-between gap-4">
-          <Link
-            to={getDefaultRouteForUserType(userType)}
-            className="cursor-pointer text-lg font-extrabold tracking-[0.08em] text-slate-950 uppercase"
-          >
+          <Link to={defaultRoute} className="cursor-pointer text-lg font-extrabold tracking-[0.08em] text-slate-950 uppercase">
             FeedForward
           </Link>
 
-          <nav
-            className="hidden items-center gap-2 md:flex"
-            aria-label="Primary"
-          >
+          <nav className="hidden items-center gap-2 md:flex" aria-label="Primary">
             {navItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.end}
-                className={({ isActive }) =>
-                  getNavLinkClassName(item, isActive)
-                }
-              >
+              <NavLink key={item.to} to={item.to} end={item.end} className={({ isActive }) => getNavLinkClassName(item, isActive)}>
                 {item.label}
               </NavLink>
             ))}
@@ -137,30 +119,14 @@ export default function Navbar() {
         </div>
 
         {isMenuOpen ? (
-          <nav
-            id="mobile-navigation"
-            className="mt-4 flex flex-col gap-2 border-t border-slate-200/80 pt-4 md:hidden"
-            aria-label="Mobile primary"
-          >
+          <nav id="mobile-navigation" className="mt-4 flex flex-col gap-2 border-t border-slate-200/80 pt-4 md:hidden" aria-label="Mobile primary">
             {navItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.end}
-                onClick={() => setIsMenuOpen(false)}
-                className={({ isActive }) =>
-                  getNavLinkClassName(item, isActive, 'text-left')
-                }
-              >
+              <NavLink key={item.to} to={item.to} end={item.end} onClick={() => setIsMenuOpen(false)} className={({ isActive }) => getNavLinkClassName(item, isActive, 'text-left')}>
                 {item.label}
               </NavLink>
             ))}
 
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="btn-soft justify-center"
-            >
+            <button type="button" onClick={handleLogout} className="btn-soft justify-center">
               Logout
             </button>
           </nav>
